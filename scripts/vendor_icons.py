@@ -40,6 +40,8 @@ UI_ICONS = [
     "folder-search",
     "scroll-text",
     "hourglass",
+    "key-round",
+    "user",
     "refresh-cw",
     "send",
     "search",

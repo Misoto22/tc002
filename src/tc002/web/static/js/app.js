@@ -18,6 +18,7 @@ import { rotation } from "./pages/rotation.js";
 import { sessions } from "./pages/sessions.js";
 import { setup } from "./pages/setup.js";
 import { pollAgents } from "./agents.js";
+import { followUiPalette } from "./appearance.js";
 
 const PAGES = [
   ["overview", overview, "layout-dashboard", "nav.watch"],
@@ -112,9 +113,14 @@ function markDirty() {
   }
 }
 
-function render() {
+// `entering`: a page the user went to animates in; anything else (reload, edit, save)
+// redraws in place, so nothing on screen slides about.
+let firstPaint = true; // the first page after start-up animates in too
+function render(entering = false) {
   if (!store.store.state) return;
-  delete document.documentElement.dataset.refresh; // a real page change animates in again
+  if (entering || firstPaint) delete document.documentElement.dataset.refresh;
+  else document.documentElement.dataset.refresh = "";
+  firstPaint = false;
   $("page").replaceChildren(PAGES.find(([id]) => id === current())[1]());
   renderNav();
   renderTopbar();
@@ -152,7 +158,7 @@ store.subscribe((what) => {
   if (what === "render") render();
   else { renderTopbar(); renderSavebar(); renderNav(); markDirty(); }
 });
-window.addEventListener("hashchange", () => transition(() => { render(); $("main").scrollTop = 0; }));
+window.addEventListener("hashchange", () => transition(() => { render(true); $("main").scrollTop = 0; }));
 window.addEventListener("hashchange", () => document.querySelectorAll(".popover, .menu").forEach((p) => p.remove()));
 $("save").addEventListener("click", () => store.save());
 $("discard").addEventListener("click", store.discard);
@@ -167,7 +173,11 @@ function openTheme(anchor) {
     [t("ui.theme"), [mode("system", t("pal.themeSystem"), "monitor"), mode("light", t("pal.themeLight"), "sun"),
       mode("dark", t("pal.themeDark"), "moon")]],
     [t("ui.palette"), PALETTES.map(colour)],
-  ], (v) => { const [key, value] = v.split(":"); setPref(key, value, render, origin); });
+  ], (v) => {
+    const [key, value] = v.split(":");
+    setPref(key, value, render, origin);
+    if (key === "palette") followUiPalette(value);
+  });
 }
 $("theme").addEventListener("click", (e) => openTheme(e.currentTarget));
 $("lang").addEventListener("click", () => setPref("lang", prefs.lang === "zh" ? "en" : "zh", render));

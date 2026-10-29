@@ -1,4 +1,4 @@
-import { appName, t } from "../i18n.js";
+import { ago, appName, t } from "../i18n.js";
 import { sortable } from "../sortable.js";
 import { applyPreset, edit, setFocus, show, store } from "../store.js";
 import { appIcon, button, h, icon, menu, pageHead, panel, row, section, toggle } from "../ui.js";
@@ -21,6 +21,17 @@ function presetCards(slots) {
   h("div", { class: "preset-desc" }, t(`preset.${p.id}.desc`)))));
 }
 
+// How fresh a tc002 screen's data is, as the background service last recorded it.
+function freshnessHint(key) {
+  const f = store.state.freshness?.[key];
+  if (!f) return h("div", { class: "row-hint" }, t("rotation.screen"));
+  if (f.stale) {
+    const text = f.age === null ? t("fresh.never", { error: f.error }) : t("fresh.stale", { ago: ago(f.age), error: f.error });
+    return h("div", { class: "row-hint warn" }, text);
+  }
+  return h("div", { class: "row-hint" }, f.age === null ? t("rotation.screen") : t("fresh.ok", { ago: ago(f.age) }));
+}
+
 function slotRow(slot, i) {
   const key = slotKey(slot);
   return h("div", {
@@ -31,7 +42,7 @@ function slotRow(slot, i) {
   thumb(key, Boolean(slot.screen)),
   h("div", { class: "row-text" },
     h("div", { class: "row-title" }, appIcon(key, "sm"), appName(key)),
-    h("div", { class: "row-hint" }, slot.screen ? t("rotation.screen") : t("rotation.builtin"))),
+    slot.screen ? freshnessHint(key) : h("div", { class: "row-hint" }, t("rotation.builtin"))),
   h("div", { class: "row-control" },
     h("div", { class: "seconds" },
       h("input", { class: "field num", type: "number", min: store.state.slotSeconds.min, max: store.state.slotSeconds.max, value: slot.seconds,

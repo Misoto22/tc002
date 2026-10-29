@@ -30,7 +30,9 @@ SECTION_KEYS = {
     "apps": None,
     "rotation": {"slots"},
     "alerts": {"takeover"},
+    "appearance": {"led_theme", "ui_palette"},
 }
+DEFAULT_APPEARANCE = {"led_theme": "match", "ui_palette": "paper"}
 
 
 class ConfigError(ValueError):
@@ -58,7 +60,15 @@ class Settings:
     alert_takeover: bool = True
     display: dict = field(default_factory=dict)  # global settings, keys as in /setConfig
     apps: dict = field(default_factory=dict)  # built-in app settings, see device_settings
+    appearance: dict = field(default_factory=lambda: dict(DEFAULT_APPEARANCE))
     source: str = "<built-in defaults>"
+
+    @property
+    def led_theme(self):
+        """The LED theme in effect, with "match" resolved to the UI's palette."""
+        from .render import themes
+
+        return themes.resolve(self.appearance["led_theme"], self.appearance["ui_palette"])
 
 
 def _parse(data, source):
@@ -119,7 +129,12 @@ def _parse(data, source):
     if problems := device_settings.validate_display(display) + device_settings.validate_apps(apps):
         raise ConfigError(f"{source}: " + "; ".join(problems))
 
+    appearance = {**DEFAULT_APPEARANCE, **data.get("appearance", {})}
+    if problems := _appearance_problems(appearance):
+        raise ConfigError(f"{source}: " + "; ".join(problems))
+
     return Settings(
+        appearance=appearance,
         screens=screens,
         rotation=tuple(slots),
         keep_builtins=keep,
@@ -128,6 +143,17 @@ def _parse(data, source):
         apps=apps,
         source=source,
     )
+
+
+def _appearance_problems(appearance):
+    from .render import themes
+
+    problems = []
+    if appearance["led_theme"] not in themes.names():
+        problems.append(f"appearance.led_theme must be one of {themes.names()}")
+    if appearance["ui_palette"] not in themes.UI_PALETTES:
+        problems.append(f"appearance.ui_palette must be one of {list(themes.UI_PALETTES)}")
+    return problems
 
 
 def parse(data, source="<input>"):
@@ -151,6 +177,7 @@ def to_data(settings):
             ]
         },
         "alerts": {"takeover": settings.alert_takeover},
+        "appearance": dict(settings.appearance),
     }
 
 

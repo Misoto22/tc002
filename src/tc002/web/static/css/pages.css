@@ -149,3 +149,8 @@ a.link:hover { color: var(--accent-text); }
 .check > span { display: grid; }
 .check-title { font-weight: 500; }
 .step-actions { display: flex; justify-content: flex-end; padding-top: var(--space-24); }
+
+/* ---- LED colour themes ---------------------------------------------------------- */
+
+.led-choices { grid-template-columns: repeat(auto-fill, minmax(var(--preset-min), 1fr)); }
+.led-choice .led-thumb { width: 100%; }

@@ -2,6 +2,7 @@ import { t } from "../i18n.js";
 import { edit, setFocus, store } from "../store.js";
 import { badge, pageHead, panel, row, section, segmented, select, slider, toggle } from "../ui.js";
 import { offlineNotice, page } from "./common.js";
+import { ledThemes } from "../appearance.js";
 
 const ICONS = { volume: "bell", timezone: "clock", dateFormat: "history", showWeek: "history",
   weekStart: "history", scrollSpeed: "zap", lowBatteryAutoSleep: "power" };
@@ -22,7 +23,7 @@ export function display() {
   const schema = store.state.schema;
   const value = (key) => store.draft.display[key] ?? clock[key];
   const set = (key, v) => edit((dr) => { dr.display[key] = v; });
-  const bright = { level: "high", low: 50, mid: 80, high: 100, ...clock.brightness, ...store.draft.display.brightness };
+  const bright = { ...schema.brightnessDefaults, ...clock.brightness, ...store.draft.display.brightness };
   const setBright = (patch) => { Object.assign(bright, patch); edit((dr) => { dr.display.brightness = { ...bright }; }); };
   const levels = schema.brightnessLevels;
 
@@ -41,13 +42,14 @@ export function display() {
   return page(
     pageHead(t("page.display"), t("desc.display")),
     store.state.clock.online ? null : offlineNotice(store.state.clock),
+    ...ledThemes(() => document.getElementById("page").replaceChildren(display())),
     section(t("section.brightness")),
     panel(
       row(t("display.level"), managed("brightness", clock.brightness),
         segmented(levels.map((l) => [l, t(`level.${l}`)]), bright.level, (v) => setBright({ level: v }), t("display.level")),
         { path: "display.brightness", icon: "sun" }),
       ...levels.map((l) => row(t("display.levelPercent", { level: t(`level.${l}`) }), t("display.percentHint"),
-        slider(5, 100, bright[l], (v) => setBright({ [l]: v }), l), { path: "display.brightness" })),
+        slider(...schema.brightnessRange, bright[l], (v) => setBright({ [l]: v }), l), { path: "display.brightness" })),
     ),
     section(t("section.general")),
     panel(...rows,

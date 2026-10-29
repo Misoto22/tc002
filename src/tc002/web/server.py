@@ -172,6 +172,8 @@ def make_handler(api, token, port):
                 "/api/preset": api.apply_preset,
                 "/api/live/stop": api.live_stop,
                 "/api/setup": api.first_run,
+                "/api/appearance": api.appearance,
+                "/api/social-token": api.social_token,
                 "/api/reveal": api.reveal,
             }
             if path.startswith("/api/integrations/"):

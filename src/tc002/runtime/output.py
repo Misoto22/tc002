@@ -5,7 +5,7 @@ import time
 from pathlib import Path
 
 from ..device import DeviceError
-from ..render import mockup
+from ..render import mockup, themes
 
 REFRESH = 60  # re-push an unchanged animation this often so a rebooted clock gets it back
 
@@ -34,8 +34,8 @@ class Quiet:
 class Output:
     """Pushes animations, skipping ones whose key matches the last successful push."""
 
-    def __init__(self, device, preview_dir=None, duration=10):
-        self.device = device
+    def __init__(self, device, preview_dir=None, duration=10, theme=themes.CLASSIC):
+        self.device, self.theme = device, theme
         self.preview_dir = Path(preview_dir) if preview_dir else None
         self.duration = duration
         self._last = {}
@@ -44,7 +44,7 @@ class Output:
     def show(self, app, anim):
         if self.device is None:
             path = self.preview_dir / f"tc002-{app}.gif"
-            path.write_bytes(mockup.led_gif(anim))
+            path.write_bytes(mockup.led_gif(anim, self.theme))
             print(f"[{app}] {len(anim.frames)} frames -> {path}")
             print(anim.frames[0].ansi())
             return
@@ -53,7 +53,7 @@ class Output:
         if anim.key is not None and last and last[0] == anim.key and now - last[1] < REFRESH:
             return
         try:
-            self.device.push(app, anim.payload(self.duration))
+            self.device.push(app, anim.payload(self.duration, self.theme))
         except DeviceError as exc:
             self._quiet.failed(app, exc)
             return

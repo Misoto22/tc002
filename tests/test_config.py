@@ -44,7 +44,7 @@ def test_no_config_means_builtin_defaults(monkeypatch, tmp_path):
         ('[apps.clock]\ntimeFormat = "24h"', "timeFormat"),
         ('[apps.weather]\ntoken = "secret"', "not a known setting"),
         ("[apps.weather.displayInfo]\ndisplayAqi = false", "at least one"),
-        ('[apps.xhs]\nuid = "1"', "settings exist only"),
+        ('[apps.feishu]\nurl = "1"', "settings exist only"),
         ("[surprise]\nx = 1", "unknown section"),
         ("[screens\n", "Expected"),
     ],

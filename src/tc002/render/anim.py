@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 
-from . import gif
+from . import gif, themes
 from .canvas import HEIGHT, WIDTH, Canvas
 
 # Firmware limits for a GIF image element (protocol reference, section 4.2).
@@ -29,14 +29,15 @@ class Animation:
     def duration_s(self):
         return sum(self.delays()) / 1000
 
-    def gif(self):
-        return gif.encode([f.px for f in self.frames], WIDTH, HEIGHT, self.delays())
+    def gif(self, theme=themes.CLASSIC):
+        px = themes.frames([f.px for f in self.frames], theme)
+        return gif.encode(px, WIDTH, HEIGHT, self.delays())
 
-    def payload(self, duration=10):
+    def payload(self, duration=10, theme=themes.CLASSIC):
         """Device payload: the clock loops the GIF on its own until replaced."""
         if len(self.frames) > MAX_FRAMES:
             raise ValueError(f"{len(self.frames)} frames; the clock plays at most {MAX_FRAMES}")
-        uri = gif.data_uri(self.gif())
+        uri = gif.data_uri(self.gif(theme))
         if len(uri) > MAX_DATA_URI_BYTES:
             raise ValueError(f"GIF is {len(uri)} bytes as base64; limit {MAX_DATA_URI_BYTES}")
         return {"duration": duration, "image": [{"data": uri, "position": [0, 0]}]}

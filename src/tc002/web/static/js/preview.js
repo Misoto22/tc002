@@ -111,6 +111,8 @@ function renderControls() {
   ].filter(Boolean));
 }
 
+// Built once: refreshes update the title, chips and controls inside it, so the bar
+// (and everything under it) never collapses and grows back.
 function mount(container) {
   els = {
     canvas: h("canvas", { width: W * SCALE, height: H * SCALE, class: "led-canvas", "aria-label": t("preview.title") }),
@@ -120,10 +122,17 @@ function mount(container) {
     controls: h("div", { class: "device-actions" }),
   };
   els.stage = h("div", { class: "stage" }, els.canvas, els.img);
+  els.stage.style.setProperty("--led-aspect", `${W} / ${H}`);
   els.root = h("div", { class: "device-inner" }, els.stage,
     h("div", { class: "device-info" }, els.title, els.chips, els.controls));
   container.replaceChildren(els.root);
   lastSource = "";
+  renderChips();
+  renderControls();
+}
+
+function refresh() {
+  lastSource = ""; // redraw the title and cross-fade to whatever is in focus now
   renderChips();
   renderControls();
 }
@@ -133,7 +142,7 @@ export function startPreview(container) {
   setInterval(tick, TIMING.previewTickMs);
   subscribe((what) => {
     if (what === "status") renderControls();
-    if (what === "focus" || what === "render") mount(container);
+    if (what === "focus" || what === "render") refresh();
     if (what === "draft") renderChips();
   });
 }

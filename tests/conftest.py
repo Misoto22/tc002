@@ -3,7 +3,7 @@
 import pytest
 
 from tc002.integrations import statusline
-from tc002.runtime import hold, sessions
+from tc002.runtime import freshness, hold, sessions
 from tc002.usage import claude, claude_login, limits
 
 
@@ -11,6 +11,7 @@ from tc002.usage import claude, claude_login, limits
 def isolated_state(tmp_path, monkeypatch):
     monkeypatch.setattr(hold, "PATH", tmp_path / "hold.json")
     monkeypatch.setattr(sessions, "DIR", tmp_path / "sessions")
+    monkeypatch.setattr(freshness, "PATH", tmp_path / "screens.json")
     monkeypatch.setattr(limits, "PATH", tmp_path / "claude-limits.json")
     monkeypatch.setattr(statusline, "SAVED", tmp_path / "statusline.json")
     monkeypatch.setattr(claude, "PROJECTS", str(tmp_path / "claude-projects"))

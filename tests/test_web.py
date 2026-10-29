@@ -324,3 +324,43 @@ def test_every_server_error_title_is_translated():
     for title in titles:
         key = f'"err.{title.lower().replace(" ", "-")}"'
         assert key in en and key in zh, f"no translation for error {title!r}"
+
+
+def test_ui_palettes_are_the_same_in_python_css_and_js():
+    import re
+    from pathlib import Path
+
+    from tc002.render import themes
+
+    static = Path(server.STATIC)
+    js = (static / "js" / "prefs.js").read_text()
+    listed = re.search(r"PALETTES = \[([^\]]+)\]", js).group(1)
+    assert [s.strip(' "') for s in listed.split(",")] == list(themes.UI_PALETTES)
+    css = (static / "css" / "palettes.css").read_text()
+    assert all(f'data-palette="{p}"' in css for p in themes.UI_PALETTES if p != "paper")
+
+
+def test_appearance_changes_only_that_table(ui):
+    import tomllib
+
+    url, token, cfg = ui
+    headers = {"X-TC002-Token": token, "Content-Type": "application/json"}
+    status, _, body = call(
+        url, "/api/appearance", {"led_theme": "match", "ui_palette": "sakura"}, headers
+    )
+    assert status == 200 and json.loads(body)["ledTheme"] == "sakura"
+    saved = tomllib.loads(cfg.read_text())
+    assert saved["appearance"] == {"led_theme": "match", "ui_palette": "sakura"}
+    assert saved["rotation"]["slots"][0]["screen"] == "claude"  # the rest is untouched
+    assert call(url, "/api/appearance", {"led_theme": "rainbow"}, headers)[0] == 422
+    status, _, gif = call(url, "/api/preview/usage.gif?theme=kohaku")
+    assert status == 200 and gif[:6] == b"GIF89a"
+
+
+def test_social_tokens_are_write_only_and_limited_to_token_apps(ui):
+    url, token, _ = ui
+    headers = {"X-TC002-Token": token, "Content-Type": "application/json"}
+    assert call(url, "/api/social-token", {"app": "bilibili", "token": "x"}, headers)[0] == 422
+    assert call(url, "/api/social-token", {"app": "youtube", "token": " "}, headers)[0] == 422
+    # a valid request needs a clock; with none configured it is refused, never stored
+    assert call(url, "/api/social-token", {"app": "youtube", "token": "t"}, headers)[0] == 409

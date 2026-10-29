@@ -2,6 +2,7 @@
 
 import { t } from "../i18n.js";
 import { screenPreview } from "../media.js";
+import { H, SCALE, W } from "../led.js";
 import { load } from "../store.js";
 import { button, h, panel, row } from "../ui.js";
 
@@ -9,7 +10,7 @@ import { button, h, panel, row } from "../ui.js";
 // built-in app (the firmware draws those; the server approximates them).
 export function thumb(key, isScreen) {
   return h("img", {
-    class: "led-thumb", alt: "", loading: "lazy",
+    class: "led-thumb", alt: "", loading: "lazy", width: W * SCALE, height: H * SCALE,
     src: isScreen ? screenPreview(key) : `/api/preview/builtin-${key}.gif`,
   });
 }

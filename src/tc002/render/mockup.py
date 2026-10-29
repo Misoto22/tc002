@@ -1,6 +1,6 @@
 """LED-style mock-ups: each device pixel drawn as a round lamp, for previews and docs."""
 
-from . import gif
+from . import gif, themes
 from .canvas import HEIGHT, WIDTH
 from .palette import LED
 
@@ -35,6 +35,6 @@ def led_pixels(px):
     return out
 
 
-def led_gif(anim):
-    frames = [led_pixels(f.px) for f in anim.frames]
+def led_gif(anim, theme=themes.CLASSIC):
+    frames = [led_pixels(px) for px in themes.frames([f.px for f in anim.frames], theme)]
     return gif.encode(frames, WIDTH * CELL, HEIGHT * CELL, anim.delays())
