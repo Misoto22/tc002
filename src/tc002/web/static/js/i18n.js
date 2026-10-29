@@ -85,6 +85,11 @@ const en = {
   "field.displayInfo": "Show", "field.focusTime": "Focus minutes", "field.relaxTime": "Break minutes",
   "flag.displayTemperature": "Temperature", "flag.displayHumidity": "Humidity",
   "flag.displayPressure": "Pressure", "flag.displayAqi": "Air quality",
+  "field.uid": "Account ID", "field.uidHint": "Whose numbers the clock shows: the ID or handle from the profile page",
+  "field.token": "Access token", "field.tokenHint": "This platform needs one. It goes straight to the clock; tc002 never saves or shows it",
+  "field.tokenPlaceholder": "Paste a token", "field.tokenSend": "Send to clock", "field.tokenSet": "Token on clock",
+  "field.tokenSent": "Token sent to the clock",
+  "apps.moreSocial": "Also available once switched on: {list}.",
   "apps.off": "switched off", "city.placeholder": "Search a city…", "city.source.open-meteo": "Open-Meteo",
   "city.source.offline": "built-in list (offline)", "city.none": "No matching city",
 
@@ -212,6 +217,11 @@ const zh = {
   "field.displayInfo": "显示", "field.focusTime": "专注时长（分钟）", "field.relaxTime": "休息时长（分钟）",
   "flag.displayTemperature": "温度", "flag.displayHumidity": "湿度",
   "flag.displayPressure": "气压", "flag.displayAqi": "空气质量",
+  "field.uid": "账号 ID", "field.uidHint": "时钟显示谁的数据：主页上的 ID 或用户名",
+  "field.token": "访问令牌", "field.tokenHint": "该平台需要令牌。它直接发送到时钟，tc002 不会保存或显示",
+  "field.tokenPlaceholder": "粘贴令牌", "field.tokenSend": "发送到时钟", "field.tokenSet": "时钟已有令牌",
+  "field.tokenSent": "令牌已发送到时钟",
+  "apps.moreSocial": "开启后还可以设置：{list}。",
   "apps.off": "已关闭", "city.placeholder": "搜索城市…", "city.source.open-meteo": "Open-Meteo",
   "city.source.offline": "内置列表（离线）", "city.none": "没有匹配的城市",
 

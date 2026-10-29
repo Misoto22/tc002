@@ -110,3 +110,28 @@ def test_apply_twice_changes_nothing_the_second_time(tmp_path):
     calls = len(clock.set_calls)
     assert sync.apply(clock, settings, tmp_path) == []
     assert len(clock.set_calls) == calls
+
+
+def test_social_account_ids_sync_to_the_social_category():
+    from tc002 import sync
+
+    class Clock:
+        def __init__(self):
+            self.social = {
+                "socialInfos": {"youtube": {"enable": True, "token": "kept"}},
+                "socialOrder": [],
+            }
+            self.writes = []
+
+        def category_config(self, category):
+            return copy.deepcopy(self.social) if category == "social" else {}
+
+        def set_category_config(self, category, body):
+            self.writes.append((category, body))
+
+    clock = Clock()
+    changes = sync._apply_apps(clock, {"youtube": {"uid": "UC123"}})
+    assert changes == ["youtube.uid -> UC123"]
+    ((category, body),) = clock.writes
+    assert category == "social" and body["socialInfos"]["youtube"]["token"] == "kept"
+    assert body["socialOrder"]  # a complete order, as the clock requires

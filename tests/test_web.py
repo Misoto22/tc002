@@ -355,3 +355,12 @@ def test_appearance_changes_only_that_table(ui):
     assert call(url, "/api/appearance", {"led_theme": "rainbow"}, headers)[0] == 422
     status, _, gif = call(url, "/api/preview/usage.gif?theme=kohaku")
     assert status == 200 and gif[:6] == b"GIF89a"
+
+
+def test_social_tokens_are_write_only_and_limited_to_token_apps(ui):
+    url, token, _ = ui
+    headers = {"X-TC002-Token": token, "Content-Type": "application/json"}
+    assert call(url, "/api/social-token", {"app": "bilibili", "token": "x"}, headers)[0] == 422
+    assert call(url, "/api/social-token", {"app": "youtube", "token": " "}, headers)[0] == 422
+    # a valid request needs a clock; with none configured it is refused, never stored
+    assert call(url, "/api/social-token", {"app": "youtube", "token": "t"}, headers)[0] == 409

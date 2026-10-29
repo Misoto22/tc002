@@ -7,20 +7,27 @@ undo tc002 entirely.
 """
 
 from . import builtins, device_settings
+from .device import CATEGORY_ENDPOINTS
 
 GLOBAL_KEYS = ["carouselSpeed", "brightness", *device_settings.DISPLAY]
 
 
+def _infos(device, category):
+    _, _, infos_key, _ = CATEGORY_ENDPOINTS[category]
+    return device.category_config(category).get(infos_key, {})
+
+
 def _original(device):
     current = device.config()
-    tools = device.category_config("tools").get("toolsInfos", {})
+    infos = {c: _infos(device, c) for c in CATEGORY_ENDPOINTS}
+    apps = {}
+    for app, rules in device_settings.APPS.items():
+        stored = infos[builtins.lookup(app).category].get(app, {})
+        apps[app] = {k: stored[k] for k in rules if k in stored}  # rules hold no secrets
     return {
         "categories": builtins.snapshot(device),
         "global": {k: current[k] for k in GLOBAL_KEYS if k in current},
-        "apps": {
-            app: {k: tools[app][k] for k in rules if k in tools.get(app, {})}
-            for app, rules in device_settings.APPS.items()
-        },
+        "apps": apps,
     }
 
 
@@ -51,21 +58,25 @@ def apply(device, settings, state_dir):
 
 
 def _apply_apps(device, apps):
-    if not apps:
-        return []
-    cfg = device.category_config("tools")
-    infos = cfg.get("toolsInfos", {})
+    """Write [apps.*] settings, one request per category that changed."""
     changes = []
-    for app, fields in apps.items():
-        target = infos.setdefault(app, {})
-        for key, value in fields.items():
-            merged = target.get(key, {}) | value if isinstance(value, dict) else value
-            if target.get(key) != merged:
-                target[key] = merged
-                changes.append(f"{app}.{key} -> {merged}")
-    if changes:
-        order = cfg.get("toolsOrder") or list(range(1, 10))
-        device.set_category_config("tools", {"toolsInfos": infos, "toolsOrder": order})
+    for category, (_, _, infos_key, order_key) in CATEGORY_ENDPOINTS.items():
+        mine = {a: f for a, f in apps.items() if builtins.lookup(a).category == category}
+        if not mine:
+            continue
+        cfg = device.category_config(category)
+        infos = cfg.get(infos_key, {})
+        before = len(changes)
+        for app, fields in mine.items():
+            target = infos.setdefault(app, {})
+            for key, value in fields.items():
+                merged = target.get(key, {}) | value if isinstance(value, dict) else value
+                if target.get(key) != merged:
+                    target[key] = merged
+                    changes.append(f"{app}.{key} -> {merged}")
+        if len(changes) > before:
+            order = cfg.get(order_key) or builtins.full_order(category)
+            device.set_category_config(category, {infos_key: infos, order_key: order})
     return changes
 
 

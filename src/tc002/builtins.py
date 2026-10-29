@@ -114,12 +114,12 @@ def apply_enabled(device, keep):
                 changed.append(f"{key}={'on' if want else 'off'}")
                 dirty = True
         if dirty:
-            order = cfg.get(order_key) or _full_order(category)
+            order = cfg.get(order_key) or full_order(category)
             device.set_category_config(category, {infos_key: infos, order_key: order})
     return changed
 
 
-def _full_order(category):
+def full_order(category):
     return sorted(b.index for b in CATALOGUE.values() if b.category == category)
 
 

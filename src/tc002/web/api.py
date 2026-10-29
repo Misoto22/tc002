@@ -103,9 +103,14 @@ class Api:
                         "enabled": bool(info.get("enable")),
                         "credentials": any(info.get(s) for s in SECRET_KEYS & set(info)),
                     }
-        tools = categories["tools"].get("toolsInfos", {})
+
+        def stored(app):
+            _, _, infos_key, _ = CATEGORY_ENDPOINTS[builtins.lookup(app).category]
+            return categories[builtins.lookup(app).category].get(infos_key, {}).get(app, {})
+
+        # only the settings tc002 manages: never a token, password or key
         app_settings = {
-            app: {k: tools.get(app, {}).get(k) for k in rules}
+            app: {k: stored(app).get(k) for k in rules}
             for app, rules in device_settings.APPS.items()
         }
         return {
@@ -168,6 +173,25 @@ class Api:
             # only a change the clock can see is worth redrawing every screen for
             "serviceRestarted": settings.led_theme != before.led_theme and launchd.restart(),
         }
+
+    def social_token(self, body):
+        """Hand a social app its OAuth token. Write-only: sent to the clock and forgotten;
+        it is not logged, stored, or ever read back (the UI only learns that one is set)."""
+        app, token = body.get("app"), body.get("token")
+        if app not in device_settings.TOKEN_APPS:
+            raise ApiError(
+                422, "Invalid settings", f"Only {device_settings.TOKEN_APPS} take a token."
+            )
+        if not isinstance(token, str) or not token.strip() or len(token) > 4096:
+            raise ApiError(422, "Invalid settings", "Paste the token the platform gave you.")
+        dev = self._device()
+        _, _, infos_key, order_key = CATEGORY_ENDPOINTS["social"]
+        cfg = dev.category_config("social")
+        infos = cfg.get(infos_key, {})
+        infos.setdefault(app, {})["token"] = token.strip()
+        order = cfg.get(order_key) or builtins.full_order("social")
+        dev.set_category_config("social", {infos_key: infos, order_key: order})
+        return {"app": app, "tokenSet": True}
 
     def integration(self, action):
         try:
