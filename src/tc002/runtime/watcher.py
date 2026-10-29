@@ -32,7 +32,7 @@ def screen_loop(out, screen, stop, attention, once=False):
 
 def watch(device, settings, preview_dir=None, once=False):
     """Run the configured screens (and, on a real clock, the rotation driver)."""
-    out = Output(device, preview_dir)
+    out = Output(device, preview_dir, theme=settings.led_theme)
     screens = [SCREENS[name]() for name in settings.screens]
     stop = threading.Event()
     attention = Attention()

@@ -18,6 +18,7 @@ import { rotation } from "./pages/rotation.js";
 import { sessions } from "./pages/sessions.js";
 import { setup } from "./pages/setup.js";
 import { pollAgents } from "./agents.js";
+import { followUiPalette } from "./appearance.js";
 
 const PAGES = [
   ["overview", overview, "layout-dashboard", "nav.watch"],
@@ -167,7 +168,11 @@ function openTheme(anchor) {
     [t("ui.theme"), [mode("system", t("pal.themeSystem"), "monitor"), mode("light", t("pal.themeLight"), "sun"),
       mode("dark", t("pal.themeDark"), "moon")]],
     [t("ui.palette"), PALETTES.map(colour)],
-  ], (v) => { const [key, value] = v.split(":"); setPref(key, value, render, origin); });
+  ], (v) => {
+    const [key, value] = v.split(":");
+    setPref(key, value, render, origin);
+    if (key === "palette") followUiPalette(value);
+  });
 }
 $("theme").addEventListener("click", (e) => openTheme(e.currentTarget));
 $("lang").addEventListener("click", () => setPref("lang", prefs.lang === "zh" ? "en" : "zh", render));

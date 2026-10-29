@@ -22,6 +22,7 @@ FULL = {
         "slots": [{"screen": "sys", "seconds": 12.5}, {"builtin": "weather", "seconds": 20}]
     },
     "alerts": {"takeover": False},
+    "appearance": {"led_theme": "kohaku", "ui_palette": "ai"},
 }
 
 

@@ -13,7 +13,7 @@ from concurrent.futures import ThreadPoolExecutor
 from .. import builtins, config, config_writer, device_settings, presets, sync
 from ..device import CATEGORY_ENDPOINTS, Device, DeviceError
 from ..integrations import claude_hooks, executable, launchd, statusline
-from ..render import font, mockup
+from ..render import font, mockup, themes
 from ..render.canvas import HEIGHT, WIDTH
 from ..render.palette import hex_palette
 from ..runtime import hold
@@ -75,6 +75,7 @@ class Api:
             "limits": {"warn": usage_screen.WARN, "critical": usage_screen.CRITICAL},
             "slotSeconds": {"min": config.MIN_SLOT_SECONDS, "max": config.MAX_SLOT_SECONDS},
             "presets": presets.describe(),
+            "ledThemes": themes.names(),
         }
 
     def _clock_state(self, settings):
@@ -141,6 +142,31 @@ class Api:
         self.host, self.config_path = done["host"], config.path()
         return done
 
+    def appearance(self, body):
+        """Change only the [appearance] table: LED theme and the UI palette it may follow.
+
+        Nothing is sent to the clock's settings; the service restarts to redraw its screens.
+        """
+        if not self.config_path:
+            raise ApiError(409, "No tc002.toml", "Run `tc002 setup --config <path>` first.")
+        before = self._settings()
+        data = config.to_data(before)
+        data["appearance"] = {
+            **data["appearance"],
+            **{k: body[k] for k in ("led_theme", "ui_palette") if k in body},
+        }
+        try:
+            settings = config.parse(data, str(self.config_path))
+        except config.ConfigError as exc:
+            raise ApiError(422, "Invalid settings", str(exc)) from None
+        config_writer.save(settings, self.config_path)
+        return {
+            "appearance": settings.appearance,
+            "ledTheme": settings.led_theme,
+            # only a change the clock can see is worth redrawing every screen for
+            "serviceRestarted": settings.led_theme != before.led_theme and launchd.restart(),
+        }
+
     def integration(self, action):
         try:
             return host_actions.run(action)
@@ -170,17 +196,27 @@ class Api:
         return cities.search(query.get("q", ""), query.get("lang", "en"))
 
     def preview(self, name, query):
-        """LED mock-up GIF bytes for an example screen or a message draft."""
+        """LED mock-up GIF bytes for an example screen or a message draft.
+
+        Screens are drawn in the saved LED theme, or in `?theme=` (a draft not yet saved);
+        messages keep the colour they were given.
+        """
+        theme = query.get("theme") if query.get("theme") in themes.THEMES else None
+        theme = theme or self._settings().led_theme
         if name == "text":
-            anim = message.text_animation(
-                query.get("text", "TEXT")[: message.MAX_CHARS], query.get("color", "white")
-            )[0]
+            anim, theme = (
+                message.text_animation(
+                    query.get("text", "TEXT")[: message.MAX_CHARS], query.get("color", "white")
+                )[0],
+                themes.CLASSIC,
+            )
         elif name == "alert":
             anim = message.alert_animation(
                 query.get("text", "DONE")[: message.ALERT_MAX_CHARS],
                 query.get("kind", "done"),
                 query.get("color"),
             )
+            theme = themes.CLASSIC
         elif name.removeprefix("live-") in LIVE_SCREENS and name.startswith("live-"):
             screen = SCREENS[name.removeprefix("live-")]()
             anim = screen.render(screen.sample())
@@ -194,7 +230,7 @@ class Api:
             if name not in anims:
                 raise ApiError(404, "Unknown preview", f"No preview named {name!r}.")
             anim = anims[name]
-        return mockup.led_gif(anim)
+        return mockup.led_gif(anim, theme)
 
     # -- writes -------------------------------------------------------------------
 
@@ -285,7 +321,8 @@ class Api:
             # clock first, so switching to it cannot fail with "app not found".
             if screen not in dev.apps():
                 live = SCREENS[screen]()
-                dev.push(screen, live.render(live.sample()).payload())
+                frames = live.render(live.sample())
+                dev.push(screen, frames.payload(theme=self._settings().led_theme))
             dev.switch_custom(screen)
         elif body.get("builtin"):
             app = builtins.lookup(body["builtin"])

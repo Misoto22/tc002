@@ -20,7 +20,7 @@ HEADER = """\
 """
 
 COMMENTS = {
-    "screens": "Live screens run by the background service: claude, sys.",
+    "screens": "Live screens run by the background service: claude, usage, sys.",
     "device": "Built-in apps that stay on; `tc002 layout apply` turns every other one off.\n"
     + "\n".join(
         f"{cat}: {' '.join(k for k, b in builtins.CATALOGUE.items() if b.category == cat)}"
@@ -29,7 +29,9 @@ COMMENTS = {
     "display": "Clock-wide settings, applied with /setConfig. Omit a key to leave it as is.",
     "apps": "Settings of built-in apps (no credentials: those stay on the device).",
     "rotation": "Replaces the device's own carousel. Each slot is a screen or a kept built-in.",
-    "alerts": "Jump straight to the Claude screen when a hook reports DONE or WAIT.",
+    "alerts": "A Claude Code session waiting for you takes over the clock until you answer.",
+    "appearance": "Colours of tc002's screens on the clock: led_theme is one of match, classic,\n"
+    'paper, matcha, ai, sakura, kohaku ("match" follows ui_palette, the UI\'s colour theme).',
 }
 
 
