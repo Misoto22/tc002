@@ -12,10 +12,11 @@ import time
 from .. import builtins, config, config_writer, device_settings, sync
 from ..device import CATEGORY_ENDPOINTS, Device, DeviceError
 from ..integrations import claude_hooks, executable, launchd
-from ..render import mockup
-from ..runtime import events
+from ..render import font, mockup
+from ..runtime import events, hold
 from ..screens import SCREENS, message
 from ..screens.examples import examples
+from . import cities
 
 SECRET_KEYS = {"token", "password", "username", "url", "tokens"}
 
@@ -110,6 +111,13 @@ class Api:
             "lastEvent": {"kind": kind, "secondsAgo": round(time.time() - at)} if kind else None,
         }
 
+    def font(self):
+        """The pixel fonts, so the browser's LED simulator draws exactly what the clock would."""
+        return {"big": font.BIG, "small": font.SMALL}
+
+    def cities(self, query):
+        return cities.search(query.get("q", ""), query.get("lang", "en"))
+
     def preview(self, name, query):
         """LED mock-up GIF bytes for an example screen or a message draft."""
         if name == "text":
@@ -153,6 +161,27 @@ class Api:
                 result["error"] = f"saved, but the clock is unreachable: {exc}"
         result["serviceRestarted"] = launchd.restart()
         return result
+
+    def live(self, body):
+        """Put a draft on the clock without saving it, and keep the playlist off the screen."""
+        data, focus = body.get("data"), body.get("focus") or {}
+        try:
+            settings = config.parse(data or {}, "draft")
+        except config.ConfigError as exc:
+            raise ApiError(422, "Invalid settings", str(exc).split(": ", 1)[-1]) from None
+        dev = self._device()
+        hold.hold(120)
+        changes = sync.apply(dev, settings, self.state_dir)
+        if focus:
+            self.show(focus)
+        return {"changes": changes, "heldFor": 120}
+
+    def live_stop(self, body):
+        """Put the saved tc002.toml back on the clock and hand the screen back to the playlist."""
+        hold.release()
+        if not self.host:
+            return {"changes": []}
+        return {"changes": sync.apply(self._device(), self._settings(), self.state_dir)}
 
     def show(self, body):
         dev = self._device()

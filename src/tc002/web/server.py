@@ -26,6 +26,17 @@ TYPES = {
 STATIC = resources.files("tc002.web").joinpath("static")
 
 
+def _static_files(root, prefix=""):
+    """Every file under static/, keyed by its URL path; nothing else is ever served."""
+    files = {}
+    for entry in root.iterdir():
+        if entry.is_dir():
+            files |= _static_files(entry, f"{prefix}{entry.name}/")
+        elif entry.is_file():
+            files[prefix + entry.name] = entry
+    return files
+
+
 def problem(status, title, detail, errors=None, instance=None):
     body = {
         "type": f"https://tc002.local/errors/{title.lower().replace(' ', '-')}",
@@ -42,7 +53,7 @@ def problem(status, title, detail, errors=None, instance=None):
 
 def make_handler(api, token, port):
     allowed_hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
-    static_files = {p.name: p for p in STATIC.iterdir() if p.is_file()}
+    static_files = _static_files(STATIC)
 
     class Handler(BaseHTTPRequestHandler):
         server_version = "tc002"
@@ -116,11 +127,16 @@ def make_handler(api, token, port):
 
         def _get(self, url):
             path = url.path
+            query = dict(parse_qsl(url.query))
             if path == "/api/state":
                 self._send(200, api.state())
+            elif path == "/api/font":
+                self._send(200, api.font())
+            elif path == "/api/cities":
+                self._send(200, api.cities(query))
             elif path.startswith("/api/preview/") and path.endswith(".gif"):
                 name = path.removeprefix("/api/preview/").removesuffix(".gif")
-                self._send(200, api.preview(name, dict(parse_qsl(url.query))), "image/gif")
+                self._send(200, api.preview(name, query), "image/gif")
             elif path in ("/", "/index.html"):
                 html = static_files["index.html"].read_text().replace("{{TOKEN}}", token)
                 self._send(200, html.encode(), TYPES[".html"])
@@ -135,6 +151,8 @@ def make_handler(api, token, port):
                 "/api/config": api.save_config,
                 "/api/show": api.show,
                 "/api/message": api.send_message,
+                "/api/live": api.live,
+                "/api/live/stop": api.live_stop,
             }
             if path not in routes:
                 raise ApiError(404, "Not found", f"No endpoint at {path}.")

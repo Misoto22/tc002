@@ -63,7 +63,7 @@ def test_index_embeds_a_token_and_strict_headers(ui):
     status, headers, body = call(url, "/")
     assert status == 200 and len(token) > 20 and b"{{TOKEN}}" not in body
     assert "script-src 'self'" in headers["Content-Security-Policy"]
-    for asset in ("/app.js", "/app.css", "/views.js", "/ui.js", "/sortable.js"):
+    for asset in ("/js/app.js", "/js/pages/playlist.js", "/css/tokens.css", "/icons.svg"):
         assert call(url, asset)[0] == 200
 
 
@@ -135,3 +135,43 @@ def test_actions_need_a_clock(ui):
     url, token, _ = ui
     status, _, body = call(url, "/api/show", {"screen": "claude"}, {"X-TC002-Token": token})
     assert status == 409 and json.loads(body)["title"] == "No clock configured"
+
+
+def test_nested_static_paths_cannot_escape(ui):
+    url, _, _ = ui
+    assert call(url, "/js/../../api.py")[0] == 404
+    assert call(url, "/%2e%2e/web/api.py")[0] == 404
+
+
+def test_font_matches_the_python_renderer(ui):
+    from tc002.render import font
+
+    url, _, _ = ui
+    status, _, body = call(url, "/api/font")
+    assert status == 200 and json.loads(body) == {"big": font.BIG, "small": font.SMALL}
+
+
+def test_cities_fall_back_offline_and_need_no_token(ui, monkeypatch):
+    from tc002.web import cities
+
+    def no_network(url):
+        raise OSError("offline")
+
+    monkeypatch.setattr(cities, "_fetch", no_network)
+    url, _, _ = ui
+    status, _, body = call(url, "/api/cities?q=%E5%A2%A8%E5%B0%94&lang=zh")
+    data = json.loads(body)
+    assert status == 200 and data["source"] == "offline"
+    assert data["results"][0]["name"] == "墨尔本" and data["results"][0]["region"] == "澳大利亚"
+
+
+def test_live_preview_needs_a_clock_and_validates(ui):
+    url, token, _ = ui
+    status, _, body = call(
+        url, "/api/live", {"data": {"display": {"volume": 99}}}, {"X-TC002-Token": token}
+    )
+    assert status == 422
+    status, _, body = call(url, "/api/live", {"data": {}}, {"X-TC002-Token": token})
+    assert status == 409  # no clock configured in the test server
+    status, _, body = call(url, "/api/live/stop", {}, {"X-TC002-Token": token})
+    assert status == 200 and json.loads(body) == {"changes": []}
