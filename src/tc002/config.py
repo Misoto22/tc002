@@ -14,9 +14,11 @@ import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import builtins, device_settings
+from . import builtins, device_settings, paths
 
-STATE_DIR = Path(os.environ.get("TC002_STATE_DIR", "~/.config/tc002")).expanduser()
+MIN_SLOT_SECONDS, MAX_SLOT_SECONDS = 3, 600  # how long one rotation slot may show
+UI_PORT = 8742  # `tc002 ui` default
+STATE_DIR = paths.STATE_DIR
 LOCAL_FILE = STATE_DIR / "local.json"
 
 
@@ -91,8 +93,13 @@ def _parse(data, source):
             except ValueError as exc:
                 raise ConfigError(f"{where}: {exc}") from None
         seconds = raw.get("seconds", 15)
-        if not isinstance(seconds, int | float) or seconds < 3:
-            raise ConfigError(f"{where}: seconds must be a number >= 3")
+        if (
+            not isinstance(seconds, int | float)
+            or not MIN_SLOT_SECONDS <= seconds <= MAX_SLOT_SECONDS
+        ):
+            raise ConfigError(
+                f"{where}: seconds must be a number from {MIN_SLOT_SECONDS} to {MAX_SLOT_SECONDS}"
+            )
         slots.append(Slot(float(seconds), raw.get("screen"), raw.get("builtin")))
 
     device = data.get("device", {})

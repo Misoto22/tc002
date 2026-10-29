@@ -14,7 +14,9 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-PATH = Path(os.environ.get("TC002_LIMITS_FILE", "~/.cache/tc002/claude-limits.json")).expanduser()
+from .. import paths
+
+PATH = Path(os.environ.get("TC002_LIMITS_FILE", paths.CACHE_DIR / "claude-limits.json"))
 WINDOWS = {"five_hour": "limit_5h", "seven_day": "limit_week"}
 
 

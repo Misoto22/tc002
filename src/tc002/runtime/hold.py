@@ -10,8 +10,11 @@ import os
 import time
 from pathlib import Path
 
-PATH = Path(os.environ.get("TC002_HOLD_FILE", "~/.cache/tc002/hold.json")).expanduser()
+from .. import paths
+
+PATH = Path(os.environ.get("TC002_HOLD_FILE", paths.CACHE_DIR / "hold.json"))
 MAX_SECONDS = 300
+LIVE_SECONDS = 120  # one live-preview hold; the UI renews it at half this
 
 
 def hold(seconds=120, path=None, now=None):

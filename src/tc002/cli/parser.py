@@ -3,6 +3,7 @@
 import argparse
 from importlib.metadata import version
 
+from .. import config
 from ..runtime import sessions
 from ..screens import message
 
@@ -44,7 +45,9 @@ def build():
     sub.add_parser("uninstall", help="stop the service, remove hooks, restore built-in apps")
     sub.add_parser("doctor", help="check config, clock, firmware, service and hooks")
     ui = sub.add_parser("ui", help="open the settings UI in your browser (local only)")
-    ui.add_argument("--port", type=int, default=8742, help="local port (default 8742)")
+    ui.add_argument(
+        "--port", type=int, default=config.UI_PORT, help=f"local port (default {config.UI_PORT})"
+    )
     ui.add_argument("--no-open", action="store_true", help="do not open a browser")
 
     sub.add_parser("info", help="clock firmware, Wi-Fi and global settings")

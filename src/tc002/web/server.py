@@ -13,10 +13,12 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from importlib import resources
 from urllib.parse import parse_qsl, urlsplit
 
+from .. import config
 from ..device import DeviceError
 from .api import Api, ApiError
 
 MAX_BODY = 256 * 1024
+LOOPBACK = "127.0.0.1"  # the UI never listens beyond this machine
 TYPES = {
     ".html": "text/html; charset=utf-8",
     ".css": "text/css",
@@ -59,7 +61,7 @@ def problem(status, title, detail, errors=None, instance=None):
 
 
 def make_handler(api, token, port):
-    allowed_hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
+    allowed_hosts = {f"{LOOPBACK}:{port}", f"localhost:{port}"}
     static_files = _static_files(STATIC)
 
     class Handler(BaseHTTPRequestHandler):
@@ -92,7 +94,7 @@ def make_handler(api, token, port):
 
         def _guard(self, write):
             if self.headers.get("Host") not in allowed_hosts:
-                self._fail(421, "Wrong host", f"Open the UI at http://127.0.0.1:{port}.")
+                self._fail(421, "Wrong host", f"Open the UI at http://{LOOPBACK}:{port}.")
                 return False
             if write:
                 origin = self.headers.get("Origin")
@@ -188,14 +190,14 @@ def make_handler(api, token, port):
     return Handler
 
 
-def serve(host, config_path, port=8742, ready=None):
+def serve(host, config_path, port=config.UI_PORT, ready=None):
     """Run until interrupted. `ready(url)` is called once the socket is listening."""
     token = secrets.token_urlsafe(24)
     api = Api(host, config_path)
-    httpd = ThreadingHTTPServer(("127.0.0.1", port), BaseHTTPRequestHandler)
+    httpd = ThreadingHTTPServer((LOOPBACK, port), BaseHTTPRequestHandler)
     # port 0 picks a free port; the Host check must use the real one
     httpd.RequestHandlerClass = make_handler(api, token, httpd.server_port)
-    url = f"http://127.0.0.1:{httpd.server_port}/"
+    url = f"http://{LOOPBACK}:{httpd.server_port}/"
     if ready:
         ready(url)
     try:

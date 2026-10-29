@@ -11,3 +11,6 @@ build/
 tc002-*.gif
 # local editor / agent settings
 .claude/
+# your own settings: `tc002 ui` keeps them in ~/.config/tc002/tc002.toml; this name is
+# ignored so a copy kept in the clone is never committed (see tc002.example.toml)
+/tc002.toml

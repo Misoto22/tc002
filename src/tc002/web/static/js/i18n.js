@@ -2,16 +2,17 @@
 // falls back to English, then to the key itself, so a missing string is visible, not blank.
 
 import * as agents from "./i18n-agents.js";
+import * as errors from "./i18n-errors.js";
 
 const en = {
   "nav.clock": "Clock", "nav.send": "Send", "nav.system": "System",
   "page.overview": "Overview", "page.rotation": "Rotation", "page.builtins": "Built-in apps",
-  "page.display": "Display", "page.apps": "App settings", "page.messages": "Messages",
+  "page.display": "Display & sound", "page.apps": "App settings", "page.messages": "Messages",
   "page.integrations": "Integrations",
   "desc.overview": "What your clock is doing and whether it matches tc002.toml.",
   "desc.rotation": "The screens the clock cycles through, in order. Drag to reorder, or start from a preset.",
   "desc.builtins": "Apps that stay on the clock. Everything switched off is hidden from the device.",
-  "desc.display": "Clock-wide settings, saved to tc002.toml and applied to the clock.",
+  "desc.display": "Brightness, volume, time and date on the clock. Saved to tc002.toml and applied to the clock.",
   "desc.apps": "Options of the built-in apps. Accounts and API keys stay in Ulanzi Studio.",
   "desc.messages": "Send a one-off message. It plays, then clears itself.",
   "desc.integrations": "How tc002 is wired into this Mac.",
@@ -88,7 +89,10 @@ const en = {
   "city.source.offline": "built-in list (offline)", "city.none": "No matching city",
 
   "msg.type": "Type", "msg.text": "Text", "msg.alert": "Alert", "msg.message": "Message",
-  "msg.messageHint": "ASCII, shown upper case", "msg.colour": "Colour",
+  "msg.messageHint": "English or Chinese. Short text shimmers in place; longer text scrolls.",
+  "msg.placeholder": "BUILD OK",
+  "msg.sampleText": "HELLO", "msg.sampleAlert": "DONE", "pal.dialog": "Command palette", "unit.seconds": "s",
+  "agent.claude": "Claude Code", "agent.codex": "Codex", "msg.colour": "Colour",
   "msg.colourHint": "Long text scrolls across", "msg.kind": "Kind", "msg.kindHint": "Icon and colour",
   "msg.sent": "Sent to the clock", "msg.plays": "Plays for about {s}s, then clears",
   "kind.done": "Done", "kind.wait": "Wait", "kind.error": "Error",
@@ -108,7 +112,7 @@ const en = {
   "pal.themeDark": "Theme: dark", "pal.langEn": "Language: English", "pal.langZh": "Language: 中文",
   "nav.collapse": "Collapse sidebar  [", "nav.expand": "Expand sidebar  [",
   "quick.title": "Quick settings", "quick.brightness": "Brightness", "quick.volume": "Volume",
-  "quick.more": "All display settings", "quick.applied": "Applied to the clock",
+  "quick.more": "All display & sound settings", "quick.applied": "Applied to the clock",
   "rotation.presets": "Presets", "rotation.presetsHint": "Start from a ready-made rotation; save to apply it.",
   "rotation.slots": "Slots", "preset.loaded": "Preset loaded", "preset.loadedHint": "Save to put it on the clock",
   "preset.focus.name": "Coding focus", "preset.focus.desc": "Claude activity, then today's tokens",
@@ -126,12 +130,12 @@ const en = {
 const zh = {
   "nav.clock": "时钟", "nav.send": "发送", "nav.system": "系统",
   "page.overview": "总览", "page.rotation": "轮播", "page.builtins": "预设应用",
-  "page.display": "显示", "page.apps": "应用设置", "page.messages": "消息",
+  "page.display": "显示与声音", "page.apps": "应用设置", "page.messages": "消息",
   "page.integrations": "集成",
   "desc.overview": "时钟正在做什么，以及它是否与 tc002.toml 一致。",
   "desc.rotation": "时钟依次循环显示的画面。拖动调整顺序，或从预设开始。",
   "desc.builtins": "保留在时钟上的预设应用。关闭的应用不会在设备上出现。",
-  "desc.display": "全局设置，保存到 tc002.toml 并同步到时钟。",
+  "desc.display": "时钟的亮度、音量、时间和日期。保存到 tc002.toml 并同步到时钟。",
   "desc.apps": "预设应用的选项。账号和 API 密钥仍由 Ulanzi Studio 管理。",
   "desc.messages": "发送一条临时消息，播放完自动清除。",
   "desc.integrations": "tc002 与这台 Mac 的连接方式。",
@@ -208,7 +212,10 @@ const zh = {
   "city.source.offline": "内置列表（离线）", "city.none": "没有匹配的城市",
 
   "msg.type": "类型", "msg.text": "文字", "msg.alert": "提醒", "msg.message": "内容",
-  "msg.messageHint": "仅 ASCII，显示为大写", "msg.colour": "颜色",
+  "msg.messageHint": "中英文均可。短文字原地闪光，长文字会滚动。",
+  "msg.placeholder": "构建完成",
+  "msg.sampleText": "你好", "msg.sampleAlert": "完成", "pal.dialog": "命令面板", "unit.seconds": "秒",
+  "agent.claude": "Claude Code", "agent.codex": "Codex", "msg.colour": "颜色",
   "msg.colourHint": "长文字会滚动显示", "msg.kind": "种类", "msg.kindHint": "图标和颜色",
   "msg.sent": "已发送到时钟", "msg.plays": "播放约 {s} 秒后自动清除",
   "kind.done": "完成", "kind.wait": "等待", "kind.error": "错误",
@@ -228,7 +235,7 @@ const zh = {
   "pal.themeDark": "主题：深色", "pal.langEn": "语言：English", "pal.langZh": "语言：中文",
   "nav.collapse": "收起侧栏  [", "nav.expand": "展开侧栏  [",
   "quick.title": "快捷设置", "quick.brightness": "亮度", "quick.volume": "音量",
-  "quick.more": "全部显示设置", "quick.applied": "已应用到时钟",
+  "quick.more": "全部显示与声音设置", "quick.applied": "已应用到时钟",
   "rotation.presets": "预设", "rotation.presetsHint": "从现成的轮播开始；保存后生效。",
   "rotation.slots": "轮播项", "preset.loaded": "已载入预设", "preset.loadedHint": "保存后应用到时钟",
   "preset.focus.name": "专注编码", "preset.focus.desc": "Claude 活动，然后是今天的 token",
@@ -259,7 +266,10 @@ const names = {
     wecom: "企业微信", google: "Google 日历", icloud: "iCloud 日历", outlook: "Outlook" },
 };
 
-const DICTS = { en: { ...en, ...agents.en }, zh: { ...zh, ...agents.zh } };
+const DICTS = {
+  en: { ...en, ...agents.en, ...errors.en },
+  zh: { ...zh, ...agents.zh, ...errors.zh },
+};
 let current = "en";
 
 export function setLang(lang) {

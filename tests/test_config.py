@@ -1,4 +1,4 @@
-"""tc002.toml parsing and validation, including the repository's own file."""
+"""tc002.toml parsing and validation, including the example shipped with the repository."""
 
 from pathlib import Path
 
@@ -6,7 +6,7 @@ import pytest
 
 from tc002 import config
 
-REPO_CONFIG = Path(__file__).resolve().parent.parent / "tc002.toml"
+REPO_CONFIG = Path(__file__).resolve().parent.parent / "tc002.example.toml"
 
 
 def write(tmp_path, body):
@@ -15,9 +15,8 @@ def write(tmp_path, body):
     return path
 
 
-def test_repository_config_is_valid():
-    # tc002.toml is the owner's live configuration and changes with use; only its validity
-    # is a property of the repository.
+def test_example_config_is_valid():
+    # the example shipped for new users must load as it is
     settings = config.load(REPO_CONFIG)
     assert settings.source == str(REPO_CONFIG)
     assert all(s.screen in settings.screens for s in settings.rotation if s.screen)

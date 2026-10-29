@@ -2,12 +2,13 @@ import { t } from "../i18n.js";
 import { send, setFocus, store } from "../store.js";
 import { button, h, pageHead, panel, row, section, segmented } from "../ui.js";
 import { page } from "./common.js";
+import { TIMING } from "../timing.js";
 
 // The draft survives page switches within a visit.
 const draft = { type: "text", text: "", color: "green", kind: "done" };
 
 function previewSrc() {
-  const q = new URLSearchParams({ text: draft.text || (draft.type === "alert" ? "DONE" : "HELLO") });
+  const q = new URLSearchParams({ text: draft.text || t(draft.type === "alert" ? "msg.sampleAlert" : "msg.sampleText") });
   if (draft.type === "alert") q.set("kind", draft.kind);
   else q.set("color", draft.color);
   return `/api/preview/${draft.type}.gif?${q}`;
@@ -16,7 +17,7 @@ function previewSrc() {
 export function messages() {
   let timer;
   const refresh = () => setFocus({ type: "message", src: previewSrc() });
-  const later = () => { clearTimeout(timer); timer = setTimeout(refresh, 250); };
+  const later = () => { clearTimeout(timer); timer = setTimeout(refresh, TIMING.messagePreviewMs); };
   refresh();
 
   const swatches = h("div", { class: "swatches", role: "radiogroup", "aria-label": t("msg.colour") },
@@ -47,12 +48,12 @@ export function messages() {
         segmented([["text", t("msg.text")], ["alert", t("msg.alert")]], draft.type, (v) => { draft.type = v; renderOptions(); refresh(); }, t("msg.type")),
         { icon: "message-square-text" }),
       row(t("msg.message"), t("msg.messageHint"),
-        h("input", { class: "field wide-field", value: draft.text, maxlength: 60, placeholder: "BUILD OK",
+        h("input", { class: "field wide-field", value: draft.text, maxlength: store.state.messageMaxChars, placeholder: t("msg.placeholder"),
           "aria-label": t("msg.message"), onInput: (e) => { draft.text = e.target.value; later(); } }),
         { icon: "keyboard" }),
       options,
       h("div", { class: "row row-end" },
-        button(t("btn.send"), () => send({ ...draft, text: draft.text || "HELLO" }),
+        button(t("btn.send"), () => send({ ...draft, text: draft.text || t("msg.sampleText") }),
           { kind: "primary", ico: "send", disabled: !store.state.clock.online })),
     ),
   );

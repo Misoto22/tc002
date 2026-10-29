@@ -145,13 +145,18 @@ def test_nested_static_paths_cannot_escape(ui):
 
 def test_led_assets_match_the_python_renderer(ui):
     from tc002.render import font
+    from tc002.render.canvas import HEIGHT, WIDTH
     from tc002.render.palette import hex_palette
 
     url, _, _ = ui
     status, _, body = call(url, "/api/led")
     data = json.loads(body)
     assert status == 200
-    assert data == {"font": {"big": font.BIG, "small": font.SMALL}, "palette": hex_palette()}
+    assert data == {
+        "font": {"big": font.BIG, "small": font.SMALL},
+        "palette": hex_palette(),
+        "size": {"width": WIDTH, "height": HEIGHT},
+    }
 
 
 def test_quick_settings_write_only_display(ui):
@@ -290,3 +295,32 @@ def test_live_previews_render_current_state(ui):
         status, _, body = call(url, f"/api/preview/{name}.gif")
         assert status == 200 and body[:6] == b"GIF89a"
     assert call(url, "/api/preview/live-sys.gif")[0] == 404
+
+
+def test_favicon_is_served_in_the_token_colours(ui):
+    import re
+    from pathlib import Path
+
+    url, _, _ = ui
+    status, headers, body = call(url, "/favicon.svg")
+    assert status == 200 and headers["Content-Type"] == "image/svg+xml"
+    tokens = (Path(server.STATIC) / "css" / "tokens.css").read_text().split(":root[data-theme")[0]
+    for name in ("--primary", "--bg", "--accent"):
+        value = re.search(rf"{name}: (#[0-9a-f]{{6}});", tokens).group(1)
+        assert value.encode() in body, f"favicon lost {name} {value}"
+
+
+def test_every_server_error_title_is_translated():
+    import re
+    from pathlib import Path
+
+    src = Path(server.__file__).parent
+    titles = set()
+    for name in ("api.py", "server.py"):
+        text = (src / name).read_text()
+        titles |= set(re.findall(r'(?:ApiError|_fail)\(\s*\d+,\s*"([^"]+)"', text))
+    strings = (src / "static" / "js" / "i18n-errors.js").read_text()
+    en, zh = strings.split("export const zh")
+    for title in titles:
+        key = f'"err.{title.lower().replace(" ", "-")}"'
+        assert key in en and key in zh, f"no translation for error {title!r}"

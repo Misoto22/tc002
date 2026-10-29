@@ -15,13 +15,14 @@ import os
 import time
 from dataclasses import dataclass
 
+from .. import paths
 from ..render import font
 from ..render.anim import Animation
 from ..render.canvas import Canvas
 from ..render.palette import LED
 from ..runtime import sessions
 
-PROJECTS = os.path.expanduser("~/.claude/projects")
+PROJECTS = str(paths.CLAUDE_PROJECTS)
 SESSION_WINDOW = 180
 DONE_SECONDS = 5
 COLUMNS = (  # x, width, label, colour, state counted

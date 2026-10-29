@@ -9,7 +9,7 @@ function current() {
   const clock = store.state.clock.settings ?? {};
   const display = store.saved.display ?? {};
   return {
-    brightness: { level: "high", low: 50, mid: 80, high: 100, ...clock.brightness, ...display.brightness },
+    brightness: { ...store.state.schema.brightnessDefaults, ...clock.brightness, ...display.brightness },
     volume: display.volume ?? clock.volume ?? 0,
   };
 }
@@ -18,7 +18,7 @@ export function quickControls({ compact = false } = {}) {
   const now = current();
   const levels = store.state.schema.brightnessLevels;
   const percent = h("div", {});
-  const renderPercent = () => percent.replaceChildren(slider(5, 100, now.brightness[now.brightness.level],
+  const renderPercent = () => percent.replaceChildren(slider(...store.state.schema.brightnessRange, now.brightness[now.brightness.level],
     (v) => { now.brightness[now.brightness.level] = v; quick({ brightness: { ...now.brightness } }); },
     t("quick.brightness")));
   renderPercent();

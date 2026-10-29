@@ -8,6 +8,7 @@
 import { get, post, postOnExit } from "./api.js";
 import { appName, t } from "./i18n.js";
 import { toast } from "./ui.js";
+import { TIMING } from "./timing.js";
 
 export const store = {
   state: null, saved: null, draft: null,
@@ -46,7 +47,7 @@ export function statusOf() {
   if (store.live.on) return { kind: "live", text: t("status.live"), icon: "radio" };
   const n = dirtyPaths().length;
   if (n) return { kind: "dirty", text: t("status.dirty", { n }), icon: "circle-alert" };
-  const recent = store.op && Date.now() - store.op.at < 6000;
+  const recent = store.op && Date.now() - store.op.at < TIMING.statusSettleMs;
   if (recent && store.op.kind === "applied") return { kind: "ok", text: t("status.applied"), icon: "circle-check" };
   if (store.op?.kind === "offline") return { kind: "warn", text: t("status.savedOffline"), icon: "cloud-off" };
   if (store.op?.kind === "error") return { kind: "error", text: t("status.error"), icon: "circle-alert" };
@@ -106,7 +107,7 @@ export async function save(data = store.draft) {
     store.draft = null;
     if (store.live.on) await stopLive(false);
     await load();
-    setTimeout(() => notify("status"), 6100); // let "Applied" settle back to "In sync"
+    setTimeout(() => notify("status"), TIMING.statusSettleMs + 100); // "Applied" settles to "In sync"
   } catch (err) {
     store.op = { kind: "error", at: Date.now(), detail: err.message };
     record("activity.save", false, err.message);
@@ -131,7 +132,7 @@ function focusTarget() {
 
 function scheduleLive() {
   clearTimeout(liveTimer);
-  liveTimer = setTimeout(pushLive, 450);
+  liveTimer = setTimeout(pushLive, TIMING.liveDebounceMs);
 }
 
 async function pushLive() {
@@ -139,6 +140,7 @@ async function pushLive() {
   notify("status");
   try {
     const result = await post("/api/live", { data: store.draft, focus: focusTarget() });
+    store.live.heldFor = result.heldFor;
     if (result.changes.length) record("activity.live", true, result.changes.slice(0, 4).join(" · "));
   } catch (err) {
     toast(err.title ?? t("activity.live"), err.message, "error");
@@ -157,7 +159,8 @@ export async function setLive(on) {
   notify("status");
   if (on) {
     await pushLive();
-    heartbeat = setInterval(pushLive, 60_000); // keeps the rotation hold alive
+    // renew the server's rotation hold at half its length, so it never lapses while live
+    if (store.live.on && store.live.heldFor) heartbeat = setInterval(pushLive, (store.live.heldFor * 1000) / 2);
   } else {
     await stopLive(true);
   }
@@ -229,8 +232,8 @@ export function quick(display) {
       toast(err.title, err.message, "error");
     }
     notify("status");
-    setTimeout(() => notify("status"), 6100);
-  }, 200);
+    setTimeout(() => notify("status"), TIMING.statusSettleMs + 100);
+  }, TIMING.quickDebounceMs);
 }
 
 export async function applyPreset(id) {

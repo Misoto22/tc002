@@ -14,11 +14,12 @@ import sqlite3
 import time
 from datetime import datetime
 
+from .. import paths
 from . import FIVE_HOURS, Usage, day_start
 
 
 def home():
-    return os.path.expanduser(os.environ.get("CODEX_HOME", "~/.codex"))
+    return os.environ.get("CODEX_HOME") or str(paths.CODEX_HOME)  # read late: tests set it
 
 
 def _rollouts(root, since):

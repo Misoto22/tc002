@@ -14,9 +14,11 @@ from .. import builtins, config, config_writer, device_settings, presets, sync
 from ..device import CATEGORY_ENDPOINTS, Device, DeviceError
 from ..integrations import claude_hooks, executable, launchd, statusline
 from ..render import font, mockup
+from ..render.canvas import HEIGHT, WIDTH
 from ..render.palette import hex_palette
 from ..runtime import hold
 from ..screens import SCREENS, builtin_previews, message
+from ..screens import usage as usage_screen
 from ..screens.examples import examples
 from . import cities, host_actions, setup
 from .agents import Agents
@@ -69,6 +71,9 @@ class Api:
             "schema": device_settings.schema(),
             "colors": message.COLORS,
             "alertKinds": list(message.ICONS),
+            "messageMaxChars": message.MAX_CHARS,
+            "limits": {"warn": usage_screen.WARN, "critical": usage_screen.CRITICAL},
+            "slotSeconds": {"min": config.MIN_SLOT_SECONDS, "max": config.MAX_SLOT_SECONDS},
             "presets": presets.describe(),
         }
 
@@ -155,7 +160,11 @@ class Api:
 
     def led(self):
         """Pixel fonts and LED palette, so browser previews draw exactly what the clock would."""
-        return {"font": {"big": font.BIG, "small": font.SMALL}, "palette": hex_palette()}
+        return {
+            "font": {"big": font.BIG, "small": font.SMALL},
+            "palette": hex_palette(),
+            "size": {"width": WIDTH, "height": HEIGHT},
+        }
 
     def cities(self, query):
         return cities.search(query.get("q", ""), query.get("lang", "en"))
@@ -164,11 +173,13 @@ class Api:
         """LED mock-up GIF bytes for an example screen or a message draft."""
         if name == "text":
             anim = message.text_animation(
-                query.get("text", "TEXT")[:60], query.get("color", "white")
+                query.get("text", "TEXT")[: message.MAX_CHARS], query.get("color", "white")
             )[0]
         elif name == "alert":
             anim = message.alert_animation(
-                query.get("text", "DONE")[:12], query.get("kind", "done"), query.get("color")
+                query.get("text", "DONE")[: message.ALERT_MAX_CHARS],
+                query.get("kind", "done"),
+                query.get("color"),
             )
         elif name.removeprefix("live-") in LIVE_SCREENS and name.startswith("live-"):
             screen = SCREENS[name.removeprefix("live-")]()
@@ -252,11 +263,11 @@ class Api:
         except config.ConfigError as exc:
             raise ApiError(422, "Invalid settings", str(exc).split(": ", 1)[-1]) from None
         dev = self._device()
-        hold.hold(120)
+        hold.hold(hold.LIVE_SECONDS)
         changes = sync.apply(dev, settings, self.state_dir)
         if focus:
             self.show(focus)
-        return {"changes": changes, "heldFor": 120}
+        return {"changes": changes, "heldFor": hold.LIVE_SECONDS}
 
     def live_stop(self, body):
         """Put the saved tc002.toml back on the clock and hand the screen back to the rotation."""

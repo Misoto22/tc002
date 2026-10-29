@@ -18,7 +18,9 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-DIR = Path(os.environ.get("TC002_SESSIONS_DIR", "~/.cache/tc002/sessions")).expanduser()
+from .. import paths
+
+DIR = Path(os.environ.get("TC002_SESSIONS_DIR", paths.CACHE_DIR / "sessions"))
 STATES = ("working", "waiting", "done", "idle")
 # hook event -> state it sets; SessionEnd forgets the session
 HOOKS = {

@@ -12,20 +12,17 @@ waiting until Claude Code refreshes it.
 """
 
 import json
-import os
 import subprocess
 import time
 import urllib.error
 import urllib.request
-from pathlib import Path
 
+from .. import paths
 from . import limits
 
 URL = "https://api.anthropic.com/api/oauth/usage"
 KEYCHAIN_SERVICE = "Claude Code-credentials"
-CREDENTIALS_FILE = (
-    Path(os.environ.get("CLAUDE_CONFIG_DIR", "~/.claude")).expanduser() / ".credentials.json"
-)
+CREDENTIALS_FILE = paths.CLAUDE_DIR / ".credentials.json"
 REFRESH = 300  # seconds between asks, shared by every tc002 process through the limits file
 TIMEOUT = 10
 

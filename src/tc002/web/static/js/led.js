@@ -3,8 +3,15 @@
 
 import { assets } from "./assets.js";
 
-export const W = 52;
-export const H = 16;
+// The matrix size comes from the Python renderer (/api/led) at start-up; see assets.js.
+export let W = 0;
+export let H = 0;
+export const SCALE = 10; // canvas pixels per LED in the previews
+
+export function setSize({ width, height }) {
+  W = width;
+  H = height;
+}
 const font = () => assets.font;
 
 const rgb = (c) => (typeof c === "number" ? c : parseInt(c.slice(1), 16));

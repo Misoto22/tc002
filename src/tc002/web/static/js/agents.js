@@ -5,8 +5,8 @@ import { get, post } from "./api.js";
 import { t } from "./i18n.js";
 import { load, store } from "./store.js";
 import { toast } from "./ui.js";
+import { TIMING } from "./timing.js";
 
-const EVERY_MS = 5000;
 
 export async function refreshAgents() {
   store.state.agents = await get("/api/agents");
@@ -24,7 +24,7 @@ export function pollAgents(onChange) {
       return;
     }
     if (JSON.stringify(store.state.agents) !== before) onChange();
-  }, EVERY_MS);
+  }, TIMING.agentPollMs);
 }
 
 // One fixed action on this Mac (see web/host_actions.py), then fresh state.

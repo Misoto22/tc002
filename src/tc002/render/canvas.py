@@ -55,9 +55,10 @@ class Canvas:
                 if c == "#":
                     self.set(x + dx, y + dy, color)
 
-    def text(self, x, y, text, color, big=True, spacing=1):
-        """Draw text with the local pixel font; returns the x after the last glyph."""
-        table = font.BIG if big else font.SMALL
+    def text(self, x, y, text, color, big=True, spacing=None, table=None):
+        """Draw text with a pixel font (`table`, else BIG or SMALL); returns the x after it."""
+        table = table or (font.BIG if big else font.SMALL)
+        spacing = font.letter_spacing(table) if spacing is None else spacing
         for ch in text:
             rows = font.glyph(table, ch)
             for dy, row in enumerate(rows):
