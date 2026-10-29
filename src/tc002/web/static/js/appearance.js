@@ -2,6 +2,7 @@
 // UI's colour palette when the theme is set to "match". Stored in tc002.toml [appearance].
 
 import { post } from "./api.js";
+import { H, SCALE, W } from "./led.js";
 import { t } from "./i18n.js";
 import { store } from "./store.js";
 import { h, section, toast } from "./ui.js";
@@ -38,7 +39,7 @@ export function ledThemes(rerender) {
     type: "button", class: "choice led-choice", "aria-pressed": String(chosen === id),
     onClick: async () => { await change({ led_theme: id }); rerender(); },
   },
-  h("img", { class: "led-thumb", alt: "", loading: "lazy",
+  h("img", { class: "led-thumb", alt: "", loading: "lazy", width: W * SCALE, height: H * SCALE,
     src: `/api/preview/usage.gif?theme=${encodeURIComponent(id === "match" ? resolved : id)}` }),
   h("span", { class: "choice-title" }, label(id)),
   id === "match" ? h("span", { class: "muted" }, label(resolved)) : null));

@@ -111,7 +111,7 @@
   pointer-events: none;
 }
 
-.led-canvas, .led-img { display: block; width: 100%; height: auto; border-radius: var(--radius-xs); image-rendering: pixelated; }
+.led-canvas, .led-img { display: block; width: 100%; height: auto; aspect-ratio: var(--led-aspect); border-radius: var(--radius-xs); image-rendering: pixelated; }
 
 .chips { display: flex; flex-wrap: wrap; gap: var(--space-6); }
 
@@ -180,7 +180,7 @@
 .preset-name { font-weight: 500; }
 .preset-desc { color: var(--muted); font-size: var(--text-sm); }
 
-.led-thumb { width: var(--thumb-w); flex: none; border-radius: var(--radius-xs); image-rendering: pixelated; }
+.led-thumb { width: var(--thumb-w); height: auto; flex: none; border-radius: var(--radius-xs); image-rendering: pixelated; }
 
 .panel.slots { position: relative; }
 .slot { background: var(--panel); touch-action: none; }
