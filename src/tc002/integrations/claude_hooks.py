@@ -1,7 +1,9 @@
-"""Install the Claude Code hooks that feed DONE / WAIT to the Claude screen.
+"""Install the Claude Code hooks that tell tc002 what each session is doing.
 
-Edits ~/.claude/settings.json in place: adds one command hook per event, leaves every
-other hook untouched, and backs the file up before the first change.
+Edits ~/.claude/settings.json in place: adds one `tc002 hook` command per event (it
+reads the event from stdin, see runtime/sessions.py), leaves every other hook
+untouched, and backs the file up before the first change. Hooks from older tc002
+versions (`tc002 event <kind>`) are recognised and replaced.
 """
 
 import json
@@ -10,18 +12,18 @@ import shutil
 from pathlib import Path
 
 SETTINGS = Path(os.environ.get("CLAUDE_CONFIG_DIR", "~/.claude")).expanduser() / "settings.json"
-EVENTS = {"Stop": "done", "Notification": "wait", "UserPromptSubmit": "clear"}
-MARKER = " event "  # every tc002 hook command is `<exe> event <kind> ...`
+EVENTS = ("SessionStart", "UserPromptSubmit", "Notification", "Stop", "SessionEnd")
+MARKERS = (" hook", " event ")  # `<exe> hook`, and `<exe> event <kind>` from older versions
 
 
-def command(executable, kind):
+def command(executable):
     # Hooks must never slow or fail a session: no output, and always exit 0.
-    return f"{executable} event {kind} >/dev/null 2>&1 || true"
+    return f"{executable} hook >/dev/null 2>&1 || true"
 
 
 def _is_ours(hook, executable):
     cmd = hook.get("command", "")
-    return cmd.startswith(f"{executable}{MARKER}") or "/tc002 event " in cmd
+    return any(cmd.startswith(executable + m) or f"/tc002{m}" in cmd for m in MARKERS)
 
 
 def _load(path):
@@ -37,13 +39,13 @@ def _save(path, data):
 
 
 def install(executable, path=SETTINGS):
-    """Add (or refresh) the three hooks; returns the events changed."""
+    """Add (or refresh) the hooks; returns the events changed."""
     data = _load(path)
     hooks = data.setdefault("hooks", {})
     changed = []
-    for event, kind in EVENTS.items():
+    for event in EVENTS:
         entries = hooks.setdefault(event, [])
-        wanted = command(executable, kind)
+        wanted = command(executable)
         present = [h for e in entries for h in e.get("hooks", []) if _is_ours(h, executable)]
         if [h.get("command") for h in present] == [wanted]:
             continue

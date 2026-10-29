@@ -7,8 +7,8 @@ from dataclasses import dataclass
 
 from .. import builtins, config, sync
 from ..device import Device, DeviceError
-from ..integrations import claude_hooks, executable, launchd
-from ..runtime import events, watcher
+from ..integrations import claude_hooks, executable, launchd, statusline
+from ..runtime import sessions, watcher
 from ..runtime.output import Output
 from ..screens import message
 
@@ -129,19 +129,30 @@ def service(args, ctx):
 def hooks(args, ctx):
     exe = executable()
     if args.action == "install":
-        changed = claude_hooks.install(exe)
-        print("hooks added: " + (", ".join(changed) or "already installed"))
+        _connect_claude(exe)
     elif args.action == "uninstall":
-        changed = claude_hooks.uninstall(exe)
-        print("hooks removed: " + (", ".join(changed) or "none were installed"))
+        _disconnect_claude(exe)
     for event, present in claude_hooks.status(exe).items():
         print(f"  {event:17} {'installed' if present else '-'}")
+    print(f"  {'status line':17} {'wrapped' if statusline.status(exe) else '-'}")
     return 0
+
+
+def _connect_claude(exe):
+    print("hooks added: " + (", ".join(claude_hooks.install(exe)) or "already installed"))
+    wrapped = statusline.install(exe)
+    print("status line: " + ("now saves plan limits" if wrapped else "already saves plan limits"))
+
+
+def _disconnect_claude(exe):
+    print("hooks removed: " + (", ".join(claude_hooks.uninstall(exe)) or "none were installed"))
+    if statusline.uninstall(exe):
+        print("status line: restored")
 
 
 def install(args, ctx):
     exe = executable()
-    print("hooks added: " + (", ".join(claude_hooks.install(exe)) or "already installed"))
+    _connect_claude(exe)
     if ctx.device is None:
         print("layout not applied: no clock configured; run `tc002 setup` first")
     else:
@@ -157,7 +168,7 @@ def install(args, ctx):
 def uninstall(args, ctx):
     launchd.uninstall()
     print("service removed")
-    print("hooks removed: " + (", ".join(claude_hooks.uninstall(executable())) or "none"))
+    _disconnect_claude(executable())
     if ctx.device is None:
         return 0
     try:
@@ -207,6 +218,8 @@ def doctor(args, ctx):
         healthy &= _say(all(hook_state.values()) or None, "hooks", json.dumps(hook_state))
     except RuntimeError as exc:
         healthy &= _say(None, "hooks", str(exc))
-    kind, at = events.latest()
-    _say(True, "last hook event", f"{kind} {time.time() - at:.0f}s ago" if kind else "none yet")
+    healthy &= _say(statusline.status(executable()) or None, "status line", "saves plan limits")
+    known = sessions.load()
+    latest = f"{known[0].project} {known[0].state} {time.time() - known[0].since:.0f}s ago"
+    _say(True, "sessions", f"{len(known)} known, latest: {latest}" if known else "none yet")
     return 0 if healthy else 1

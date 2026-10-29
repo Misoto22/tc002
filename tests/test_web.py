@@ -125,7 +125,7 @@ def test_foreign_host_header_is_refused(ui):
 
 def test_previews_are_gifs_and_unknown_ones_404(ui):
     url, _, _ = ui
-    status, headers, body = call(url, "/api/preview/claude-busy.gif")
+    status, headers, body = call(url, "/api/preview/claude.gif")
     assert status == 200 and headers["Content-Type"] == "image/gif" and body[:6] == b"GIF89a"
     assert call(url, "/api/preview/text.gif?text=HI&color=green")[0] == 200
     assert call(url, "/api/preview/nope.gif")[0] == 404

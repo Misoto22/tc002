@@ -2,6 +2,8 @@
 
 Nothing here touches the network or an account: each agent already writes its token
 counts to disk, and these readers only add them up for "today" and "the last 5 hours".
+Plan limits (% of the 5-hour and weekly allowance) come from the same local files for
+Codex, and from what Claude Code hands its status line (see limits.py).
 """
 
 import time
@@ -17,6 +19,8 @@ class Usage:
     limit_5h: float | None = None  # % of the 5-hour allowance used, when the agent reports it
     limit_week: float | None = None  # % of the weekly allowance used
     source: str = "none"  # which file the numbers came from; "none" when the agent is absent
+    reset_5h: float | None = None  # Unix time the 5-hour allowance refills, when known
+    reset_week: float | None = None
 
 
 def day_start(now=None):

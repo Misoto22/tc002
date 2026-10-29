@@ -1,29 +1,42 @@
 """`tc002` entry point: parse, build the context, dispatch, map errors to exit codes."""
 
+import json
 import subprocess
 import sys
 from pathlib import Path
 
 from .. import config
 from ..device import Device, DeviceError
-from ..runtime import events
+from ..runtime import sessions
 from ..runtime.output import Output
 from . import commands, parser
 
 # Commands that never talk to the clock.
-LOCAL_ONLY = {"setup", "event", "service", "hooks", "ui"}
+LOCAL_ONLY = {"setup", "service", "hooks", "ui"}
+
+
+def _from_claude(args):
+    """Commands Claude Code runs (hooks, status line): never block or fail it over tc002."""
+    if args.cmd == "statusline":
+        from ..integrations import statusline
+
+        sys.stdout.buffer.write(statusline.run(sys.stdin.buffer.read()))
+        return 0
+    try:
+        if args.cmd == "hook":
+            sessions.record_hook(json.loads(sys.stdin.read() or "{}"))
+        else:
+            sessions.record_manual(args.kind)
+    except (OSError, ValueError) as exc:
+        print(f"tc002: could not record {args.cmd}: {exc}", file=sys.stderr)
+    return 0
 
 
 def main(argv=None):
     args = parser.build().parse_args(argv)
 
-    if args.cmd == "event":
-        # Runs inside Claude Code hooks: never block or fail the session over the clock.
-        try:
-            events.record(args.kind)
-        except OSError as exc:
-            print(f"tc002: could not record event: {exc}", file=sys.stderr)
-        return 0
+    if args.cmd in ("hook", "statusline", "event"):
+        return _from_claude(args)
 
     if args.cmd == "setup":
         saved = config.save_local(

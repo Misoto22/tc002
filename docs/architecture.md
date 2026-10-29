@@ -6,9 +6,9 @@
 cli/            parser.py (commands, help)  ·  commands.py (handlers)  ·  __init__ (dispatch, errors)
 web/            server.py (HTTP, host/token guard)  ·  api.py (state, save, actions)  ·  static/ (UI)
   │
-integrations/   launchd.py (background service)  ·  claude_hooks.py (~/.claude/settings.json)
+integrations/   launchd.py (background service)  ·  claude_hooks.py, statusline.py (~/.claude/settings.json)
 runtime/        watcher.py (threads, signals)  ·  rotation.py (what is on screen)
-                output.py (push or preview, change detection)  ·  events.py (hook → file)
+                output.py (push or preview, change detection)  ·  sessions.py (hook → per-session file)
   │
 screens/        claude.py  ·  sysmon.py  ·  message.py (text, alerts)
   │
@@ -16,7 +16,7 @@ render/         canvas.py (52×16 buffer)  ·  font.py  ·  palette.py (LED colo
                 gif.py (encoder)  ·  mockup.py (LED previews)
   │
 sync.py (tc002.toml → clock, restore)  ·  config_writer.py (tc002.toml writer)  ·  presets.py
-usage/ (Claude Code and Codex token counts from local files)
+usage/ (Claude Code and Codex token counts and plan limits from local files)
 config.py (tc002.toml + local state)  ·  device_settings.py (allowed values)
 builtins.py (built-in app catalogue)  ·  device.py (HTTP client)
 ```
@@ -35,8 +35,9 @@ builtins.py (built-in app catalogue)  ·  device.py (HTTP client)
 | `runtime/output.py` | Sending an `Animation`; skips unchanged ones; logs an outage once |
 | `runtime/rotation.py` | Choosing what the clock displays; alerts pre-empt the rotation |
 | `runtime/watcher.py` | One thread per screen + the rotation; SIGTERM/Ctrl-C remove the screens |
-| `runtime/events.py` | The only contract between Claude Code hooks and the running service |
-| `integrations/` | Everything that edits the host: launchd plist, Claude settings |
+| `runtime/sessions.py` | The only contract between Claude Code hooks and the service and UI: one state file per session |
+| `usage/limits.py` | Claude Code's 5-hour and 7-day % used, as its status line reports them |
+| `integrations/` | Everything that edits the host: launchd plist, Claude hooks, the status line wrapper |
 
 ## Data flow
 
@@ -45,8 +46,10 @@ builtins.py (built-in app catalogue)  ·  device.py (HTTP client)
    when the key changed or 60 s passed (so a rebooted clock gets its screens back).
 3. If the state carries an `alert`, the screen marks itself in `Attention`; the rotation
    switches to it at once and resumes the rotation when the alert clears.
-4. Hooks never talk to the clock: `tc002 event done|wait|clear` writes one small JSON file
-   in about 50 ms, which the `claude` screen reads on its next sample.
+4. Hooks never talk to the clock: `tc002 hook` reads the hook's JSON from stdin and writes
+   one small file per session, which the `claude` screen and the UI read. Claude Code's
+   status line runs `tc002 statusline`, which saves the plan limits and then runs the
+   status line command you had before, printing its output unchanged.
 
 ## Adding a screen
 
@@ -62,7 +65,9 @@ builtins.py (built-in app catalogue)  ·  device.py (HTTP client)
 |---|---|
 | `~/.config/tc002/local.json` | Clock IP and the path of your `tc002.toml` |
 | `~/.config/tc002/original-layout.json` | Built-in app enable flags, orders and carousel before tc002 changed them — **no tokens or passwords** |
-| `~/.cache/tc002/event.json` | Last Claude Code hook event |
+| `~/.cache/tc002/sessions/*.json` | Each Claude Code session's state (working, waiting, done, idle) |
+| `~/.cache/tc002/claude-limits.json` | Last 5-hour and 7-day % from the status line |
+| `~/.config/tc002/statusline.json` | Your previous status line command, restored on uninstall |
 | `~/Library/LaunchAgents/dev.tc002.watch.plist` | Background service |
 | `~/Library/Logs/tc002.log` | Service log |
 | `~/.claude/settings.json.bak-tc002` | Backup taken before the first hook install |

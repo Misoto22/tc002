@@ -1,242 +1,134 @@
-"""Claude Code activity as a looping scene.
+"""Claude Code sessions: how many are running, asking for you, and finished.
 
-Layout (52x16):
-  left   spark (spins while generating, breathes while idle, sleeps with no session);
-         live sub-agents orbit it as yellow satellites
-  right  session count + BUSY/IDLE, and below it an equalizer (busy), a heartbeat
-         line (idle) or a flat line (no session)
-Hook events (see events.py) take the whole screen: DONE after a turn ends, WAIT while
-Claude needs you.
+Layout (52x16), three columns split by dim 1 px rules at x 17 and x 35:
+  RUN (sky)  ASK (amber)  OK (green) -- a 5x7 count over a 3x5 label; a zero column
+  is grey. ASK blinks while anything waits; a dot runs under RUN while work is going on.
+A session that starts waiting takes the whole screen (bell, project, NEEDS YOU) until
+you answer; one that finishes shows DONE and its project for a few seconds.
+
+States come from the hooks (runtime/sessions.py). Without hooks, transcripts written
+in the last SESSION_WINDOW seconds still count as running.
 """
 
 import glob
-import math
 import os
-import subprocess
 import time
 from dataclasses import dataclass
 
-from .. import usage as tokens
+from ..render import font
 from ..render.anim import Animation
-from ..render.canvas import Canvas, dim, mix
+from ..render.canvas import Canvas
 from ..render.palette import LED
-from ..runtime import events
-from ..usage.claude import ClaudeUsage
-from . import message
-from . import usage as usage_screen
+from ..runtime import sessions
 
 PROJECTS = os.path.expanduser("~/.claude/projects")
-SESSION_WINDOW = 180  # a transcript touched this recently counts as a live session
-SUBAGENT_WINDOW = 40
-BUSY_CPU = 8.0  # summed CPU% of `claude` processes above this = generating
-USAGE_EVERY = 30.0  # seconds between token re-counts
-BUSY_HOLD = 6.0  # stay BUSY this long after the last hot sample, so tool waits don't flicker
-DONE_SECONDS = 15  # how long DONE stays up after a turn ends
-WAIT_SECONDS = 600  # give up on WAIT if nobody answers for this long
-
-ORANGE, PEACH, GREEN, WHITE = LED["orange"], LED["peach"], LED["green"], LED["soft_white"]
-GRAY, DARK, YELLOW = LED["gray"], LED["track"], LED["yellow"]
-CX, CY = 8, 7  # spark centre
-ARMS = [
-    (0, -1, 4),
-    (1, -1, 3),
-    (1, 0, 4),
-    (1, 1, 3),
-    (0, 1, 4),
-    (-1, 1, 3),
-    (-1, 0, 4),
-    (-1, -1, 3),
-]
-RIGHT = 20  # x where the right column starts
-HEARTBEAT = {0: -1, 1: -3, 2: 2, 3: -1}  # y offsets of one beat, by x offset
-ZZZ = ["###", ".#.", "###"]
+SESSION_WINDOW = 180
+DONE_SECONDS = 5
+COLUMNS = (  # x, width, label, colour, state counted
+    (0, 17, "RUN", LED["sky"], "working"),
+    (18, 17, "ASK", LED["amber"], "waiting"),
+    (36, 16, "OK", LED["green"], "done"),
+)
+BELL = ["..#..", ".###.", ".###.", ".###.", "#####", ".....", "..#.."]
+CHECK = [".......", "......#", ".....#.", "#...#..", ".#.#...", "..#....", "......."]
+NAME_X = 11
 
 
 @dataclass(frozen=True)
 class State:
-    sessions: int
-    subagents: int
-    busy: bool
-    alert: str | None = None  # "done" or "wait" from a hook event
-    today: int = 0  # tokens since midnight (two significant figures)
-    window: int = 0  # tokens in the last five hours
+    working: int
+    waiting: int
+    done: int
+    alert: tuple[str, str] | None = None  # ("wait" | "done", project)
 
 
-def claude_cpu():
-    """Summed CPU% of processes whose executable is named exactly `claude`.
-
-    pgrep first, then ps for just those PIDs: listing every process timed out
-    repeatedly on a heavily loaded machine.
-    """
-    found = subprocess.run(["pgrep", "-x", "claude"], capture_output=True, text=True, timeout=10)
-    pids = found.stdout.split()
-    if found.returncode == 1 or not pids:  # 1 = no match
-        return 0.0
-    found.check_returncode()
-    out = subprocess.run(
-        ["ps", "-o", "pcpu=", "-p", ",".join(pids)],
-        capture_output=True,
-        text=True,
-        timeout=10,
-        check=False,
-    ).stdout  # ps exits 1 if a PID vanished in between; the rest is still valid
-    return sum(float(v) for v in out.split())
-
-
-def count_sessions(projects, now):
-    """(live sessions, live sub-agents) from transcript modification times."""
-    sessions = subagents = 0
+def unhooked_transcripts(projects, now, known):
+    """Transcripts written recently by sessions the hooks have not told us about."""
+    count = 0
     for path in glob.glob(os.path.join(projects, "*", "*.jsonl")):
-        if now - os.path.getmtime(path) > SESSION_WINDOW:
-            continue
-        sessions += 1
-        sub_dir = os.path.join(path[: -len(".jsonl")], "subagents")
-        subagents += sum(
-            1
-            for s in glob.glob(os.path.join(sub_dir, "*.jsonl"))
-            if now - os.path.getmtime(s) < SUBAGENT_WINDOW
-        )
-    return sessions, subagents
+        if path not in known and now - os.path.getmtime(path) <= SESSION_WINDOW:
+            count += 1
+    return count
 
 
 class ClaudeScreen:
-    """Samples Claude Code state; renders it as a GIF that only changes with the state."""
+    """Samples session states; renders a GIF that only changes with them."""
 
     APP = "claude"
     TICK = 2.0
 
-    def __init__(self, projects=PROJECTS, cpu=claude_cpu, clock=time.time, event_path=None):
-        self.projects, self.cpu, self.clock = projects, cpu, clock
-        self.event_path = event_path or events.PATH
-        self._last_hot = float("-inf")
-        self.usage = ClaudeUsage(projects, clock)
-        self._usage = (float("-inf"), 0, 0)  # (sampled at, today, window)
-
-    def _tokens(self, now):
-        """Token totals, re-read at most every USAGE_EVERY seconds (transcripts can be large)."""
-        if now - self._usage[0] >= USAGE_EVERY:
-            u = self.usage.collect()
-            self._usage = (now, tokens.rough(u.today), tokens.rough(u.window))
-        return self._usage[1:]
+    def __init__(self, projects=PROJECTS, clock=time.time, root=None):
+        self.projects, self.clock, self.root = projects, clock, root
 
     def sample(self):
         now = self.clock()
-        sessions, subagents = count_sessions(self.projects, now)
-        if sessions and self.cpu() > BUSY_CPU:
-            self._last_hot = now
-        busy = sessions > 0 and now - self._last_hot <= BUSY_HOLD
-        return State(sessions, min(subagents, 6), busy, self._alert(now), *self._tokens(now))
-
-    def _alert(self, now):
-        kind, at = events.latest(self.event_path)
-        age = now - at
-        if kind == "done" and age < DONE_SECONDS:
-            return "done"
-        # Claude generating again well after the prompt means it was answered.
-        resumed = self._last_hot > at + BUSY_HOLD
-        if kind == "wait" and age < WAIT_SECONDS and not resumed:
-            return "wait"
-        return None
+        known = sessions.load(self.root, now)
+        tally = sessions.counts(known)
+        extra = unhooked_transcripts(self.projects, now, {s.transcript for s in known})
+        return State(tally["working"] + extra, tally["waiting"], tally["done"], _alert(known, now))
 
     def render(self, state):
         if state.alert:
-            anim = message.alert_animation(state.alert.upper(), state.alert)
-            anim.key = state
-            return anim
-        if state.busy:
-            count, delay, repeat = 16, 80, 2
-        elif state.sessions:
-            count, delay, repeat = 32, 80, 1
-        else:
-            count, delay, repeat = 24, 120, 1
-        frames = [_frame(state, f, count) for f in range(count)] * repeat
-        delays = [delay] * len(frames)
-        # then a stats card: today's tokens counting up, held for a few seconds
-        card = usage_screen.Page("claude", state.today, state.window)
-        stats, stat_delays = usage_screen.page_frames(card)
-        return Animation(frames + stats, delays + stat_delays, key=state)
+            kind, project = state.alert
+            return Animation(*_alert_frames(kind, project), key=state)
+        return Animation(*_overview_frames(state), key=state)
 
 
-def _frame(state, f, count):
+def _alert(known, now):
+    waiting = [s for s in known if s.state == "waiting"]
+    if waiting:
+        return "wait", min(waiting, key=lambda s: s.since).project  # longest wait first
+    fresh = [s for s in known if s.state == "done" and now - s.since < DONE_SECONDS]
+    return ("done", fresh[0].project) if fresh else None
+
+
+def _centred(c, x0, width, y, text, colour, big):
+    table = font.BIG if big else font.SMALL
+    c.text(x0 + (width - font.text_width(table, text)) // 2, y, text, colour, big)
+
+
+def _overview(state, f):
     c = Canvas()
-    t = f / count  # 0..1 through the loop; every motion completes whole cycles
-    _spark(c, state, f, t)
-    _orbit(c, state.subagents, t)
-    _status(c, state)
-    if state.busy:
-        _equalizer(c, t)
-    elif state.sessions:
-        _heartbeat(c, f)
-    else:
-        c.rect(RIGHT, 13, 52 - RIGHT, 1, DARK)
+    counts = {"working": state.working, "waiting": state.waiting, "done": state.done}
+    for x0, width, label, colour, key in COLUMNS:
+        n = counts[key]
+        lit = n > 0 and not (key == "waiting" and (f // 5) % 2)
+        _centred(c, x0, width, 1, str(min(n, 9)), colour if lit else LED["gray"], True)
+        _centred(c, x0, width, 10, label, LED["label"] if n else LED["dim"], False)
+    for x in (17, 35):
+        c.rect(x, 2, 1, 12, LED["dim"])
+    if state.working:
+        c.set(1 + f % 15, 15, LED["sky"])
     return c
 
 
-def _spark(c, state, f, t):
-    if state.busy:  # a bright head runs round the arms: reads as spinning
-        head = (f // 2) % len(ARMS)
-        for i, (dx, dy, length) in enumerate(ARMS):
-            behind = (head - i) % len(ARMS)
-            color = PEACH if behind == 0 else ORANGE if behind == 1 else dim(ORANGE, 0.55)
-            _arm(c, dx, dy, length, color)
-        c.set(CX, CY, PEACH)
-        return
-    if state.sessions:  # slow breath
-        level = 0.45 + 0.55 * (0.5 - 0.5 * math.cos(2 * math.pi * t))
+def _overview_frames(state):
+    if state.working or state.waiting:
+        frames = [_overview(state, f) for f in range(30)]
+        return frames, [100] * len(frames)
+    return [_overview(state, 0)], [5000]
+
+
+def _name(c, project, y_big, y_small, colour):
+    text = project.upper()
+    if font.text_width(font.BIG, text) <= 52 - NAME_X:
+        c.text(NAME_X, y_big, text, colour, True)
     else:
-        level = 0.25
-    for dx, dy, length in ARMS:
-        _arm(c, dx, dy, length, dim(ORANGE, level))
-    c.set(CX, CY, dim(ORANGE, level))
-    if not state.sessions:  # a "z" drifts up and fades
-        c.sprite(13, 4 - round(4 * t), ZZZ, dim(GRAY, 1 - t))
+        c.text(NAME_X, y_small, text[:10], colour, False)
 
 
-def _arm(c, dx, dy, length, color):
-    for r in range(1, length + 1):
-        c.set(CX + dx * r, CY + dy * r, color)
-
-
-def _orbit(c, n, t):
-    for k in range(n):
-        a = 2 * math.pi * (t + k / n)
-        for lag, shade in ((0.0, 1.0), (0.06, 0.35)):  # dot plus a faint tail
-            x = round(CX + 7.5 * math.cos(a - 2 * math.pi * lag))
-            y = round(CY + 6.5 * math.sin(a - 2 * math.pi * lag))
-            if c.get(x, y) == 0 or shade == 1.0:
-                c.set(x, y, dim(YELLOW, shade))
-
-
-def _status(c, state):
-    count = str(min(state.sessions, 99))
-    color = GREEN if state.busy else WHITE if state.sessions else GRAY
-    x = c.text(RIGHT, 1, count, color) + 2
-    if state.busy:
-        label, label_color = "BUSY", GREEN
-    elif state.sessions:
-        label, label_color = "IDLE", GRAY
-    else:
-        label, label_color = "OFF", GRAY
-    c.text(x, 3, label, label_color, big=False)
-
-
-def _equalizer(c, t):
-    """Eight 3 px bars bouncing out of phase, green at the floor to yellow at the top."""
-    for i in range(8):
-        level = 0.5 + 0.5 * math.sin(2 * math.pi * (t * (1 + i % 3)) + i * 1.7)
-        height = 1 + round(5 * level)
-        for row in range(height):
-            color = mix(GREEN, YELLOW, row / 5)
-            c.rect(RIGHT + i * 4, 15 - row, 3, 1, color)
-
-
-def _heartbeat(c, f):
-    """A flat line with one beat scrolling right to left; wraps every 32 px."""
-    width = 52 - RIGHT
-    for x in range(width):
-        offset = HEARTBEAT.get((x + f) % width - (width - 8), 0)
-        if offset:  # draw the whole stroke so the spike reads as one line
-            for y in range(min(13, 13 + offset), max(13, 13 + offset) + 1):
-                c.set(RIGHT + x, y, GREEN)
-        else:
-            c.set(RIGHT + x, 13, dim(GREEN, 0.35))
+def _alert_frames(kind, project):
+    frames = []
+    if kind == "wait":
+        for dx in (0, -1, 0, 1):  # the bell swings
+            c = Canvas()
+            c.sprite(3 + dx, 2, BELL, LED["amber"])
+            _name(c, project, 1, 2, LED["white"])
+            c.text(NAME_X, 10, "NEEDS YOU", LED["amber"], False)
+            frames.append(c)
+        return frames * 3, [150] * 12
+    c = Canvas()
+    c.sprite(1, 2, CHECK, LED["green"])
+    c.text(NAME_X, 1, "DONE", LED["white"], True)
+    c.text(NAME_X, 10, project.upper()[:10], LED["green"], False)
+    return [c], [DONE_SECONDS * 1000]

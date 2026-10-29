@@ -11,13 +11,14 @@ import time
 
 from .. import builtins, config, config_writer, device_settings, presets, sync
 from ..device import CATEGORY_ENDPOINTS, Device, DeviceError
-from ..integrations import claude_hooks, executable, launchd
+from ..integrations import claude_hooks, executable, launchd, statusline
 from ..render import font, mockup
 from ..render.palette import hex_palette
-from ..runtime import events, hold
+from ..runtime import hold
 from ..screens import SCREENS, message
 from ..screens.examples import examples
 from . import cities
+from .agents import Agents
 
 SECRET_KEYS = {"token", "password", "username", "url", "tokens"}
 
@@ -34,6 +35,7 @@ class Api:
     def __init__(self, host, config_path, state_dir=None):
         self.host, self.config_path = host, config_path
         self.state_dir = state_dir or config.STATE_DIR
+        self.agents = Agents()
 
     # -- helpers ------------------------------------------------------------------
 
@@ -56,6 +58,7 @@ class Api:
             },
             "clock": self._clock_state(settings),
             "integrations": self._integrations(),
+            "agents": self.agents.snapshot(),
             "catalogue": [
                 {"key": k, "category": b.category, "index": b.index}
                 for k, b in builtins.CATALOGUE.items()
@@ -106,11 +109,10 @@ class Api:
             hooks = claude_hooks.status(executable())
         except RuntimeError as exc:
             hooks = {"error": str(exc)}
-        kind, at = events.latest()
         return {
             "service": launchd.status(),
             "hooks": hooks,
-            "lastEvent": {"kind": kind, "secondsAgo": round(time.time() - at)} if kind else None,
+            "statusline": statusline.status(executable()),
         }
 
     def led(self):

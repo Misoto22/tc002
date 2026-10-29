@@ -117,7 +117,7 @@ def test_short_and_rough():
     assert usage.rough(146_475_601) == 150_000_000 and usage.rough(42) == 42
 
 
-def test_usage_screen_hides_codex_when_absent_and_fits_the_clock(tmp_path):
+def test_usage_screen_rounds_limits_and_fits_the_clock(tmp_path):
     class Fixed:
         def __init__(self, u):
             self.u = u
@@ -126,10 +126,10 @@ def test_usage_screen_hides_codex_when_absent_and_fits_the_clock(tmp_path):
             return self.u
 
     screen = usage_screen.UsageScreen(
-        Fixed(usage.Usage(1_234_567, 1000, source="x")), Fixed(usage.Usage(0, 0))
+        Fixed(usage.Usage(1_234_567, 1000, 62.4, 38.6, source="x")), Fixed(usage.Usage(0, 0))
     )
     state = screen.sample()
-    assert [p.agent for p in state.pages] == ["claude"]
+    assert state.rows == (usage_screen.Row("claude", 62, 39), usage_screen.Row("codex", None, None))
     anim = screen.render(state)
     assert len(anim.frames) <= MAX_FRAMES
     anim.payload()
