@@ -219,8 +219,15 @@ class Api:
 
     def show(self, body):
         dev = self._device()
-        if body.get("screen"):
-            dev.switch_custom(body["screen"])
+        if screen := body.get("screen"):
+            if screen not in SCREENS:
+                raise ApiError(422, "Unknown screen", f"No screen named {screen!r}.")
+            # The background service may not run this screen (yet): put one frame on the
+            # clock first, so switching to it cannot fail with "app not found".
+            if screen not in dev.apps():
+                live = SCREENS[screen]()
+                dev.push(screen, live.render(live.sample()).payload())
+            dev.switch_custom(screen)
         elif body.get("builtin"):
             app = builtins.lookup(body["builtin"])
             dev.switch_builtin(app.category, app.index)

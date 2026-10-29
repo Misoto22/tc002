@@ -206,3 +206,30 @@ def test_live_preview_needs_a_clock_and_validates(ui):
     assert status == 409  # no clock configured in the test server
     status, _, body = call(url, "/api/live/stop", {}, {"X-TC002-Token": token})
     assert status == 200 and json.loads(body) == {"changes": []}
+
+
+def test_show_pushes_a_screen_the_clock_does_not_have_yet(monkeypatch):
+    from tc002.web import api as api_module
+
+    calls = []
+
+    class Clock:
+        def apps(self):
+            return []
+
+        def push(self, app, payload):
+            calls.append(("push", app, "image" in payload))
+
+        def switch_custom(self, app):
+            calls.append(("switch", app))
+
+    api = api_module.Api("192.0.2.1", None)
+    monkeypatch.setattr(api, "_device", lambda: Clock())
+    api.show({"screen": "sys"})
+    assert calls == [("push", "sys", True), ("switch", "sys")]
+
+
+def test_device_http_errors_keep_their_status():
+    from tc002.device import DeviceError
+
+    assert DeviceError("x", 404).status == 404 and DeviceError("y").status is None

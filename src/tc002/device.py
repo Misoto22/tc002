@@ -22,7 +22,11 @@ CATEGORY_ENDPOINTS = {
 
 
 class DeviceError(RuntimeError):
-    """The clock was unreachable or rejected a request."""
+    """The clock was unreachable (`status` None) or answered with an HTTP error `status`."""
+
+    def __init__(self, message, status=None):
+        super().__init__(message)
+        self.status = status
 
 
 class Device:
@@ -47,7 +51,9 @@ class Device:
                     raw = resp.read()
                 break
             except urllib.error.HTTPError as exc:
-                raise DeviceError(f"{self.base}{path}: HTTP {exc.code} {exc.reason}") from exc
+                raise DeviceError(
+                    f"{self.base}{path}: HTTP {exc.code} {exc.reason}", exc.code
+                ) from exc
             except (urllib.error.URLError, OSError) as exc:
                 if attempt == 2:
                     raise DeviceError(f"{self.base}{path}: {exc}") from exc

@@ -121,7 +121,12 @@ def make_handler(api, token, port):
             except ApiError as exc:
                 self._fail(exc.status, exc.title, exc.detail, exc.errors)
             except DeviceError as exc:
-                self._fail(502, "Clock unreachable", str(exc))
+                if exc.status is None:
+                    self._fail(502, "Clock unreachable", str(exc))
+                elif exc.status == 404:
+                    self._fail(404, "Not on the clock", f"The clock has no such app: {exc}")
+                else:
+                    self._fail(502, "Clock refused the request", str(exc))
             except (OSError, RuntimeError, ValueError) as exc:
                 self._fail(500, "Request failed", str(exc))
 

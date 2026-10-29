@@ -125,12 +125,39 @@ export function toast(title, detail, kind = "info") {
     kind === "error" ? 8000 : 4000);
 }
 
-// A positioned popover menu of grouped items; closes on pick, outside click or Escape.
+// Show a fixed popover under `anchor` (above it when there is no room below; right-aligned
+// when it would overflow). It closes on an outside click, Escape, scroll or resize: a fixed
+// layer cannot follow its anchor when the page moves, so it must not outlive the move.
+// Returns close().
+export function attachPopover(el, anchor, onClose) {
+  document.body.append(el);
+  const box = anchor.getBoundingClientRect();
+  const gap = 6;
+  const left = box.left + el.offsetWidth > innerWidth - 8 ? box.right - el.offsetWidth : box.left;
+  const fitsBelow = box.bottom + gap + el.offsetHeight <= innerHeight - 8;
+  el.style.left = `${Math.max(8, left)}px`;
+  el.style.top = `${fitsBelow || box.top < el.offsetHeight + gap ? box.bottom + gap : box.top - gap - el.offsetHeight}px`;
+  const outside = (e) => { if (!el.contains(e.target) && !anchor.contains(e.target)) close(); };
+  const moved = (e) => { if (!(e.target instanceof Node) || !el.contains(e.target)) close(); };
+  function close() {
+    el.remove();
+    document.removeEventListener("pointerdown", outside);
+    document.removeEventListener("scroll", moved, true);
+    window.removeEventListener("resize", moved);
+    onClose?.();
+  }
+  setTimeout(() => document.addEventListener("pointerdown", outside));
+  document.addEventListener("scroll", moved, true); // capture: #main scrolls, not the window
+  window.addEventListener("resize", moved);
+  el.addEventListener("keydown", (e) => { if (e.key === "Escape") { close(); anchor.focus(); } });
+  return close;
+}
+
+// A popover menu of grouped items; closes on pick, or as attachPopover does.
 export function menu(anchor, groups, onPick, emptyText) {
   document.querySelector(".menu")?.remove();
-  const box = anchor.getBoundingClientRect();
-  const el = h("div", { class: "menu", role: "menu",
-    style: `top:${box.bottom + 6}px;left:${Math.min(box.left, innerWidth - 240)}px` });
+  const el = h("div", { class: "menu", role: "menu" });
+  let close = () => {};
   for (const [label, items] of groups) {
     if (!items.length) continue;
     el.append(h("div", { class: "menu-label" }, label));
@@ -140,15 +167,11 @@ export function menu(anchor, groups, onPick, emptyText) {
     }
   }
   if (!el.querySelector("button")) el.append(h("div", { class: "menu-label" }, emptyText));
-  document.body.append(el);
+  close = attachPopover(el, anchor);
   el.querySelector("button")?.focus();
-  const outside = (e) => { if (!el.contains(e.target) && !anchor.contains(e.target)) close(); };
-  function close() { el.remove(); document.removeEventListener("pointerdown", outside); }
-  setTimeout(() => document.addEventListener("pointerdown", outside));
   el.addEventListener("keydown", (e) => {
     const items = [...el.querySelectorAll("button")];
     const i = items.indexOf(document.activeElement);
-    if (e.key === "Escape") { close(); anchor.focus(); }
     if (e.key === "ArrowDown") { e.preventDefault(); items[(i + 1) % items.length]?.focus(); }
     if (e.key === "ArrowUp") { e.preventDefault(); items[(i - 1 + items.length) % items.length]?.focus(); }
   });

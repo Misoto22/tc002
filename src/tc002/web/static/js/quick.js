@@ -3,7 +3,7 @@
 
 import { t } from "./i18n.js";
 import { quick, store } from "./store.js";
-import { h, icon, segmented, slider } from "./ui.js";
+import { attachPopover, h, icon, segmented, slider } from "./ui.js";
 
 function current() {
   const clock = store.state.clock.settings ?? {};
@@ -42,16 +42,11 @@ export function quickControls({ compact = false } = {}) {
 // The top-bar popover.
 export function openQuick(anchor) {
   document.querySelector(".popover.quick")?.remove();
-  const box = anchor.getBoundingClientRect();
-  const el = h("div", { class: "popover quick", role: "dialog", "aria-label": t("quick.title"),
-    style: `top:${box.bottom + 6}px;right:${innerWidth - box.right}px;left:auto` },
-  h("div", { class: "menu-label" }, t("quick.title")),
-  ...quickControls({ compact: true }),
-  h("a", { class: "btn ghost", href: "#display", onClick: () => close() }, icon("sliders-horizontal"), t("quick.more")));
-  document.body.append(el);
-  const outside = (e) => { if (!el.contains(e.target) && !anchor.contains(e.target)) close(); };
-  function close() { el.remove(); document.removeEventListener("pointerdown", outside); }
-  setTimeout(() => document.addEventListener("pointerdown", outside));
-  el.addEventListener("keydown", (e) => { if (e.key === "Escape") { close(); anchor.focus(); } });
+  let close = () => {};
+  const el = h("div", { class: "popover quick", role: "dialog", "aria-label": t("quick.title") },
+    h("div", { class: "menu-label" }, t("quick.title")),
+    ...quickControls({ compact: true }),
+    h("a", { class: "btn ghost", href: "#display", onClick: () => close() }, icon("sliders-horizontal"), t("quick.more")));
+  close = attachPopover(el, anchor);
   el.querySelector("button")?.focus();
 }
