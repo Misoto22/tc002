@@ -10,35 +10,40 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-from .. import builtins, config, config_writer, device_settings, presets, provision, sync
+from .. import (
+    builtins,
+    config,
+    config_writer,
+    device_settings,
+    presets,
+    sync,
+)
 from ..device import CATEGORY_ENDPOINTS, MIN_FIRMWARE, Device, DeviceError
 from ..games import GAMES
-from ..games.session import Session
 from ..integrations import claude_hooks, executable, launchd, statusline
 from ..render import font, mockup, themes
 from ..render.canvas import HEIGHT, WIDTH
 from ..render.palette import hex_palette
 from ..runtime import freshness, hold
-from ..screens import SCREENS, build, builtin_previews, message, stale
+from ..screens import NETWORKED, SCREENS, build, builtin_previews, message, stale
 from ..screens import options as screen_options
 from ..screens import usage as usage_screen
 from ..screens.examples import examples
-from . import cities, host_actions, setup
+from . import cities
 from .agents import Agents
+from .errors import ApiError
+from .host_actions_api import HostActions
+from .play_actions import PlayActions, _focus_now
+from .setup_actions import SetupActions
 
-LIVE_SCREENS = set(SCREENS) - {"sys"}  # cheap to sample, so previewed with real data
+# cheap, local and quiet to sample, so previewed with real data
+LIVE_SCREENS = set(SCREENS) - {"sys"} - NETWORKED
 SECRET_KEYS = {"token", "password", "username", "url", "tokens"}
 
 
-class ApiError(Exception):
-    """Becomes an RFC 9457 problem response."""
+class Api(SetupActions, PlayActions, HostActions):
+    """Every API action; groups of them live in the *_actions modules."""
 
-    def __init__(self, status, title, detail, errors=None):
-        super().__init__(detail)
-        self.status, self.title, self.detail, self.errors = status, title, detail, errors
-
-
-class Api:
     def __init__(self, host, config_path, state_dir=None):
         self.host, self.config_path = host, config_path
         self.state_dir = state_dir or config.STATE_DIR
@@ -82,6 +87,7 @@ class Api:
             "agents": self.agents.snapshot(),
             "freshness": freshness.read(),
             "focus": _focus_now(),
+            "connections": self._connections(),
             "staleAfter": {"age": stale.STALE_AFTER, "noData": stale.NO_DATA_AFTER},
             "catalogue": [
                 {"key": k, "category": b.category, "index": b.index}
@@ -158,58 +164,6 @@ class Api:
     def agents_now(self, query=None):
         return self.agents.snapshot()
 
-    def discover(self, query):
-        return setup.discover()
-
-    def first_run(self, body):
-        host = str(body.get("host") or "").strip()
-        if not host or len(host) > 253 or any(c.isspace() for c in host):
-            raise ApiError(422, "Invalid address", "Give the clock's IP address or host name.")
-        try:
-            done = setup.setup(host, body.get("preset"), body.get("timezone"), body.get("weather"))
-        except config.ConfigError as exc:
-            raise ApiError(422, "Invalid settings", str(exc)) from None
-        except ValueError as exc:
-            raise ApiError(422, "No clock there", str(exc)) from None
-        self.host, self.config_path = done["host"], config.path()
-        try:  # the clock should look like its new settings straight away
-            changes = sync.apply(self._device(), done["settings"], self.state_dir)
-        except DeviceError as exc:
-            changes = [f"not applied yet: {exc}"]
-        return {"host": done["host"], "config": done["config"], "changes": changes}
-
-    # -- a new clock's Wi-Fi (see provision.py) ------------------------------------
-
-    def wifi_status(self, query=None):
-        """Whether this Mac can see a clock on its setup hotspot right now."""
-        return {
-            "onHotspot": setup.probe(provision.HOTSPOT_HOST, timeout=1) is not None,
-            "hotspot": provision.HOTSPOT_SSID,
-            "hotspotPassword": provision.HOTSPOT_PASSWORD,
-        }
-
-    def wifi_join_hotspot(self, body):
-        problem = provision.join(provision.HOTSPOT_SSID, provision.HOTSPOT_PASSWORD)
-        if problem:
-            raise ApiError(409, "Request failed", problem)
-        return {"joined": provision.HOTSPOT_SSID}
-
-    def wifi_send(self, body):
-        """Pass the home Wi-Fi to the clock. The password goes to the clock only."""
-        try:
-            provision.send_wifi(str(body.get("ssid") or ""), str(body.get("password") or ""))
-        except provision.ProvisionError as exc:
-            raise ApiError(422, "Invalid settings", str(exc)) from None
-        return {"sent": True}
-
-    def wifi_rejoin(self, body):
-        """Put this Mac back on its own network (macOS uses the password it saved)."""
-        ssid = str(body.get("ssid") or "")
-        if not ssid:
-            raise ApiError(422, "Invalid settings", "Name the network to go back to.")
-        problem = provision.join(ssid)
-        return {"rejoined": problem is None, "detail": problem}
-
     def appearance(self, body):
         """Change only the [appearance] table: LED theme and the UI palette it may follow.
 
@@ -234,82 +188,6 @@ class Api:
             # only a change the clock can see is worth redrawing every screen for
             "serviceRestarted": settings.led_theme != before.led_theme and launchd.restart(),
         }
-
-    def play(self, body):
-        """Start a game on the clock, or stop the one running."""
-        if self.game is not None:
-            self.game.stop()
-            self.game = None
-        if body.get("action") == "stop":
-            return {"running": False}
-        name = body.get("game")
-        if name not in GAMES:
-            raise ApiError(422, "Invalid settings", f"Choose one of {', '.join(GAMES)}.")
-        self.game = Session(self._device(), name, self._led_theme())
-        self.game.start()
-        return {"running": True, "game": name}
-
-    def game_key(self, body):
-        if self.game is None:
-            raise ApiError(409, "Nothing to show", "No game is running.")
-        key = body.get("key")
-        if key not in GAMES[self.game.name].KEYS:
-            return {"ignored": key}
-        self.game.key(key, bool(body.get("down")))
-        return {"ok": True}
-
-    def game_frame(self, query=None):
-        return self.game.snapshot() if self.game else {"running": False}
-
-    def focus(self, body):
-        """Start or stop the focus timer screen."""
-        from ..runtime import focus as timer
-
-        if body.get("action") == "stop":
-            timer.stop()
-            return {"running": False}
-        screen = build("focus", self._settings_or_none())
-        minutes = body.get("minutes") or screen.minutes
-        if not isinstance(minutes, int) or not 1 <= minutes <= 180:
-            raise ApiError(422, "Invalid settings", "Minutes must be a whole number from 1 to 180.")
-        timer.start(minutes, screen.break_minutes)
-        return {"running": True, "minutes": minutes, "break": screen.break_minutes}
-
-    def social_token(self, body):
-        """Hand a social app its OAuth token. Write-only: sent to the clock and forgotten;
-        it is not logged, stored, or ever read back (the UI only learns that one is set)."""
-        app, token = body.get("app"), body.get("token")
-        if app not in device_settings.TOKEN_APPS:
-            raise ApiError(
-                422, "Invalid settings", f"Only {device_settings.TOKEN_APPS} take a token."
-            )
-        if not isinstance(token, str) or not token.strip() or len(token) > 4096:
-            raise ApiError(422, "Invalid settings", "Paste the token the platform gave you.")
-        dev = self._device()
-        _, _, infos_key, order_key = CATEGORY_ENDPOINTS["social"]
-        cfg = dev.category_config("social")
-        infos = cfg.get(infos_key, {})
-        infos.setdefault(app, {})["token"] = token.strip()
-        order = cfg.get(order_key) or builtins.full_order("social")
-        dev.set_category_config("social", {infos_key: infos, order_key: order})
-        return {"app": app, "tokenSet": True}
-
-    def integration(self, action):
-        try:
-            return host_actions.run(action)
-        except KeyError:
-            raise ApiError(404, "Not found", f"No integration action {action!r}.") from None
-
-    def log(self, query):
-        return {"path": str(launchd.LOG), "text": host_actions.log_tail()}
-
-    def reveal(self, body):
-        targets = {"config": self.config_path, "log": launchd.LOG}
-        target = targets.get(body.get("what"))
-        if target is None:
-            raise ApiError(422, "Nothing to show", "Choose the config file or the log.")
-        host_actions.reveal(target)
-        return {"revealed": str(target)}
 
     def led(self):
         """Pixel fonts and LED palette, so browser previews draw exactly what the clock would."""
@@ -511,10 +389,3 @@ def _drift(settings, cfg, app_settings, enabled):
     if settings.rotation and cfg.get("carouselSpeed"):
         drift.append("display.carouselSpeed")
     return drift
-
-
-def _focus_now():
-    from ..runtime import focus as timer
-
-    now = timer.current()
-    return {"phase": now[0], "left": round(now[1])} if now else None
