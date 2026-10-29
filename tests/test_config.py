@@ -16,9 +16,11 @@ def write(tmp_path, body):
 
 
 def test_repository_config_is_valid():
+    # tc002.toml is the owner's live configuration and changes with use; only its validity
+    # is a property of the repository.
     settings = config.load(REPO_CONFIG)
-    assert settings.screens == ("claude", "sys")
-    assert [s.label for s in settings.rotation] == ["claude", "sys", "builtin:clock"]
+    assert settings.source == str(REPO_CONFIG)
+    assert all(s.screen in settings.screens for s in settings.rotation if s.screen)
 
 
 def test_no_config_means_builtin_defaults(monkeypatch, tmp_path):
