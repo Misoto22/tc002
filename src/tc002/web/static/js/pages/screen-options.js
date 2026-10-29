@@ -4,9 +4,14 @@
 import { t } from "../i18n.js";
 import { edit, store } from "../store.js";
 import { h, row, segmented, slider } from "../ui.js";
+import { entityPicker, symbolPicker } from "./pickers.js";
+
+const PICKED = new Set(["symbols", "entities"]); // chips change shape: redraw the page
 
 function control(name, key, spec, value, set) {
   const label = t(`opt.${name}.${key}`);
+  if (spec.kind === "symbols") return symbolPicker([...(value ?? spec.default)], spec.spec, set);
+  if (spec.kind === "entities") return entityPicker([...(value ?? [])], spec.spec, set);
   if (spec.kind === "choice") return segmented(spec.spec.map((v) => [v, t(`opt.value.${v}`)]), value, set, label);
   if (spec.kind === "int") return slider(spec.spec[0], spec.spec[1], value, set, label);
   if (spec.kind === "date") {
@@ -35,6 +40,7 @@ export function screenOptions(name) {
   };
   return Object.entries(described).map(([key, spec]) => row(t(`opt.${name}.${key}`), hint(key),
     control(name, key, spec, values[key] ?? spec.default,
-      (v) => edit((dr) => { dr.screen = { ...dr.screen, [name]: { ...dr.screen?.[name], [key]: v } }; })),
+      (v) => edit((dr) => { dr.screen = { ...dr.screen, [name]: { ...dr.screen?.[name], [key]: v } }; },
+        { rerender: PICKED.has(spec.kind) })),
     { path: `screen.${name}.${key}` }));
 }

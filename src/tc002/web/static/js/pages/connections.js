@@ -1,26 +1,28 @@
 // Services the API screens connect to. Plain settings (an address) are saved to
 // tc002.toml with the page; secrets go straight to the macOS Keychain and are never shown
-// again, only whether one is saved. Each screen can be tried without touching the clock.
+// again, only whether one is saved. Testing a service reads it for real and shows the
+// result in place: working or not (and why), how long it took, the picture the clock
+// would get and what was read.
 
 import { post } from "../api.js";
 import { appName, t } from "../i18n.js";
+import { liveCheck } from "../livecheck.js";
 import { edit, load, setFocus, store } from "../store.js";
 import { badge, button, h, pageHead, panel, row, section, toast } from "../ui.js";
 import { page } from "./common.js";
 
 const SCREEN_OF = { homeassistant: "home", calendar: "agenda" };
 const OPEN = ["air", "crypto", "stocks", "hackernews", "github", "nowplaying"];
+const opened = new Set(); // screens whose test result is showing, kept across redraws
 
-async function trial(screen, hint) {
-  try {
-    const r = await post("/api/try-screen", { screen });
-    if (r.ok) toast(t("conn.works", { name: appName(screen) }));
-    else toast(t("conn.fails", { name: appName(screen) }), r.error, "error");
-  } catch (err) {
-    toast(err.title, err.message, "error");
-  }
-  hint?.();
+// A result slot under a service, and the button that fills it.
+function tester(screen) {
+  const slot = h("div", { class: "conn-result" }, opened.has(screen) ? liveCheck(screen) : null);
+  const open = () => { opened.add(screen); slot.replaceChildren(liveCheck(screen)); };
+  return { slot, open };
 }
+
+const settingsLink = (screen) => h("a", { class: "btn ghost", href: `#rotation/${screen}` }, t("place.settings"));
 
 function secretRow(connection, field, status) {
   const input = h("input", { class: "field", type: "password", autocomplete: "off",
@@ -58,17 +60,22 @@ export function connections() {
   const status = store.state.connections ?? {};
   const known = Object.entries(status).flatMap(([name, fields]) => {
     const screen = SCREEN_OF[name];
+    const test = tester(screen);
     return [
       section(t(`conn.${name}`), h("span", { class: "muted" }, `· ${t(`conn.${name}Hint`)}`), h("span", { class: "spacer" }),
-        button(t("conn.try"), () => trial(screen), { kind: "ghost", ico: "play" })),
+        settingsLink(screen), button(t("conn.try"), test.open, { kind: "ghost", ico: "play" })),
       panel(...Object.entries(fields).map(([field, s]) => (s.secret ? secretRow(name, field, s) : plainRow(name, field)))),
+      test.slot,
     ];
   });
   return page(
     pageHead(t("page.connections"), t("desc.connections")),
     Object.keys(status).length ? known : h("p", { class: "muted" }, t("conn.noKeychain")),
     section(t("conn.open"), h("span", { class: "muted" }, `· ${t("conn.openHint")}`)),
-    panel(...OPEN.map((screen) => row(appName(screen), t(`conn.about.${screen}`),
-      button(t("conn.try"), () => trial(screen), { kind: "ghost", ico: "play" }), { app: screen }))),
+    panel(...OPEN.map((screen) => {
+      const test = tester(screen);
+      return h("div", { class: "conn-item" }, row(appName(screen), t(`conn.about.${screen}`),
+        [settingsLink(screen), button(t("conn.try"), test.open, { kind: "ghost", ico: "play" })], { app: screen }), test.slot);
+    })),
   );
 }

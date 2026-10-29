@@ -155,9 +155,6 @@ main { position: relative; overflow-y: auto; outline: none; }
   .brand { justify-content: center; padding-inline: 0; }
   .nav-item { justify-content: center; padding: 0; }
   .nav-group + .nav-group { margin-top: var(--space-10); padding-top: var(--space-10); }
-  .row { flex-wrap: wrap; }
-  .row-control { flex-wrap: wrap; max-width: 100%; }
-  .row-control .wide-field { width: 100%; min-width: 0; }
 }
 
 /* ---- panels and rows ------------------------------------------------------------- */
@@ -242,6 +239,7 @@ main { position: relative; overflow-y: auto; outline: none; }
   cursor: pointer;
   transition: background var(--fast), border-color var(--fast), transform var(--press);
 }
+a.btn { text-decoration: none; }
 
 .btn:hover { background: var(--hover); border-color: var(--faint); }
 .btn:active { transform: scale(0.97); }
@@ -368,3 +366,13 @@ input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.15); }
 input[type="range"]::-moz-range-track { height: 4px; border-radius: var(--radius-pill); background: var(--border-strong); }
 input[type="range"]::-moz-range-progress { height: 4px; border-radius: var(--radius-pill); background: var(--primary); }
 input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border: 0; border-radius: var(--radius-pill); background: var(--knob); }
+
+/* a phone: a row's controls take a line of their own under its label (after the base
+   rules above, which they override) */
+@media (max-width: 760px) {
+  .row { flex-wrap: wrap; }
+  .row-control { flex: 1 1 100%; flex-wrap: wrap; justify-content: flex-end; max-width: 100%; }
+  .row-control .wide-field { width: 100%; min-width: 0; }
+  .row-control .segmented { width: 100%; }
+  .segmented button { min-height: var(--control-sm-h); height: auto; padding: var(--space-2) var(--space-4); font-size: var(--text-sm); line-height: 1.25; white-space: normal; }
+}

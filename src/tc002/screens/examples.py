@@ -67,15 +67,25 @@ def examples():
         ),
         "stocks": stocks.StocksScreen().render(
             stocks.State(
-                "AAPL", 343.83, 1.2, tuple(340 + (i % 7) - i / 9 + i / 4 for i in range(52)), 339.8
+                stocks.Quote(
+                    "AAPL",
+                    343.83,
+                    1.2,
+                    tuple(340 + (i % 7) - i / 9 + i / 4 for i in range(52)),
+                    339.8,
+                ),
+                0,
+                3,
             )
         ),
         "hackernews": hackernews.HackerNewsScreen().render(
-            hackernews.State("Show HN: A pixel clock that shows your coding agents", 312)
+            hackernews.State(
+                hackernews.Story("Show HN: A pixel clock that shows your coding agents", 312, 87),
+                1,
+                5,
+            )
         ),
-        "home": home.HomeScreen().render(
-            home.State((("LIVING ROOM", "21.5°C"), ("HUMIDITY", "48%")))
-        ),
+        "home": home.HomeScreen().render(home.State(home.Value("LIVING ROOM", "21.5C"), 0, 4)),
         "text": message.text_animation("BUILD OK", "green")[0],
         "alert-error": message.alert_animation("FAILED", "error"),
     }

@@ -401,3 +401,46 @@ def test_social_tokens_are_write_only_and_limited_to_token_apps(ui):
     assert call(url, "/api/social-token", {"app": "youtube", "token": " "}, headers)[0] == 422
     # a valid request needs a clock; with none configured it is refused, never stored
     assert call(url, "/api/social-token", {"app": "youtube", "token": "t"}, headers)[0] == 409
+
+
+def test_trying_a_screen_returns_what_it_read_and_its_picture(ui):
+    url, token, _ = ui
+    headers = {"X-TC002-Token": token, "Content-Type": "application/json"}
+    body = {"screen": "moon", "options": {"hemisphere": "south", "detail": "full"}}
+    status, _, raw = call(url, "/api/try-screen", body, headers)
+    result = json.loads(raw)
+    assert status == 200 and result["ok"] and result["gif"].startswith("data:image/gif;base64,")
+    assert {"eighth", "lit"} <= {label for label, _ in result["facts"]}
+    assert call(url, "/api/try-screen", {"screen": "nope"}, headers)[0] == 422
+
+
+def test_trying_a_failing_screen_says_why(ui, monkeypatch):
+    from tc002.screens import stocks
+
+    def offline(*args, **kwargs):
+        raise OSError("query1.finance.yahoo.com: no network")
+
+    monkeypatch.setattr(stocks, "fetch_quote", offline)
+    url, token, _ = ui
+    headers = {"X-TC002-Token": token, "Content-Type": "application/json"}
+    result = json.loads(call(url, "/api/try-screen", {"screen": "stocks"}, headers)[2])
+    assert result["ok"] is False and "no network" in result["error"]
+
+
+def test_home_entities_need_a_connection(ui, monkeypatch):
+    from tc002 import connections
+
+    monkeypatch.setattr(connections, "value", lambda *a, **k: None)
+    url, token, _ = ui
+    status = call(url, "/api/home/entities", headers={"X-TC002-Token": token})[0]
+    assert status == 409
+
+
+def test_fixed_previews_are_drawn_once(ui, monkeypatch):
+    from tc002.web import previews
+
+    url, _, _ = ui
+    previews._fixed.cache_clear()
+    for _ in range(3):
+        assert call(url, "/api/preview/builtin-youtube.gif")[0] == 200
+    assert previews._fixed.cache_info().misses == 1

@@ -35,12 +35,13 @@ from .errors import ApiError
 from .host_actions_api import HostActions
 from .play_actions import PlayActions, _focus_now
 from .previews import LIVE_SCREENS, Previews
+from .screen_actions import ScreenActions
 from .setup_actions import SetupActions
 
 SECRET_KEYS = {"token", "password", "username", "url", "tokens"}
 
 
-class Api(SetupActions, PlayActions, HostActions, Previews):
+class Api(SetupActions, PlayActions, HostActions, Previews, ScreenActions):
     """Every API action; groups of them live in the *_actions modules."""
 
     def __init__(self, host, config_path, state_dir=None):

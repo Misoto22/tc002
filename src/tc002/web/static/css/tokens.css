@@ -194,6 +194,8 @@
   --thumb-sm-w: 132px; /* the overview strip and pick grid */
   --screen-card-min: 180px;
   --game-card-min: 260px;
+  --detail-thumb-w: 360px; /* the big picture on an item's own page */
+  --picker-w: 360px;
 
   /* type */
   --font: "Inter Tight", -apple-system, BlinkMacSystemFont, "Hiragino Sans", "PingFang SC",
