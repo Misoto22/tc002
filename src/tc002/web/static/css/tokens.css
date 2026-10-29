@@ -79,8 +79,8 @@
   --state-idle: var(--faint);
 
   /* agents, for limit bars (muted so the accent stays the loudest colour) */
-  --agent-claude: #c2482f;
-  --agent-codex: #3d6f63;
+  --agent-claude: #d97757;
+  --agent-codex: #4a63e0;
 
   /* controls */
   --knob: #ffffff;
@@ -191,6 +191,9 @@
   --topbar-h: 52px;
   --content-w: 960px;
   --thumb-w: 176px;
+  --thumb-sm-w: 132px; /* the overview strip and pick grid */
+  --screen-card-min: 180px;
+  --game-card-min: 260px;
 
   /* type */
   --font: "Inter Tight", -apple-system, BlinkMacSystemFont, "Hiragino Sans", "PingFang SC",
@@ -256,8 +259,8 @@
   --yellow-soft: rgb(224 176 80 / 14%);
   --red: #ef6a5f;
   --red-soft: rgb(239 106 95 / 14%);
-  --agent-claude: #e5694e;
-  --agent-codex: #6fb3a2;
+  --agent-claude: #e38b6d;
+  --agent-codex: #8b9cff;
   --knob: #f1eee7;
   --knob-on: #161513;
   --knob-shadow: 0 1px 2px rgb(0 0 0 / 40%);
@@ -306,8 +309,8 @@
     --yellow-soft: rgb(224 176 80 / 14%);
     --red: #ef6a5f;
     --red-soft: rgb(239 106 95 / 14%);
-    --agent-claude: #e5694e;
-    --agent-codex: #6fb3a2;
+    --agent-claude: #e38b6d;
+    --agent-codex: #8b9cff;
     --knob: #f1eee7;
   --knob-on: #161513;
     --knob-shadow: 0 1px 2px rgb(0 0 0 / 40%);

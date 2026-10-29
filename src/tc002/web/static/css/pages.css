@@ -1,91 +1,10 @@
-/* Sessions, plan limits, integrations and first-run setup. Values come from tokens.css. */
+/* Overview, the screen library, built-in apps, integrations, setup and games. Values come
+   from tokens.css. Groups are cards (.panel, .step, .choice); a rule only ever separates
+   rows inside a card, never floats on the page. */
 
 .block { margin-top: var(--space-8); }
 .section-title .link, a.link { color: var(--muted); font-size: var(--text-sm); font-weight: 400; text-decoration: none; }
 a.link:hover { color: var(--accent-text); }
-
-/* ---- state figures: four counts on hairlines ------------------------------------ */
-
-.figures {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  border-block: var(--hairline) solid var(--border);
-}
-
-.figure { padding: var(--space-14) 0 var(--space-14) var(--space-18); }
-.figure:first-child { padding-left: 0; }
-.figure + .figure { border-left: var(--hairline) solid var(--border); }
-.figure-num { font: 300 var(--text-num)/1.1 var(--display); font-variant-numeric: tabular-nums; }
-.figure-label { color: var(--text-2); }
-.figure-hint { color: var(--faint); font-size: var(--text-sm); }
-.figure.state-waiting .figure-num { color: var(--state-waiting); }
-.figure.state-idle .figure-num { color: var(--state-idle); }
-
-@media (max-width: 640px) {
-  .figures { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .figure:nth-child(3) { padding-left: 0; border-left: 0; }
-}
-
-/* ---- session rows --------------------------------------------------------------- */
-
-.session-list { display: flex; flex-direction: column; margin-top: var(--space-16); border-top: var(--hairline) solid var(--border); }
-
-.session {
-  display: grid;
-  grid-template-columns: 14px minmax(0, 1fr) auto auto;
-  gap: var(--space-14);
-  align-items: center;
-  min-height: var(--row-h);
-  padding: var(--space-6) var(--space-4);
-  border-bottom: var(--hairline) solid var(--border);
-  animation: row-in var(--normal) var(--ease) both;
-}
-
-.session.state-waiting { background: var(--accent-soft); }
-.state-dot { width: 7px; height: 7px; border-radius: var(--radius-pill); background: var(--state-working); }
-.state-waiting .state-dot { background: var(--state-waiting); box-shadow: 0 0 0 4px var(--accent-soft); }
-.state-done .state-dot { background: none; box-shadow: inset 0 0 0 1.5px var(--state-done); }
-.state-idle .state-dot { background: var(--track-strong); }
-.session-title { display: flex; align-items: baseline; gap: var(--space-10); min-width: 0; }
-.session-project { font-weight: 500; }
-.session-state { color: var(--muted); font-size: var(--text-sm); }
-.state-waiting .session-state { color: var(--state-waiting); }
-.state-done .session-state { color: var(--state-done); }
-.session-message { overflow: hidden; color: var(--muted); font-size: var(--text-sm); text-overflow: ellipsis; white-space: nowrap; }
-.session-age { color: var(--faint); }
-.session-actions { display: flex; gap: var(--space-2); }
-.session-list.compact .session-actions { display: none; }
-
-/* ---- plan limit cards ----------------------------------------------------------- */
-
-.limit-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(var(--card-min), 1fr)); gap: var(--space-16); }
-
-.limit-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-18);
-  padding: var(--space-20);
-  border-radius: var(--radius-xl);
-  background: var(--panel);
-  box-shadow: inset 0 0 0 1px var(--border);
-}
-
-.limit-card.unknown { background: transparent; }
-.limit-head { display: flex; align-items: center; gap: var(--space-10); }
-.limit-name { font-weight: 500; }
-.meters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-20); }
-.meter { display: flex; flex-direction: column; gap: var(--space-6); }
-.meter-label { color: var(--muted); }
-.meter-num { font: 300 var(--text-num)/1 var(--display); font-variant-numeric: tabular-nums; }
-.meter-num span:not(.num) { font-size: var(--text-xl); }
-.meter.warn .meter-num { color: var(--accent); }
-.meter-track { height: 6px; overflow: hidden; border-radius: var(--radius-pill); background: var(--track); }
-.meter-fill { display: block; height: 100%; border-radius: inherit; transition: width var(--slow) var(--ease); }
-.meter-fill.agent-claude { background: var(--agent-claude); }
-.meter-fill.agent-codex { background: var(--agent-codex); }
-.meter-hint { color: var(--faint); font-size: var(--text-sm); }
-.limit-note { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-12); margin: 0; }
-.limit-note p { flex: 1 1 220px; margin: 0; color: var(--muted); }
 
 /* ---- integrations --------------------------------------------------------------- */
 
@@ -106,7 +25,7 @@ a.link:hover { color: var(--accent-text); }
 
 /* ---- first-run setup ------------------------------------------------------------ */
 
-.step { padding: var(--space-22) 0; border-bottom: var(--hairline) solid var(--border); }
+.step { margin-bottom: var(--space-16); padding: var(--space-20); border-radius: var(--radius-xl); background: var(--panel); box-shadow: inset 0 0 0 var(--hairline) var(--border); }
 .step-head { display: flex; align-items: center; gap: var(--space-12); margin-bottom: var(--space-12); }
 .step-head h2 { margin: 0; font: 600 var(--text-xl) var(--display); }
 
@@ -171,4 +90,90 @@ a.link:hover { color: var(--accent-text); }
 
 .game-stage { max-width: calc(var(--slider-w) * 4); margin-bottom: var(--space-12); }
 .game-score { color: var(--text-2); }
-.game-choice:disabled { opacity: 0.5; cursor: not-allowed; }
+.games { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--game-card-min), 1fr)); gap: var(--space-16); }
+
+.game-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  padding: var(--space-14);
+  border-radius: var(--radius-xl);
+  background: var(--panel);
+  box-shadow: inset 0 0 0 var(--hairline) var(--border);
+}
+
+.game-card .btn { align-self: flex-start; }
+.game-thumb { width: 100%; }
+.game-text { display: grid; gap: var(--space-4); }
+
+/* ---- display mode: two cards, then a sentence saying what the clock will do ---------- */
+
+.mode-choices { grid-template-columns: repeat(auto-fit, minmax(var(--choice-min), 1fr)); margin-top: 0; }
+.choice-head { display: flex; align-items: center; gap: var(--space-8); }
+.mode-choice[aria-pressed="true"] { background: var(--accent-soft); }
+.mode-summary { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-6); margin: 0 0 var(--space-8); color: var(--text-2); }
+
+/* ---- pictures to choose from: the pinned screen, the overview strip ------------------ */
+
+.screen-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--screen-card-min), 1fr)); gap: var(--space-10); }
+
+.screen-card {
+  display: grid;
+  gap: var(--space-8);
+  padding: var(--space-10);
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  box-shadow: inset 0 0 0 var(--hairline) var(--border);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: box-shadow var(--fast), background var(--fast);
+}
+
+.screen-card:hover { box-shadow: inset 0 0 0 var(--hairline) var(--border-strong); }
+.screen-card[aria-checked="true"] { background: var(--accent-soft); box-shadow: inset 0 0 0 1.5px var(--border-accent); }
+.screen-card .led-thumb { width: 100%; }
+.screen-card-title { display: flex; align-items: center; gap: var(--space-6); }
+.screen-card-check { margin-left: auto; color: var(--accent-text); }
+
+.now-card {
+  display: grid;
+  gap: var(--space-12);
+  padding: var(--space-16);
+  border-radius: var(--radius-xl);
+  background: var(--panel);
+  box-shadow: inset 0 0 0 var(--hairline) var(--border);
+  color: inherit;
+  text-decoration: none;
+  transition: box-shadow var(--fast);
+}
+
+.now-card:hover { box-shadow: inset 0 0 0 var(--hairline) var(--border-strong); }
+.now-strip { display: flex; flex-wrap: wrap; gap: var(--space-12); }
+.now-strip figure { display: grid; gap: var(--space-4); margin: 0; }
+.now-strip .led-thumb { width: var(--thumb-sm-w); }
+.now-strip figcaption { color: var(--text-2); font-size: var(--text-sm); }
+.now-text { display: flex; align-items: center; gap: var(--space-8); color: var(--text-2); }
+
+/* ---- the library: a picture, a line, a switch; options open under a switched-on item -- */
+
+.library-item + .library-item { border-top: var(--hairline) solid var(--border); }
+.library-row { min-height: calc(var(--row-h) + var(--space-16)); }
+.library-row .row-title { flex-wrap: wrap; }
+.library-item:not(.on) .led-thumb { opacity: 0.55; filter: saturate(0.6); }
+.library-options { margin: 0 var(--space-16) var(--space-14) calc(var(--thumb-w) + var(--space-16) * 2); border-radius: var(--radius); background: var(--field); }
+.library-options .row { min-height: var(--control-h); }
+.tag { padding: 0 var(--space-6); border-radius: var(--radius-pill); background: var(--field); color: var(--muted); font-size: var(--text-xs); }
+.icon.faint { color: var(--faint); }
+
+.example { display: grid; justify-items: center; gap: var(--space-2); margin: 0; }
+.example .led-thumb { width: var(--thumb-sm-w); }
+.example figcaption { color: var(--faint); font-size: var(--text-xs); }
+
+@media (max-width: 720px) {
+  .library-options { margin-left: var(--space-16); }
+  .library-row { flex-wrap: wrap; }
+  .library-row .led-thumb, .now-strip .led-thumb { width: 100%; }
+}

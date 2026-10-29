@@ -28,7 +28,8 @@ COMMENTS = {
     ),
     "display": "Clock-wide settings, applied with /setConfig. Omit a key to leave it as is.",
     "apps": "Settings of built-in apps (no credentials: those stay on the device).",
-    "rotation": "Replaces the device's own carousel. Each slot is a screen or a kept built-in.",
+    "rotation": "Replaces the device's own carousel. Each slot is a screen or a kept built-in.\n"
+    'mode = "single" holds `show` (one screen or built-in) instead of stepping through slots.',
     "alerts": "A Claude Code session waiting for you takes over the clock until you answer.",
     "screen": "Options of tc002's own screens, one table each (see `tc002 ui` for every\n"
     "option): [screen.countdown] date and label, [screen.worldclock] zones, [screen.focus]\n"

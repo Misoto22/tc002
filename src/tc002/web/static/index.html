@@ -7,6 +7,8 @@
     <meta name="color-scheme" content="light dark" />
     <title>tc002</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <!-- palettes first: tokens.css's dark blocks must win over a palette's light paper -->
     <link rel="stylesheet" href="/css/palettes.css" />
     <link rel="stylesheet" href="/css/tokens.css" />
@@ -33,7 +35,10 @@
           </span>
         </div>
         <div id="nav"></div>
-        <div class="sidebar-foot" id="config-path"></div>
+        <div class="sidebar-foot">
+          <button class="nav-item quick-btn" id="quick" type="button"></button>
+          <div class="config-path" id="config-path"></div>
+        </div>
       </nav>
       <div class="workspace">
         <header class="topbar">
@@ -43,9 +48,6 @@
           <div class="crumb" id="crumb"></div>
           <span class="spacer"></span>
           <button class="status-pill" id="status" type="button" aria-live="polite"></button>
-          <button class="btn ghost icon" id="quick" type="button">
-            <svg class="icon" aria-hidden="true"><use href="/icons.svg#sun-dim"></use></svg>
-          </button>
           <button class="btn ghost kbd-btn" id="palette-btn" type="button">
             <svg class="icon" aria-hidden="true"><use href="/icons.svg#search"></use></svg>
             <kbd>⌘K</kbd>

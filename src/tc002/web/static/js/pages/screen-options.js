@@ -1,9 +1,9 @@
-// Options of tc002's own screens ([screen.<name>] in tc002.toml), drawn from the server's
-// description of each screen's OPTIONS, so a new option needs no UI code.
+// Options of one of tc002's own screens ([screen.<name>] in tc002.toml), drawn from the
+// server's description of each screen's OPTIONS, so a new option needs no UI code.
 
-import { appName, t } from "../i18n.js";
-import { edit, setFocus, store } from "../store.js";
-import { appIcon, h, panel, row, section, segmented, slider } from "../ui.js";
+import { t } from "../i18n.js";
+import { edit, store } from "../store.js";
+import { h, row, segmented, slider } from "../ui.js";
 
 function control(name, key, spec, value, set) {
   const label = t(`opt.${name}.${key}`);
@@ -24,19 +24,17 @@ function control(name, key, spec, value, set) {
     onChange: (e) => set(e.target.value.trim()) });
 }
 
-// One section per enabled screen that has options.
-export function screenOptions() {
-  const described = store.state.screenOptions;
-  const enabled = store.draft.screens.enabled.filter((s) => described[s]);
-  return enabled.flatMap((name) => {
-    const values = store.draft.screen?.[name] ?? {};
-    const focus = () => setFocus({ type: "screen", key: name });
-    const rows = Object.entries(described[name]).map(([key, spec]) => row(
-      t(`opt.${name}.${key}`), t(`opt.${name}.${key}Hint`) === `opt.${name}.${key}Hint` ? null : t(`opt.${name}.${key}Hint`),
-      control(name, key, spec, values[key] ?? spec.default,
-        (v) => edit((dr) => { dr.screen = { ...dr.screen, [name]: { ...dr.screen?.[name], [key]: v } }; })),
-      { path: `screen.${name}.${key}`, onFocus: focus }));
-    return [section([appIcon(name, "sm"), appName(name), h("span", { class: "muted" }, `· ${t("opt.tc002Screen")}`)]),
-      panel(...rows)];
-  });
+// The option rows of screen `name`, or null when it has none.
+export function screenOptions(name) {
+  const described = store.state.screenOptions[name];
+  if (!described) return null;
+  const values = store.draft.screen?.[name] ?? {};
+  const hint = (key) => {
+    const text = t(`opt.${name}.${key}Hint`);
+    return text === `opt.${name}.${key}Hint` ? null : text;
+  };
+  return Object.entries(described).map(([key, spec]) => row(t(`opt.${name}.${key}`), hint(key),
+    control(name, key, spec, values[key] ?? spec.default,
+      (v) => edit((dr) => { dr.screen = { ...dr.screen, [name]: { ...dr.screen?.[name], [key]: v } }; })),
+    { path: `screen.${name}.${key}` }));
 }

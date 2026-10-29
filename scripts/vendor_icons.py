@@ -31,6 +31,8 @@ UI_ICONS = [
     "plug",
     "panel-left",
     "list-checks",
+    "pin",
+    "wand-sparkles",
     # actions
     "grip-vertical",
     "plus",

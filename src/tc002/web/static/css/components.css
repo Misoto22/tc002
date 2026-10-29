@@ -1,7 +1,7 @@
 /* Shared components. Values come from tokens.css; the only per-item colour (a message
    swatch) arrives as --swatch, set from data, never written here. */
 
-/* ---- app icon: a neutral tile with the official mark or a Lucide glyph, monochrome ---- */
+/* ---- app icon: the official mark or a Lucide glyph, no tile; agents in their colour -- */
 
 .app-icon {
   display: grid;
@@ -9,17 +9,16 @@
   width: var(--app-icon);
   height: var(--app-icon);
   flex: none;
-  border-radius: var(--radius-sm);
-  background: var(--field);
   color: var(--text-2);
-  box-shadow: inset 0 0 0 1px var(--border);
 }
+.app-icon[data-app="claude"] { color: var(--agent-claude); }
+.app-icon[data-app="codex"] { color: var(--agent-codex); }
 
-/* sized from the tile token, not a percentage: a % height on an SVG in a grid cell resolves
-   against the row, not the tile */
-.app-icon .icon { width: calc(var(--app-icon) * 0.62); height: calc(var(--app-icon) * 0.62); }
-.app-icon.sm { --app-icon: 20px; border-radius: var(--radius-xs); }
-.app-icon.lg { --app-icon: 36px; border-radius: var(--radius); }
+/* sized from the box token, not a percentage: a % height on an SVG in a grid cell resolves
+   against the row, not the box */
+.app-icon .icon { width: calc(var(--app-icon) * 0.72); height: calc(var(--app-icon) * 0.72); }
+.app-icon.sm { --app-icon: 18px; }
+.app-icon.lg { --app-icon: 32px; }
 
 /* ---- badges and status ------------------------------------------------------------ */
 
@@ -131,7 +130,7 @@
   cursor: pointer;
 }
 
-.chip .app-icon { --app-icon: 18px; border-radius: var(--radius-pill); }
+.chip .app-icon { --app-icon: 16px; }
 .chip.current { color: var(--text); border-color: var(--border-accent); }
 .chip::before { /* progress of the slot now playing */
   content: "";
@@ -158,7 +157,7 @@
 .quick-grid .row-title, .quick-row .row-title { flex: none; white-space: nowrap; }
 .quick-grid .row + .row { border-top: 0; }
 
-/* ---- rotation: presets, slots, cycle bar ------------------------------------------- */
+/* ---- rotation: presets and slots ------------------------------------------------- */
 
 .presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--preset-min), 1fr)); gap: var(--space-10); }
 
@@ -187,9 +186,6 @@
 .handle { display: grid; place-items: center; width: 18px; height: var(--control-h); color: var(--faint); cursor: grab; }
 .slot.dragging { z-index: 2; border-radius: var(--radius); box-shadow: var(--shadow); cursor: grabbing; }
 
-.cycle-wrap { display: grid; gap: var(--space-6); margin-top: var(--space-12); }
-.cycle { display: flex; gap: var(--space-2); height: 6px; overflow: hidden; border-radius: var(--radius-pill); }
-.cycle span { height: 100%; border-radius: var(--radius-pill); background: var(--border-strong); transition: flex var(--slow) var(--ease); }
 
 /* ---- message swatches ------------------------------------------------------------ */
 

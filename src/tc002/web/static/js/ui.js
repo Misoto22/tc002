@@ -134,10 +134,10 @@ export function select(options, value, onChange, label) {
 }
 
 // An app's icon: the official mark (or a Lucide glyph) listed in app-icons.json, drawn
-// monochrome on a neutral tile like every other icon.
+// as a glyph with no tile behind it; the CSS colours the agents (data-app) by brand.
 export function appIcon(key, size = "") {
   const spec = assets.icons[key];
-  const tile = h("span", { class: `app-icon ${size}`.trim(), "aria-hidden": "true" });
+  const tile = h("span", { class: `app-icon ${size}`.trim(), "data-app": key, "aria-hidden": "true" });
   if (!spec) return tile;
   tile.append(icon(spec.symbol, spec.kind === "brand" ? "icon icon-brand" : "icon"));
   return tile;
@@ -246,6 +246,7 @@ export function transition(update, finished) {
   let done = false;
   const run = () => { if (!done) { done = true; update(); } };
   const vt = document.startViewTransition(run);
+  vt.ready.catch(() => {}); // a skipped transition rejects ready; the update still ran
   vt.finished.finally(() => finished?.());
   setTimeout(() => { if (!done) { vt.skipTransition(); run(); } }, TIMING.transitionStartMs);
 }

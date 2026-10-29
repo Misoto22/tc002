@@ -1,7 +1,7 @@
 [project]
 name = "tc002"
 version = "0.1.0"
-description = "Set up and run the Ulanzi TC002 pixel clock from your Mac: settings, rotation, messages and live screens"
+description = "Set up and run the Ulanzi TC002 pixel clock from your Mac: settings, rotation, messages, games and live screens"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]

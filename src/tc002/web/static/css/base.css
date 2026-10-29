@@ -47,6 +47,7 @@ kbd {
 .app {
   display: grid;
   grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr); /* one viewport-tall row: the sidebar and main scroll on their own */
   height: 100%;
   transition: grid-template-columns var(--normal) var(--ease);
 }
@@ -109,11 +110,14 @@ kbd {
 .nav-item .count { margin-left: auto; color: var(--faint); font: var(--text-sm) var(--mono); }
 .nav-item .count.alert { min-width: 20px; padding: 0 var(--space-6); border-radius: var(--radius-pill); background: var(--accent); color: var(--on-accent); text-align: center; }
 
-.sidebar-foot { margin-top: auto; padding: var(--space-10); color: var(--faint); font-size: var(--text-sm); word-break: break-all; }
+.sidebar-foot { display: grid; gap: var(--space-6); margin-top: auto; padding-top: var(--space-10); }
+.quick-btn { width: 100%; border: 0; background: none; font: inherit; cursor: pointer; }
+.quick-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.config-path { padding: 0 var(--space-10) var(--space-4); overflow: hidden; color: var(--faint); font-size: var(--text-xs); text-overflow: ellipsis; white-space: nowrap; }
 
 /* collapsed: an icon rail; labels hide, icons centre, the nav keeps its tooltips */
 .collapsed .brand-text, .collapsed .nav-label, .collapsed .nav-item span,
-.collapsed .sidebar-foot { display: none; }
+.collapsed .config-path { display: none; }
 .collapsed .brand { justify-content: center; padding-inline: 0; }
 .collapsed .nav-item { justify-content: center; padding: 0; }
 .collapsed .nav-group + .nav-group { margin-top: var(--space-10); padding-top: var(--space-10); border-top: var(--hairline) solid var(--border); }
@@ -137,7 +141,7 @@ kbd {
 main { position: relative; overflow-y: auto; outline: none; }
 
 .page { max-width: var(--content-w); margin: 0 auto; padding: var(--space-36) var(--space-40) var(--space-120); }
-.page-head { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-16); margin-bottom: var(--space-28); padding-bottom: var(--space-18); border-bottom: var(--hairline) solid var(--border); }
+.page-head { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-16); margin-bottom: var(--space-24); }
 .page-head h1 { margin: 0; font: 600 var(--text-2xl)/1.2 var(--display); letter-spacing: -0.01em; }
 .page-head p { margin: var(--space-4) 0 0; color: var(--muted); }
 .page-head .actions { margin-left: auto; display: flex; gap: var(--space-8); }
@@ -186,8 +190,6 @@ main { position: relative; overflow-y: auto; outline: none; }
   width: var(--app-icon);
   height: var(--app-icon);
   flex: none;
-  border-radius: var(--radius-sm);
-  background: var(--field);
   color: var(--muted);
 }
 

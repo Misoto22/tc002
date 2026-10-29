@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Misoto22/tc002/main/docs/hero-dark.svg">
+    <img alt="tc002 — set up and run the Ulanzi TC002 pixel clock from your Mac" src="https://raw.githubusercontent.com/Misoto22/tc002/main/docs/hero-light.svg" width="820">
+  </picture>
+</p>
+
 # tc002
 
 Set up and run your **Ulanzi TC002** pixel clock (52×16 RGB) from your Mac: brightness
@@ -18,20 +25,23 @@ Or try it without installing: `uvx tc002 ui`.
   settings file, offers a starting layout and, if you use them, connects Claude Code and
   Codex. Everything can be changed later.
 - **Display & sound** — brightness (three levels, each with its own percentage), volume,
-  time zone, date format, week start, scroll speed. The quick settings in the top bar
-  apply brightness and volume at once.
+  time zone, date format, week start, scroll speed. **Brightness & volume** at the foot of
+  the sidebar applies them at once, from any page.
 - **Built-in apps** — keep the ones you want (clock, weather, Pomodoro, social counters,
-  calendars…), turn the rest off, and set their options: clock format, weather city
-  (search by name), focus timer lengths. Accounts and API keys stay in Ulanzi Studio.
-- **Rotation** — the order and duration of everything the clock shows, replacing the
-  device's own carousel. Drag to reorder, start from a preset, and try a change **live on
-  the clock** before saving.
+  calendars…), turn the rest off, and set each one up right under its switch: clock
+  format, weather city (search by name; cities, not villages that share the name), a
+  social account's ID and token (sent to the clock, never stored).
+- **On the clock** — rotate through screens, each for its own time, or hold one screen
+  until you change it; either way you pick from pictures of what will show. Drag to
+  reorder, start from a template, and try a change **live on the clock** before saving.
 - **Messages** — send text or an alert in English or Chinese from the UI, the command
   line, or any script or CI job on the same network.
-- **Screens** — tc002 adds its own animated screens to the rotation (see the gallery
-  below), rendered on your Mac and sent as looping GIFs.
+- **Screens** — tc002 adds its own animated screens (see the gallery below), rendered on
+  your Mac and sent as looping GIFs. Each is listed with its picture, a line on what it
+  shows, and its options under it.
 - **Play** — Breakout, Snake and Pong on the clock, played with your Mac's keyboard while
-  the page mirrors the game; the rotation pauses until you stop.
+  the page mirrors the game; each card shows the game playing itself, and the rotation
+  pauses until you stop.
 
 The interface is in English or Chinese, light or dark, in five colour themes, with ⌘K for
 anything and ⌘S to save.
@@ -72,31 +82,53 @@ tc002 doctor
 
 ## Screen gallery
 
-Screens tc002 draws itself, each exactly 52×16 pixels. Turn them on in **Rotation**.
+Screens tc002 draws itself, each exactly 52×16 pixels, and the three games. Turn screens
+on in **On the clock**.
 
-| Sessions | Waiting for you | Finished | Plan limits |
-|---|---|---|---|
-| ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/claude.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/claude-wait.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/claude-done.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/usage.gif) |
-
-| System | Text | Alert | Limits, one unknown |
-|---|---|---|---|
-| ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/sys.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/text.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/alert-error.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/usage-unknown.gif) |
-
-| Focus timer | Day progress | Countdown | World clock |
-|---|---|---|---|
-| ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/focus.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/progress.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/countdown.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/worldclock.gif) |
-
-| Sunrise & sunset | Moon | Game of Life | Fireplace |
-|---|---|---|---|
-| ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/sun.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/moon.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/life.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/fire.gif) |
-
-| Calendar | GitHub | Now playing | Air quality |
-|---|---|---|---|
-| ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/agenda.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/github.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/nowplaying.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/air.gif) |
-
-| Crypto | Stocks | Hacker News | Home Assistant |
-|---|---|---|---|
-| ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/crypto.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/stocks.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/hackernews.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/home.gif) |
+<table>
+  <tr>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/claude.gif" width="192" alt="Sessions"><br><sub>Sessions</sub></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/claude-wait.gif" width="192" alt="Waiting for you"><br><sub>Waiting for you</sub></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/claude-done.gif" width="192" alt="Finished"><br><sub>Finished</sub></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/usage.gif" width="192" alt="Plan limits"><br><sub>Plan limits</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/sys.gif" width="192" alt="System"><br><sub>System</sub></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/text.gif" width="192" alt="Text"><br><sub>Text</sub></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/alert-error.gif" width="192" alt="Alert"><br><sub>Alert</sub></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/usage-unknown.gif" width="192" alt="Limits, one unknown"><br><sub>Limits, one unknown</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/focus.gif" width="192" alt="Focus timer"><br><sub>Focus timer</sub></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/progress.gif" width="192" alt="Day progress"><br><sub>Day progress</sub></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/countdown.gif" width="192" alt="Countdown"><br><sub>Countdown</sub></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/worldclock.gif" width="192" alt="World clock"><br><sub>World clock</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/sun.gif" width="192" alt="Sunrise &amp; sunset"><br><sub>Sunrise &amp; sunset</sub></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/moon.gif" width="192" alt="Moon"><br><sub>Moon</sub></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/life.gif" width="192" alt="Game of Life"><br><sub>Game of Life</sub></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/fire.gif" width="192" alt="Fireplace"><br><sub>Fireplace</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/agenda.gif" width="192" alt="Calendar"><br><sub>Calendar</sub></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/github.gif" width="192" alt="GitHub"><br><sub>GitHub</sub></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/nowplaying.gif" width="192" alt="Now playing"><br><sub>Now playing</sub></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/air.gif" width="192" alt="Air quality"><br><sub>Air quality</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/crypto.gif" width="192" alt="Crypto"><br><sub>Crypto</sub></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/stocks.gif" width="192" alt="Stocks"><br><sub>Stocks</sub></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/hackernews.gif" width="192" alt="Hacker News"><br><sub>Hacker News</sub></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/home.gif" width="192" alt="Home Assistant"><br><sub>Home Assistant</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/game-breakout.gif" width="192" alt="Breakout"><br><sub>Breakout</sub></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/game-snake.gif" width="192" alt="Snake"><br><sub>Snake</sub></td>
+    <td align="center" width="25%"><img src="https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/game-pong.gif" width="192" alt="Pong"><br><sub>Pong</sub></td>
+    <td width="25%"></td>
+  </tr>
+</table>
 
 - **Sessions** (for Claude Code users) — how many sessions are running, asking for you,
   and finished but unread. A session that starts waiting takes over the clock with its
@@ -120,9 +152,9 @@ Screens tc002 draws itself, each exactly 52×16 pixels. Turn them on in **Rotati
 - **Home Assistant** — any two sensors or devices.
 
 Screens with options (the countdown's date, the world clock's places, the focus timer's
-lengths, the coins and stock to follow) are set in **App settings**. Services that need a
-token or a private link are set up in **Connections**; those secrets are kept in the
-macOS Keychain, never in a file.
+lengths, the coins and stock to follow) are set right under the screen in **On the
+clock**. Services that need a token or a private link are set up in **Connections**;
+those secrets are kept in the macOS Keychain, never in a file.
 
 Nothing a screen reads leaves your Mac.
 
