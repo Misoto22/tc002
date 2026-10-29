@@ -1,6 +1,8 @@
 // UI strings in English and Chinese. t("key", {var}) looks up the current language and
 // falls back to English, then to the key itself, so a missing string is visible, not blank.
 
+import * as agents from "./i18n-agents.js";
+
 const en = {
   "nav.clock": "Clock", "nav.send": "Send", "nav.system": "System",
   "page.overview": "Overview", "page.rotation": "Rotation", "page.builtins": "Built-in apps",
@@ -58,7 +60,7 @@ const en = {
   "rotation.cycle": "One cycle: {s}s", "rotation.screens": "Screens",
   "rotation.builtins": "Built-in apps", "rotation.nothing": "Nothing to add",
   "rotation.takeover": "Alerts take over",
-  "rotation.takeoverHint": "DONE and WAIT from Claude Code jump to the Claude screen at once",
+  "rotation.takeoverHint": "A session waiting for you takes over the clock until you answer; a finished one shows DONE briefly",
   "rotation.screenToggle": "{name} screen", "rotation.screenHint": "Run this screen in the background service",
   "rotation.drag": "Drag to reorder", "rotation.seconds": "seconds",
 
@@ -176,7 +178,7 @@ const zh = {
   "rotation.cycle": "一轮 {s} 秒", "rotation.screens": "画面",
   "rotation.builtins": "预设应用", "rotation.nothing": "没有可添加的项目",
   "rotation.takeover": "提醒优先显示",
-  "rotation.takeoverHint": "Claude Code 的 DONE 和 WAIT 会立即切到 Claude 画面",
+  "rotation.takeoverHint": "有会话在等你时立即占用时钟，直到你回复；完成的会话会短暂显示 DONE",
   "rotation.screenToggle": "{name}画面", "rotation.screenHint": "在后台服务中运行这个画面",
   "rotation.drag": "拖动排序", "rotation.seconds": "秒",
 
@@ -239,13 +241,13 @@ const zh = {
 
 // Built-in app and screen names.
 const names = {
-  en: { claude: "Claude Code", sys: "System", usage: "AI usage", codex: "Codex", clock: "Clock", weather: "Weather", busy: "Busy light",
+  en: { claude: "Sessions", sys: "System", usage: "Plan limits", codex: "Codex", clock: "Clock", weather: "Weather", busy: "Busy light",
     scoreboard: "Scoreboard", tomato: "Pomodoro", stopwatch: "Stopwatch", battery: "Battery",
     soundlight: "Sound light", ipshow: "IP address", xhs: "Xiaohongshu", douyin: "Douyin",
     bilibili: "Bilibili", weibo: "Weibo", youtube: "YouTube", instagram: "Instagram",
     facebook: "Facebook", tiktok: "TikTok", x: "X", feishu: "Feishu", dingding: "DingTalk",
     wecom: "WeCom", google: "Google Calendar", icloud: "iCloud", outlook: "Outlook" },
-  zh: { claude: "Claude Code", sys: "系统", usage: "AI 用量", codex: "Codex", clock: "时钟", weather: "天气", busy: "忙碌灯",
+  zh: { claude: "会话", sys: "系统", usage: "用量额度", codex: "Codex", clock: "时钟", weather: "天气", busy: "忙碌灯",
     scoreboard: "计分板", tomato: "番茄钟", stopwatch: "秒表", battery: "电量",
     soundlight: "拾音灯", ipshow: "IP 显示", xhs: "小红书", douyin: "抖音",
     bilibili: "哔哩哔哩", weibo: "微博", youtube: "YouTube", instagram: "Instagram",
@@ -253,7 +255,7 @@ const names = {
     wecom: "企业微信", google: "Google 日历", icloud: "iCloud 日历", outlook: "Outlook" },
 };
 
-const DICTS = { en, zh };
+const DICTS = { en: { ...en, ...agents.en }, zh: { ...zh, ...agents.zh } };
 let current = "en";
 
 export function setLang(lang) {
@@ -264,11 +266,19 @@ export function setLang(lang) {
 export const lang = () => current;
 
 export function t(key, vars = {}) {
-  const text = DICTS[current][key] ?? en[key] ?? key;
+  const text = DICTS[current][key] ?? DICTS.en[key] ?? key;
   return text.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? "");
 }
 
 export const appName = (key) => names[current][key] ?? names.en[key] ?? key;
+
+// "1 h 42 min" until a Unix time; null when it has passed or is unknown.
+export function until(unix) {
+  const left = Math.round(unix - Date.now() / 1000);
+  if (!unix || left <= 0) return null;
+  const h = Math.floor(left / 3600), m = Math.round((left % 3600) / 60);
+  return h ? t("ago.until.h", { h, m }) : t("ago.until.m", { m: Math.max(1, m) });
+}
 
 export function ago(seconds) {
   if (seconds < 5) return t("ago.now");

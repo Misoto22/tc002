@@ -3,7 +3,7 @@
 import argparse
 from importlib.metadata import version
 
-from ..runtime import events
+from ..runtime import sessions
 from ..screens import message
 
 EPILOG = """\
@@ -67,8 +67,12 @@ def build():
     a.add_argument("--app", default="alert")
     a.add_argument("--keep", action="store_true", help="leave it on the clock")
 
-    e = sub.add_parser("event", help="record a Claude Code hook event (used by the hooks)")
-    e.add_argument("kind", choices=events.KINDS)
+    sub.add_parser("hook", help="record a Claude Code hook event from stdin (used by the hooks)")
+    sub.add_parser(
+        "statusline", help="save Claude Code's plan limits, then run your own status line"
+    )
+    e = sub.add_parser("event", help="mark a done / wait / clear by hand")
+    e.add_argument("kind", choices=list(sessions.MANUAL))
 
     w = sub.add_parser("watch", help="run screens + rotation in the foreground")
     w.add_argument("--once", action="store_true", help="push one animation per screen, exit")
@@ -79,6 +83,8 @@ def build():
     svc = sub.add_parser("service", help="the launchd background service")
     svc.add_argument("action", choices=["install", "uninstall", "status"])
 
-    hk = sub.add_parser("hooks", help="the Claude Code hooks in ~/.claude/settings.json")
+    hk = sub.add_parser(
+        "hooks", help="Claude Code hooks and status line in ~/.claude/settings.json"
+    )
     hk.add_argument("action", choices=["install", "uninstall", "status"])
     return p

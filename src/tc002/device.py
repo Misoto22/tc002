@@ -105,5 +105,9 @@ class Device:
         """Merge `fields` into the global config (brightness, carouselSpeed, ...)."""
         return self._request("/setConfig", fields)
 
+    def base_info(self):
+        """Firmware, network and serial: the cheapest call that proves a TC002 is there."""
+        return self._request("/getBase")
+
     def info(self):
-        return {"base": self._request("/getBase"), "config": self.config()}
+        return {"base": self.base_info(), "config": self.config()}

@@ -11,14 +11,16 @@ import time
 
 from .. import builtins, config, config_writer, device_settings, presets, sync
 from ..device import CATEGORY_ENDPOINTS, Device, DeviceError
-from ..integrations import claude_hooks, executable, launchd
+from ..integrations import claude_hooks, executable, launchd, statusline
 from ..render import font, mockup
 from ..render.palette import hex_palette
-from ..runtime import events, hold
-from ..screens import SCREENS, message
+from ..runtime import hold
+from ..screens import SCREENS, builtin_previews, message
 from ..screens.examples import examples
-from . import cities
+from . import cities, host_actions, setup
+from .agents import Agents
 
+LIVE_SCREENS = {"claude", "usage"}  # cheap to sample: previewed with real data
 SECRET_KEYS = {"token", "password", "username", "url", "tokens"}
 
 
@@ -34,6 +36,7 @@ class Api:
     def __init__(self, host, config_path, state_dir=None):
         self.host, self.config_path = host, config_path
         self.state_dir = state_dir or config.STATE_DIR
+        self.agents = Agents()
 
     # -- helpers ------------------------------------------------------------------
 
@@ -56,6 +59,7 @@ class Api:
             },
             "clock": self._clock_state(settings),
             "integrations": self._integrations(),
+            "agents": self.agents.snapshot(),
             "catalogue": [
                 {"key": k, "category": b.category, "index": b.index}
                 for k, b in builtins.CATALOGUE.items()
@@ -103,15 +107,45 @@ class Api:
 
     def _integrations(self):
         try:
-            hooks = claude_hooks.status(executable())
+            exe = executable()
+            hooks, wrapped = claude_hooks.status(exe), statusline.status(exe)
         except RuntimeError as exc:
-            hooks = {"error": str(exc)}
-        kind, at = events.latest()
-        return {
-            "service": launchd.status(),
-            "hooks": hooks,
-            "lastEvent": {"kind": kind, "secondsAgo": round(time.time() - at)} if kind else None,
-        }
+            hooks, wrapped = {"error": str(exc)}, False
+        return {"service": launchd.status(), "hooks": hooks, "statusline": wrapped}
+
+    def agents_now(self, query=None):
+        return self.agents.snapshot()
+
+    def discover(self, query):
+        return setup.discover()
+
+    def first_run(self, body):
+        host = str(body.get("host") or "").strip()
+        if not host or len(host) > 253 or any(c.isspace() for c in host):
+            raise ApiError(422, "Invalid address", "Give the clock's IP address or host name.")
+        try:
+            done = setup.setup(host, body.get("preset"))
+        except ValueError as exc:
+            raise ApiError(422, "No clock there", str(exc)) from None
+        self.host, self.config_path = done["host"], config.path()
+        return done
+
+    def integration(self, action):
+        try:
+            return host_actions.run(action)
+        except KeyError:
+            raise ApiError(404, "Not found", f"No integration action {action!r}.") from None
+
+    def log(self, query):
+        return {"path": str(launchd.LOG), "text": host_actions.log_tail()}
+
+    def reveal(self, body):
+        targets = {"config": self.config_path, "log": launchd.LOG}
+        target = targets.get(body.get("what"))
+        if target is None:
+            raise ApiError(422, "Nothing to show", "Choose the config file or the log.")
+        host_actions.reveal(target)
+        return {"revealed": str(target)}
 
     def led(self):
         """Pixel fonts and LED palette, so browser previews draw exactly what the clock would."""
@@ -130,6 +164,14 @@ class Api:
             anim = message.alert_animation(
                 query.get("text", "DONE")[:12], query.get("kind", "done"), query.get("color")
             )
+        elif name.removeprefix("live-") in LIVE_SCREENS and name.startswith("live-"):
+            screen = SCREENS[name.removeprefix("live-")]()
+            anim = screen.render(screen.sample())
+        elif name.startswith("builtin-"):
+            try:
+                anim = builtin_previews.render(name.removeprefix("builtin-"))
+            except ValueError:
+                raise ApiError(404, "Unknown preview", f"No built-in app {name!r}.") from None
         else:
             anims = examples()
             if name not in anims:

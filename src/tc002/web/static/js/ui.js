@@ -48,18 +48,72 @@ export function toggle(checked, onChange, { label, disabled } = {}) {
   });
 }
 
+// A segmented control whose thumb can be dragged: it follows the pointer, and on release
+// settles on the nearest option. Clicks and the arrow keys work as on any radio group.
 export function segmented(options, value, onChange, label) {
-  const group = h("div", { class: "segmented", role: "radiogroup", "aria-label": label });
-  for (const [optValue, optLabel] of options) {
-    group.append(h("button", {
-      type: "button", role: "radio", "aria-checked": String(optValue === value),
-      onClick: (e) => {
-        for (const b of group.children) b.setAttribute("aria-checked", "false");
-        e.currentTarget.setAttribute("aria-checked", "true");
-        onChange(optValue);
-      },
-    }, optLabel));
+  const thumb = h("span", { class: "segmented-thumb", "aria-hidden": "true" });
+  const group = h("div", { class: "segmented", role: "radiogroup", "aria-label": label }, thumb);
+  const buttons = options.map(([optValue, optLabel], i) => h("button", {
+    type: "button", role: "radio", tabindex: optValue === value ? "0" : "-1",
+    onClick: () => choose(i),
+  }, optLabel));
+  group.append(...buttons);
+  let index = Math.max(0, options.findIndex(([v]) => v === value));
+  let drag = null;
+
+  function paint(at, chosen = Math.round(at)) {
+    group.style.setProperty("--n", options.length);
+    group.style.setProperty("--i", at);
+    buttons.forEach((b, i) => {
+      b.setAttribute("aria-checked", String(i === chosen));
+      b.tabIndex = i === chosen ? 0 : -1;
+    });
   }
+
+  function choose(i) {
+    const changed = i !== index;
+    index = i;
+    paint(i);
+    if (changed) onChange(options[i][0]);
+  }
+
+  // pointer x -> fractional cell index under the thumb's centre
+  const position = (e) => {
+    const box = group.getBoundingClientRect();
+    const cell = (box.width - 4) / options.length;
+    return Math.min(options.length - 1, Math.max(0, (e.clientX - box.left - 2 - cell / 2) / cell));
+  };
+
+  group.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0) return;
+    drag = { x: e.clientX, moved: false };
+    group.setPointerCapture(e.pointerId);
+  });
+  group.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    if (!drag.moved && Math.abs(e.clientX - drag.x) < 3) return;
+    drag.moved = true;
+    group.classList.add("dragging");
+    paint(position(e));
+  });
+  const release = (e) => {
+    if (!drag) return;
+    group.classList.remove("dragging");
+    drag = null;
+    if (e.type === "pointerup") choose(Math.round(position(e)));
+    else paint(index);
+  };
+  group.addEventListener("pointerup", release);
+  group.addEventListener("pointercancel", release);
+  group.addEventListener("keydown", (e) => {
+    const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+    const jump = { Home: 0, End: options.length - 1 }[e.key];
+    if (step === undefined && jump === undefined) return;
+    e.preventDefault();
+    choose(jump ?? (index + step + options.length) % options.length);
+    buttons[index].focus();
+  });
+  paint(index);
   return group;
 }
 

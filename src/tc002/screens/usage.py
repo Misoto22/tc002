@@ -1,86 +1,85 @@
-"""Token usage of Claude Code and Codex, one page per agent.
+"""Plan limits of Claude Code and Codex on one screen, one 8-pixel row per agent.
 
-Layout of a page (52x16):
-  [icon 7x7]  NAME (agent colour)            5h tokens (top right, grey)
-              TODAY'S TOKENS (big, counts up when the page appears)
-              5h / weekly allowance bars (bottom row, Codex only, when reported)
+Layout of a row (52 px wide):
+  x 1-5    agent mark, 5x5, in the agent's colour
+  x 8-18   5-hour % used, small font ("--" when unknown); amber from 80 %, blinking from 95 %
+  x 25-50  5-hour bar, 3 px tall; under it a 1 px line for the 7-day %
+Claude Code is the top row (y 1), Codex the bottom (y 9). Bars fill from empty when the
+screen comes on, then hold.
 """
 
 from dataclasses import dataclass
 
-from .. import usage as tokens
-from ..render import font
 from ..render.anim import Animation
-from ..render.canvas import WIDTH, Canvas, mix
+from ..render.canvas import Canvas
 from ..render.palette import LED
 from ..usage.claude import ClaudeUsage
 from ..usage.codex import CodexUsage
 
-COUNT_FRAMES, COUNT_MS, HOLD_MS = 7, 45, 3500
-# name, colour and a 7x7 mark per agent (Claude's spark; a prompt-in-a-ring for Codex)
+FILL_FRAMES, FILL_MS, HOLD_MS, BLINK_MS = 12, 40, 4000, 500
+WARN, CRITICAL = 80, 95
+BAR_X, BAR_W = 25, 26
 AGENTS = {
-    "claude": (
-        "CLAUDE",
-        LED["orange"],
-        ["...#...", ".#.#.#.", "..###..", "#######", "..###..", ".#.#.#.", "...#..."],
-    ),
-    "codex": (
-        "CODEX",
-        LED["teal"],
-        [".#####.", "##...##", "#.#....", "#..#...", "#.#....", "##...##", ".#####."],
-    ),
+    "claude": (LED["orange"], ["#.#.#", ".###.", "#####", ".###.", "#.#.#"]),
+    "codex": (LED["teal"], [".###.", "#...#", "#.#.#", "#...#", ".###."]),
 }
+ROWS = (("claude", 1), ("codex", 9))
 
 
 @dataclass(frozen=True)
-class Page:
+class Row:
     agent: str
-    today: int
-    window: int
-    limit_5h: float | None = None
-    limit_week: float | None = None
-
-
-def load_color(pct):
-    return (
-        mix(LED["green"], LED["yellow"], pct / 60)
-        if pct <= 60
-        else mix(LED["yellow"], LED["red"], (pct - 60) / 40)
-    )
-
-
-def draw_page(c, page, progress=1.0):
-    """Draw one agent's numbers; `progress` (0..1) animates the count-up."""
-    name, colour, icon = AGENTS[page.agent]
-    c.sprite(1, 4, icon, colour)
-    c.text(11, 1, name, colour, big=False)
-    window = tokens.short(page.window)
-    c.text(WIDTH - font.text_width(font.SMALL, window), 1, window, LED["label"], big=False)
-    eased = 1 - (1 - progress) ** 3
-    c.text(11, 8, tokens.short(page.today * eased), LED["white"])
-    for x0, pct in ((11, page.limit_5h), (32, page.limit_week)):
-        if pct is not None:
-            c.rect(x0, 15, 19, 1, LED["track"])
-            c.rect(x0, 15, max(1, round(19 * min(pct, 100) / 100)), 1, load_color(pct))
-
-
-def page_frames(page):
-    """Count-up frames followed by one long hold."""
-    frames = []
-    for i in range(1, COUNT_FRAMES + 1):
-        c = Canvas()
-        draw_page(c, page, i / COUNT_FRAMES)
-        frames.append(c)
-    return frames, [COUNT_MS] * (COUNT_FRAMES - 1) + [HOLD_MS]
+    five_hour: int | None  # % used, rounded; None when the agent has not reported it
+    week: int | None
 
 
 @dataclass(frozen=True)
 class State:
-    pages: tuple[Page, ...]
+    rows: tuple[Row, ...]
+
+
+def _round(pct):
+    return None if pct is None else max(0, min(100, round(pct)))
+
+
+def _bar(c, y, height, pct, colour):
+    c.rect(BAR_X, y, BAR_W, height, LED["track"])
+    if pct:
+        c.rect(BAR_X, y, max(1, round(BAR_W * pct / 100)), height, colour)
+
+
+def draw_row(c, row, y, progress=1.0, lit=True):
+    colour, mark = AGENTS[row.agent]
+    known = row.five_hour is not None
+    c.sprite(1, y, mark, colour if known else LED["gray"])
+    if not known:
+        c.text(8, y, "--", LED["gray"], big=False)
+    elif lit:
+        warn = row.five_hour >= WARN
+        c.text(8, y, f"{row.five_hour}%", LED["amber"] if warn else LED["white"], big=False)
+    eased = 1 - (1 - progress) ** 3
+    _bar(c, y, 3, (row.five_hour or 0) * eased, colour)
+    _bar(c, y + 4, 1, (row.week or 0) * eased, LED["soft_white"])
+
+
+def frame(state, progress=1.0, lit=True):
+    c = Canvas()
+    for row, (_, y) in zip(state.rows, ROWS, strict=True):
+        draw_row(c, row, y, progress, lit)
+    return c
+
+
+def render(state):
+    frames = [frame(state, i / FILL_FRAMES) for i in range(1, FILL_FRAMES + 1)]
+    delays = [FILL_MS] * (FILL_FRAMES - 1) + [HOLD_MS]
+    if any(r.five_hour is not None and r.five_hour >= CRITICAL for r in state.rows):
+        frames += [frame(state, lit=False), frame(state)] * 4
+        delays += [BLINK_MS] * 8
+    return Animation(frames, delays, key=state)
 
 
 class UsageScreen:
-    """Claude Code and Codex token usage; re-renders only when a rounded number changes."""
+    """Re-renders only when a rounded percentage changes."""
 
     APP = "usage"
     TICK = 30.0
@@ -89,27 +88,11 @@ class UsageScreen:
         self.claude, self.codex = claude or ClaudeUsage(), codex or CodexUsage()
 
     def sample(self):
-        pages = []
-        c = self.claude.collect()
-        pages.append(Page("claude", tokens.rough(c.today), tokens.rough(c.window)))
-        x = self.codex.collect()
-        if x.source != "none":  # only show Codex when it is installed
-            pages.append(
-                Page(
-                    "codex", tokens.rough(x.today), tokens.rough(x.window), x.limit_5h, x.limit_week
-                )
-            )
-        return State(tuple(pages))
+        rows = []
+        for agent, reader in (("claude", self.claude), ("codex", self.codex)):
+            u = reader.collect()
+            rows.append(Row(agent, _round(u.limit_5h), _round(u.limit_week)))
+        return State(tuple(rows))
 
     def render(self, state):
         return render(state)
-
-
-def render(state):
-    """All pages back to back, keyed on the numbers shown."""
-    frames, delays = [], []
-    for page in state.pages:
-        f, d = page_frames(page)
-        frames += f
-        delays += d
-    return Animation(frames, delays, key=state)

@@ -4,22 +4,24 @@ Animated screens, a rotation that replaces the built-in carousel, and live Claud
 status for the **Ulanzi TC002** pixel clock (52×16 RGB). Talks to the clock's stock
 firmware over the LAN — no flashing, no cloud, no runtime dependencies beyond Python.
 
-| Claude busy | Claude idle | DONE | WAIT |
+| Sessions | Waiting for you | Finished | Plan limits |
 |---|---|---|---|
-| ![](docs/screens/claude-busy.gif) | ![](docs/screens/claude-idle.gif) | ![](docs/screens/claude-done.gif) | ![](docs/screens/claude-wait.gif) |
+| ![](docs/screens/claude.gif) | ![](docs/screens/claude-wait.gif) | ![](docs/screens/claude-done.gif) | ![](docs/screens/usage.gif) |
 
-| AI usage | System | Text | Alert |
+| Limits, Codex unknown | System | Text | Alert |
 |---|---|---|---|
-| ![](docs/screens/usage.gif) | ![](docs/screens/sys.gif) | ![](docs/screens/text.gif) | ![](docs/screens/alert-error.gif) |
+| ![](docs/screens/usage-unknown.gif) | ![](docs/screens/sys.gif) | ![](docs/screens/text.gif) | ![](docs/screens/alert-error.gif) |
 
 ## What it does
 
-- **`claude` screen** — the spark spins while Claude Code is generating and breathes when
-  idle; live sub-agents orbit it; then a card shows today's tokens. Claude Code hooks turn
-  it into a green **DONE** when a turn ends and an orange **WAIT** when Claude needs you.
-- **`usage` screen** — Claude Code and Codex token usage: today (counting up) and the last
-  five hours, plus Codex's 5-hour and weekly allowance when Codex reports it. Read from
-  each agent's local files; nothing leaves the machine.
+- **`claude` screen (Sessions)** — how many Claude Code sessions are running, asking for
+  you, and finished but unread. A session that starts waiting takes over the clock with
+  its project name until you answer; one that finishes shows **DONE** for a few seconds.
+  Fed per session by Claude Code hooks (`tc002 hook`).
+- **`usage` screen (Plan limits)** — one row per agent: the 5-hour allowance used as a
+  number and a bar, with the 7-day allowance as a line under it; amber from 80 %, blinking
+  from 95 %. Claude Code's come from its status line (`tc002 statusline` wraps yours and
+  prints it unchanged), Codex's from its session logs. Nothing leaves the machine.
 - **`sys` screen** — scrolling CPU chart of the last 52 seconds plus memory.
 - **Rotation** — cycles the clock between your screens and the built-in apps you keep, on
   your timing, replacing the device's own carousel; start from a preset (Coding focus,
@@ -158,7 +160,8 @@ An empty `slots` list leaves the device's own carousel in charge.
 ```text
 tc002.toml ─► config ─► watcher ─┬─ screen threads ── sample → render → Output ─► POST /api/custom
                                  └─ rotation ─────── switchDiyApp / switchApp ──► clock
-Claude Code hooks ─► tc002 event ─► ~/.cache/tc002/event.json ─► claude screen
+Claude Code hooks ─► tc002 hook ─► ~/.cache/tc002/sessions/<id>.json ─► claude screen, UI
+Claude Code status line ─► tc002 statusline ─► ~/.cache/tc002/claude-limits.json ─► usage screen
 ```
 
 See [docs/architecture.md](docs/architecture.md) for the module map and

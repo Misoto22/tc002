@@ -22,8 +22,15 @@ TYPES = {
     ".css": "text/css",
     ".js": "text/javascript",
     ".svg": "image/svg+xml",
+    ".woff2": "font/woff2",
+    ".json": "application/json",
+    ".md": "text/plain; charset=utf-8",
 }
 STATIC = resources.files("tc002.web").joinpath("static")
+
+
+# GET endpoints that take only the query string: path -> Api method
+GETS = {"/api/agents": "agents_now", "/api/discover": "discover", "/api/log": "log"}
 
 
 def _static_files(root, prefix=""):
@@ -139,6 +146,8 @@ def make_handler(api, token, port):
                 self._send(200, api.led())
             elif path == "/api/cities":
                 self._send(200, api.cities(query))
+            elif path in GETS:
+                self._send(200, getattr(api, GETS[path])(query))
             elif path.startswith("/api/preview/") and path.endswith(".gif"):
                 name = path.removeprefix("/api/preview/").removesuffix(".gif")
                 self._send(200, api.preview(name, query), "image/gif")
@@ -160,7 +169,12 @@ def make_handler(api, token, port):
                 "/api/quick": api.quick,
                 "/api/preset": api.apply_preset,
                 "/api/live/stop": api.live_stop,
+                "/api/setup": api.first_run,
+                "/api/reveal": api.reveal,
             }
+            if path.startswith("/api/integrations/"):
+                self._send(HTTPStatus.OK, api.integration(path.removeprefix("/api/integrations/")))
+                return
             if path not in routes:
                 raise ApiError(404, "Not found", f"No endpoint at {path}.")
             self._send(HTTPStatus.OK, routes[path](body))

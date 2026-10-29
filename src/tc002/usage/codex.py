@@ -49,14 +49,35 @@ def _events(path):
                 continue
 
 
+LIMITS_LOOKBACK = 8 * 86400  # the weekly window: older logs cannot say anything current
+
+
 def _percent(limit):
     value = (limit or {}).get("used_percent")
     return round(float(value), 1) if isinstance(value, int | float) else None
 
 
+def _resets(limit, at):
+    """When an allowance refills, from `resets_at` or from `resets_in_seconds` after `at`."""
+    limit = limit or {}
+    if isinstance(limit.get("resets_at"), int | float):
+        return float(limit["resets_at"])
+    if isinstance(limit.get("resets_in_seconds"), int | float):
+        return at + limit["resets_in_seconds"]
+    return None
+
+
+def _current(limit, at, now):
+    """(% used, reset time) for one window; a window that has since reset reads 0 %."""
+    resets = _resets(limit, at)
+    if resets is not None and resets <= now:
+        return 0.0, None
+    return _percent(limit), resets
+
+
 def from_rollouts(root, now):
     since = min(day_start(now), now - FIVE_HOURS)
-    paths = _rollouts(root, since)
+    paths = _rollouts(root, now - LIMITS_LOOKBACK)
     if not paths:
         return None
     today = window = 0
@@ -69,13 +90,19 @@ def from_rollouts(root, now):
                 window += tokens
             if limits and at > latest[0]:
                 latest = (at, limits)
-    limits = latest[1] or {}
+    at, limits = latest[0], latest[1] or {}
+    five, five_reset = _current(limits.get("primary"), at, now)
+    week, week_reset = _current(limits.get("secondary"), at, now)
+    if not (today or window or limits) and all(os.path.getmtime(p) < since for p in paths):
+        return None
     return Usage(
         today,
         window,
-        _percent(limits.get("primary")),
-        _percent(limits.get("secondary")),
+        five,
+        week,
         source="codex-rollouts",
+        reset_5h=five_reset,
+        reset_week=week_reset,
     )
 
 

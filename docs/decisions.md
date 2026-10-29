@@ -121,3 +121,27 @@ lives in `render/palette.py` and reaches the browser through `/api/led`.
 The preview moved from a right-hand column into a sticky bar above the page, and the
 sidebar collapses to an icon rail (`[`): two columns read better than three, and the
 preview stays in view without squeezing the settings.
+
+## 2026-10-29 — Sessions and plan limits on the clock; paper-and-ink UI
+
+**Problem.** The clock showed token counts, which say little (98.7 % of today's 218.7M
+Claude Code tokens on this Mac were cache reads). It could not say how many sessions
+were running, which were waiting for you, or how much of the plan allowance was left.
+The web UI read as a dashboard of the conversation that built it rather than a product.
+
+**Options.**
+1. Keep token counts, add more pages to the web UI.
+2. Show plan limits and per-session states on the clock; the web UI explains and
+   configures rather than duplicates.
+
+**Evidence.** Claude Code passes `rate_limits.five_hour` / `seven_day` (`used_percentage`,
+`resets_at`) to the status line command; Codex writes `rate_limits` into its session logs.
+Hooks receive `session_id`, `cwd`, `transcript_path` on stdin. Mock-ups of every screen at
+52 × 16, rendered with tc002's own fonts, and of the UI:
+https://claude.ai/artifact/KW24XneQgms3KrSWmJaaYA
+
+**Choice.** Option 2. One row per agent on the `usage` screen; RUN / ASK / OK columns on
+the `claude` screen with a takeover while a session waits. Hooks write one file per
+session (no shared-file races); `tc002 statusline` wraps the user's status line and keeps
+the previous command in its own file instead of re-quoting it. The UI moves to a light
+paper, ink and single vermilion accent style with a modern sans (Inter Tight).

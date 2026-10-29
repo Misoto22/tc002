@@ -15,20 +15,34 @@ import { integrations } from "./pages/integrations.js";
 import { messages } from "./pages/messages.js";
 import { overview } from "./pages/overview.js";
 import { rotation } from "./pages/rotation.js";
+import { sessions } from "./pages/sessions.js";
+import { setup } from "./pages/setup.js";
+import { pollAgents } from "./agents.js";
 
 const PAGES = [
-  ["overview", overview, "layout-dashboard", "nav.clock"],
+  ["overview", overview, "layout-dashboard", "nav.watch"],
+  ["sessions", sessions, "terminal", "nav.watch"],
   ["rotation", rotation, "repeat", "nav.clock"],
   ["builtins", builtins, "blocks", "nav.clock"],
   ["display", display, "sun", "nav.clock"],
   ["apps", apps, "sliders-horizontal", "nav.clock"],
   ["messages", messages, "message-square-text", "nav.send"],
   ["integrations", integrations, "plug", "nav.system"],
+  ["setup", setup, "plus", "nav.system"],
 ];
+const LIVE_PAGES = new Set(["overview", "sessions"]); // re-drawn when agent state changes
 const $ = (id) => document.getElementById(id);
 const current = () => (PAGES.some(([id]) => id === location.hash.slice(1)) ? location.hash.slice(1) : "overview");
 
 // ---- chrome -----------------------------------------------------------------------
+
+function navCount(id) {
+  const s = store.store;
+  const waiting = s.state?.agents?.counts.waiting ?? 0;
+  if (id === "sessions" && waiting) return h("span", { class: "count alert" }, waiting);
+  if (id === "rotation" && s.draft) return h("span", { class: "count" }, s.draft.rotation.slots.length);
+  return null;
+}
 
 function renderNav() {
   const s = store.store;
@@ -39,7 +53,7 @@ function renderNav() {
       class: "nav-item", href: `#${id}`, title: t(`page.${id}`),
       "aria-current": current() === id ? "page" : undefined,
     }, icon(ico), h("span", {}, t(`page.${id}`)),
-    id === "rotation" && s.draft ? h("span", { class: "count" }, s.draft.rotation.slots.length) : null)))));
+    navCount(id))))));
   const clock = s.state?.clock;
   $("brand-sub").replaceChildren(h("span", { class: `dot ${clock?.online ? "ok" : "bad"}` }),
     clock ? (clock.online ? `${clock.host} · ${clock.base.appVer}` : t("badge.offline")) : "…");
@@ -144,7 +158,12 @@ document.addEventListener("keydown", (e) => {
 window.addEventListener("beforeunload", (e) => { if (store.dirtyPaths().length) e.preventDefault(); });
 
 renderTopbar();
+pollAgents(() => {
+  renderNav();
+  if (LIVE_PAGES.has(current())) $("page").replaceChildren(PAGES.find(([id]) => id === current())[1]());
+});
 loadAssets() // icons and LED data first: pages draw with them
   .then(store.load)
+  .then(() => { if (!store.store.state.clock.host && current() === "overview") go("setup"); })
   .then(() => startPreview($("device")))
   .catch((err) => $("page").replaceChildren(h("div", { class: "page" }, h("div", { class: "empty" }, t("err.load", { msg: err.message })))));
