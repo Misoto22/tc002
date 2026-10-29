@@ -1,0 +1,25 @@
+# Lint and test on Linux for every pull request and every push to main.
+# Check name: "ci / python-ci".
+
+name: CI
+
+on:
+  pull_request:
+    paths-ignore: ["docs/**", "**/*.md"]
+  push:
+    branches: [main]
+    paths-ignore: ["docs/**", "**/*.md"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  ci:
+    uses: Misoto22/ci/.github/workflows/python-ci.yml@cc7dd7f7cf2113627494435195b6d7f2f52f9220 # v0.9.0
+    with:
+      python-version: "3.15"
+      command: uv run ruff check . && uv run ruff format --check . && uv run pytest

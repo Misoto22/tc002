@@ -1,0 +1,15 @@
+# Pull-request titles become squash-commit subjects, which release-please reads to
+# pick the next version. Check name: "pr-title / pr-title".
+
+name: PR title
+
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  pr-title:
+    uses: Misoto22/ci/.github/workflows/pr-title.yml@cc7dd7f7cf2113627494435195b6d7f2f52f9220 # v0.9.0

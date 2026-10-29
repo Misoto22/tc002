@@ -1,0 +1,113 @@
+"""Text animations: a shimmering or scrolling line, and alerts with chasing border lights."""
+
+from ..render import font
+from ..render.anim import MAX_FRAMES, Animation
+from ..render.canvas import HEIGHT, WIDTH, Canvas, dim, mix
+
+COLORS = {
+    "white": "#FFFFFF",
+    "green": "#3EE08A",
+    "yellow": "#FFD000",
+    "red": "#FF5A52",
+    "blue": "#4285F4",
+    "orange": "#D97757",
+    "cyan": "#00E5FF",
+}
+MAX_CHARS = 60
+SCROLL_MS, SCROLL_STEP = 60, 2  # marquee speed: 2 px every 60 ms
+SHIMMER_MS, ALERT_MS = 60, 90
+
+# Alert kinds: colour plus a 7x7 icon drawn left of the text.
+ICONS = {
+    "done": (
+        "#3EE08A",
+        ["......#", ".....##", "#...##.", "##.##..", ".###...", "..#....", "......."],
+    ),
+    "wait": (
+        "#D97757",
+        [".#####.", "#.....#", "....##.", "...#...", "...#...", ".......", "...#..."],
+    ),
+    "error": (
+        "#FF5A52",
+        ["...#...", "..#.#..", "..#.#..", ".#.#.#.", ".#...#.", "#..#..#", "#######"],
+    ),
+}
+
+
+def color_of(name):
+    return COLORS.get(name, name)
+
+
+def fits(text, room=WIDTH - 2):
+    return font.text_width(font.BIG, text) <= room
+
+
+def _shine(c, x0, x1, amount):
+    """Lighten lit pixels between columns x0 and x1 towards white."""
+    for x in range(max(0, x0), min(WIDTH, x1)):
+        for y in range(HEIGHT):
+            p = c.get(x, y)
+            if p:
+                c.set(x, y, mix(p, 0xFFFFFF, amount))
+
+
+def text_animation(text, color):
+    """Animations to play in order (each within the clock's GIF limits).
+
+    Short text: one looping animation where a light band sweeps across, then rests.
+    Long text: a marquee cut into segments of at most MAX_FRAMES frames, because the
+    clock rejects longer GIFs; the caller pushes them back to back.
+    """
+    text = text[:MAX_CHARS]
+    color = color_of(color)
+    width = font.text_width(font.BIG, text)
+    if fits(text):
+        x0 = (WIDTH - width) // 2
+        frames = []
+        for step in range(-6, width + 6, 2):
+            c = Canvas()
+            c.text(x0, 4, text, color)
+            _shine(c, x0 + step, x0 + step + 4, 0.7)
+            frames.append(c)
+        rest = Canvas()
+        rest.text(x0, 4, text, color)
+        return [Animation([*frames, rest], [SHIMMER_MS] * len(frames) + [2500])]
+    frames = []
+    for x in range(WIDTH, -width - SCROLL_STEP, -SCROLL_STEP):  # ends fully off-screen
+        c = Canvas()
+        c.text(x, 4, text, color)
+        frames.append(c)
+    return [
+        Animation(frames[i : i + MAX_FRAMES], SCROLL_MS) for i in range(0, len(frames), MAX_FRAMES)
+    ]
+
+
+def _perimeter():
+    """Border pixels in clockwise order, starting top-left."""
+    top = [(x, 0) for x in range(WIDTH)]
+    right = [(WIDTH - 1, y) for y in range(1, HEIGHT)]
+    bottom = [(x, HEIGHT - 1) for x in range(WIDTH - 2, -1, -1)]
+    left = [(0, y) for y in range(HEIGHT - 2, 0, -1)]
+    return top + right + bottom + left
+
+
+def alert_animation(text, kind="done", color=None):
+    """Theatre-marquee lights chase round the border; the icon and text pulse."""
+    base, icon = ICONS.get(kind, ICONS["done"])
+    base = color_of(color) if color else base
+    text = text[:12]
+    big = fits(text, WIDTH - 14)
+    width = font.text_width(font.BIG if big else font.SMALL, text)
+    x = (WIDTH - (7 + 3 + width)) // 2
+    ring = _perimeter()
+    frames = []
+    for f in range(6):
+        c = Canvas()
+        for i, (px, py) in enumerate(ring):
+            phase = (i + f) % 6
+            c.set(px, py, base if phase < 2 else dim(base, 0.25) if phase < 4 else 0)
+        pulse = 0.7 + 0.3 * (1 - abs(f - 3) / 3)
+        c.sprite(x, 4, icon, dim(base, pulse))
+        c.text(x + 10, 4 if big else 5, text, dim(base, pulse), big=big)
+        frames.append(c)
+    return Animation(frames, ALERT_MS)

@@ -1,0 +1,25 @@
+# Open and maintain the release pull request with the fleet release bot.
+# Merging "chore(main): release X.Y.Z" tags vX.Y.Z and publishes the GitHub Release.
+# Needs the APP_PRIVATE_KEY secret and APP_CLIENT_ID variable on this repository.
+
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    uses: Misoto22/ci/.github/workflows/release.yml@cc7dd7f7cf2113627494435195b6d7f2f52f9220 # v0.9.0
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    with:
+      app-client-id: ${{ vars.APP_CLIENT_ID }}
+    secrets:
+      APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}

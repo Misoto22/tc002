@@ -1,0 +1,35 @@
+[project]
+name = "tc002"
+version = "0.0.0"
+description = "Animated screens, playlist and Claude Code status for the Ulanzi TC002 pixel clock"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.15"
+dependencies = []
+
+[project.scripts]
+tc002 = "tc002.cli:main"
+
+[dependency-groups]
+dev = [
+    "pillow>=13.0.0",
+    "pytest>=9.2.0",
+    "ruff>=0.17.3",
+]
+
+[build-system]
+requires = ["uv_build>=0.13.6,<0.14"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py315"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "BLE"]
+# Commented if/else blocks read better than the nested ternaries SIM108 asks for.
+ignore = ["SIM108"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
