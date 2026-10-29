@@ -12,6 +12,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 from .. import builtins, config, config_writer, device_settings, presets, provision, sync
 from ..device import CATEGORY_ENDPOINTS, MIN_FIRMWARE, Device, DeviceError
+from ..games import GAMES
+from ..games.session import Session
 from ..integrations import claude_hooks, executable, launchd, statusline
 from ..render import font, mockup, themes
 from ..render.canvas import HEIGHT, WIDTH
@@ -41,6 +43,7 @@ class Api:
         self.host, self.config_path = host, config_path
         self.state_dir = state_dir or config.STATE_DIR
         self.agents = Agents()
+        self.game = None  # the one game being played, if any (games/session.py)
 
     # -- helpers ------------------------------------------------------------------
 
@@ -87,6 +90,7 @@ class Api:
             "screens": list(SCREENS),
             "screenOptions": screen_options.describe(SCREENS),
             "liveScreens": sorted(LIVE_SCREENS),
+            "games": {name: list(g.KEYS) for name, g in GAMES.items()},
             "schema": device_settings.schema(),
             "colors": message.COLORS,
             "alertKinds": list(message.ICONS),
@@ -230,6 +234,32 @@ class Api:
             # only a change the clock can see is worth redrawing every screen for
             "serviceRestarted": settings.led_theme != before.led_theme and launchd.restart(),
         }
+
+    def play(self, body):
+        """Start a game on the clock, or stop the one running."""
+        if self.game is not None:
+            self.game.stop()
+            self.game = None
+        if body.get("action") == "stop":
+            return {"running": False}
+        name = body.get("game")
+        if name not in GAMES:
+            raise ApiError(422, "Invalid settings", f"Choose one of {', '.join(GAMES)}.")
+        self.game = Session(self._device(), name, self._led_theme())
+        self.game.start()
+        return {"running": True, "game": name}
+
+    def game_key(self, body):
+        if self.game is None:
+            raise ApiError(409, "Nothing to show", "No game is running.")
+        key = body.get("key")
+        if key not in GAMES[self.game.name].KEYS:
+            return {"ignored": key}
+        self.game.key(key, bool(body.get("down")))
+        return {"ok": True}
+
+    def game_frame(self, query=None):
+        return self.game.snapshot() if self.game else {"running": False}
 
     def focus(self, body):
         """Start or stop the focus timer screen."""
