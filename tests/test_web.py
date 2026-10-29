@@ -225,8 +225,8 @@ def test_show_pushes_a_screen_the_clock_does_not_have_yet(monkeypatch):
 
     api = api_module.Api("192.0.2.1", None)
     monkeypatch.setattr(api, "_device", lambda: Clock())
-    api.show({"screen": "sys"})
-    assert calls == [("push", "sys", True), ("switch", "sys")]
+    api.show({"screen": "claude"})  # samples local files only, so it runs on any OS
+    assert calls == [("push", "claude", True), ("switch", "claude")]
 
 
 def test_device_http_errors_keep_their_status():
