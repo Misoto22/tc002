@@ -32,7 +32,8 @@ export function status(r) {
 
 export function factList(r) {
   if (!r?.ok || !r.facts?.length) return null;
-  return h("dl", { class: "facts" }, ...r.facts.flatMap(([k, v]) => [h("dt", {}, k), h("dd", { class: "mono" }, v)]));
+  const label = (k) => (t(`fact.${k}`) === `fact.${k}` ? k : t(`fact.${k}`)); // a field without a name stays as is
+  return h("dl", { class: "facts" }, ...r.facts.flatMap(([k, v]) => [h("dt", {}, label(k)), h("dd", { class: "mono" }, v)]));
 }
 
 // The card. `options`: the draft's options for this screen (null: the saved ones).

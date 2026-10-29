@@ -2,6 +2,11 @@
 // the options added with them. Merged into the dictionaries by i18n.js.
 
 export const en = {
+  "fact.symbol": "Symbol", "fact.price": "Price", "fact.change": "Change %", "fact.previous": "Previous close",
+  "fact.title": "Title", "fact.points": "Points", "fact.comments": "Comments", "fact.reviews": "Reviews for you",
+  "fact.mine": "Your open PRs", "fact.unread": "Unread notifications", "fact.account": "Signed in as",
+  "fact.firmware": "Firmware", "fact.mcu": "Controller firmware", "fact.ip": "Address", "fact.wifi": "Wi-Fi",
+  "fact.name": "Name", "fact.text": "Shows", "fact.lit": "Lit %", "fact.to full": "Days to full moon",
   "ui.breadcrumb": "Breadcrumb", "place.kept": "Kept, no turn", "builtins.hasSettings": "has settings",
   "place.title": "Where it shows", "place.off": "Off", "place.rotate": "In the rotation",
   "place.pin": "Show only this", "place.seconds": "Seconds in the rotation",
@@ -42,6 +47,11 @@ export const en = {
 };
 
 export const zh = {
+  "fact.symbol": "代码", "fact.price": "价格", "fact.change": "涨跌 %", "fact.previous": "昨收",
+  "fact.title": "标题", "fact.points": "分数", "fact.comments": "评论数", "fact.reviews": "等你评审",
+  "fact.mine": "你的 PR", "fact.unread": "未读通知", "fact.account": "登录账号",
+  "fact.firmware": "固件", "fact.mcu": "主控固件", "fact.ip": "地址", "fact.wifi": "Wi-Fi",
+  "fact.name": "名称", "fact.text": "显示", "fact.lit": "亮度 %", "fact.to full": "距满月（天）",
   "ui.breadcrumb": "路径", "place.kept": "保留，不轮播", "builtins.hasSettings": "可设置",
   "place.title": "在哪里显示", "place.off": "关闭", "place.rotate": "加入轮播",
   "place.pin": "只显示它", "place.seconds": "轮播时长（秒）",
