@@ -4,6 +4,7 @@ import { edit, setFocus, store } from "../store.js";
 import { post } from "../api.js";
 import { appIcon, badge, button, h, pageHead, row, section, segmented, toast, toggle } from "../ui.js";
 import { offlineNotice, page } from "./common.js";
+import { screenOptions } from "./screen-options.js";
 
 const APP_ICON = { clock: "clock", weather: "cloud-sun", busy: "timer", tomato: "timer" };
 
@@ -73,7 +74,7 @@ export function apps() {
   });
 
   return page(pageHead(t("page.apps"), t("desc.apps")),
-    store.state.clock.online ? null : offlineNotice(store.state.clock), ...sections,
+    store.state.clock.online ? null : offlineNotice(store.state.clock), ...screenOptions(), ...sections,
     hidden.length ? h("p", { class: "muted" }, t("apps.moreSocial", { list: hidden.map(appName).join(" · ") }),
       " ", h("a", { class: "link", href: "#builtins" }, `${t("page.builtins")} →`)) : null);
 }

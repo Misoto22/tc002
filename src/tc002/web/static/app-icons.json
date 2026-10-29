@@ -11,6 +11,38 @@
   "symbol": "gauge",
   "kind": "glyph"
  },
+ "focus": {
+  "symbol": "hourglass",
+  "kind": "glyph"
+ },
+ "progress": {
+  "symbol": "chart-no-axes-gantt",
+  "kind": "glyph"
+ },
+ "countdown": {
+  "symbol": "calendar-clock",
+  "kind": "glyph"
+ },
+ "worldclock": {
+  "symbol": "globe",
+  "kind": "glyph"
+ },
+ "sun": {
+  "symbol": "sunrise",
+  "kind": "glyph"
+ },
+ "moon": {
+  "symbol": "moon-star",
+  "kind": "glyph"
+ },
+ "life": {
+  "symbol": "grid-3x3",
+  "kind": "glyph"
+ },
+ "fire": {
+  "symbol": "flame",
+  "kind": "glyph"
+ },
  "codex": {
   "symbol": "brand-codex",
   "kind": "brand"

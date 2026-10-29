@@ -218,3 +218,21 @@ def doctor(args, ctx):
     latest = f"{known[0].project} {known[0].state} {time.time() - known[0].since:.0f}s ago"
     _say(True, "sessions", f"{len(known)} known, latest: {latest}" if known else "none yet")
     return 0 if healthy else 1
+
+
+def focus(args, ctx):
+    """Start or stop the focus timer; the focus screen shows it (enable it to see it)."""
+    from ..runtime import focus as timer
+    from ..screens import build
+
+    if args.action == "stop":
+        timer.stop()
+        print("focus timer stopped")
+        return 0
+    screen = build("focus", ctx.settings)
+    minutes = args.minutes or screen.minutes
+    timer.start(minutes, screen.break_minutes)
+    print(f"focus: {minutes} min, then a {screen.break_minutes} min break")
+    if "focus" not in ctx.settings.screens:
+        print("note: the focus screen is not enabled; turn it on in `tc002 ui` → Rotation")
+    return 0

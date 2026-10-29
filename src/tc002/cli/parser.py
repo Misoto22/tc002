@@ -77,6 +77,10 @@ def build():
     e = sub.add_parser("event", help="mark a done / wait / clear by hand")
     e.add_argument("kind", choices=list(sessions.MANUAL))
 
+    fo = sub.add_parser("focus", help="start or stop the focus timer screen")
+    fo.add_argument("action", choices=["start", "stop"])
+    fo.add_argument("--minutes", type=int, help="focus minutes (default: [screen.focus] or 25)")
+
     w = sub.add_parser("watch", help="run screens + rotation in the foreground")
     w.add_argument("--once", action="store_true", help="push one animation per screen, exit")
 

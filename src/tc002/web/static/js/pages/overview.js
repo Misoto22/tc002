@@ -3,7 +3,8 @@ import { t } from "../i18n.js";
 import { limitCards } from "../limits.js";
 import { quickControls } from "../quick.js";
 import { applySaved, load, setFocus, store } from "../store.js";
-import { badge, button, h, pageHead, panel, row, section } from "../ui.js";
+import { post } from "../api.js";
+import { badge, button, h, pageHead, panel, row, section, toast } from "../ui.js";
 import { page } from "./common.js";
 import { sessionRow, stateFigures } from "./sessions.js";
 
@@ -36,6 +37,25 @@ function statusPanel() {
   );
 }
 
+// The focus timer: start and stop it here; the focus screen on the clock shows it.
+function focusBlock() {
+  if (!store.draft.screens.enabled.includes("focus")) return null;
+  const running = store.state.focus;
+  const act = async (action) => {
+    try {
+      await post("/api/focus", { action });
+      await load();
+    } catch (err) {
+      toast(err.title, err.message, "error");
+    }
+  };
+  return panel(row(t("focus.title"),
+    running ? t(`focus.${running.phase}`, { min: Math.ceil(running.left / 60) }) : t("focus.idle"),
+    running ? button(t("focus.stop"), () => act("stop"), { ico: "x" })
+      : button(t("focus.start"), () => act("start"), { kind: "primary", ico: "play" }),
+    { app: "focus" }));
+}
+
 export function overview() {
   setFocus({ type: "rotation" });
   const { clock } = store.state;
@@ -46,6 +66,7 @@ export function overview() {
       section(t("limits.title"), h("span", { class: "spacer" }),
         h("a", { class: "link", href: "#rotation" }, `${t("limits.onClock")} →`)),
       limitCards()),
+    focusBlock(),
     clock.online && section(t("quick.title"), h("span", { class: "spacer" }),
       h("a", { class: "link", href: "#display" }, `${t("quick.more")} →`)),
     clock.online && h("div", { class: "panel quick-grid" }, ...quickControls()),

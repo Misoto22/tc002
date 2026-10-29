@@ -77,6 +77,14 @@ Screens tc002 draws itself, each exactly 52×16 pixels. Turn them on in **Rotati
 |---|---|---|---|
 | ![](docs/screens/sys.gif) | ![](docs/screens/text.gif) | ![](docs/screens/alert-error.gif) | ![](docs/screens/usage-unknown.gif) |
 
+| Focus timer | Day progress | Countdown | World clock |
+|---|---|---|---|
+| ![](docs/screens/focus.gif) | ![](docs/screens/progress.gif) | ![](docs/screens/countdown.gif) | ![](docs/screens/worldclock.gif) |
+
+| Sunrise & sunset | Moon | Game of Life | Fireplace |
+|---|---|---|---|
+| ![](docs/screens/sun.gif) | ![](docs/screens/moon.gif) | ![](docs/screens/life.gif) | ![](docs/screens/fire.gif) |
+
 - **Sessions** (for Claude Code users) — how many sessions are running, asking for you,
   and finished but unread. A session that starts waiting takes over the clock with its
   project name until you answer.
@@ -84,6 +92,16 @@ Screens tc002 draws itself, each exactly 52×16 pixels. Turn them on in **Rotati
   allowance used as a number and a bar, the 7-day allowance as a line under it; amber from
   80 %, blinking from 95 %.
 - **System** — a scrolling CPU chart of the last 52 seconds, plus memory.
+- **Focus timer** — work, then a break, counting down by the second; start it from the
+  Overview or `tc002 focus start`.
+- **Day progress, Countdown, World clock** — how much of the day, week and year has gone;
+  days to a date you name; the time in two places.
+- **Sunrise & sunset, Moon** — today's daylight where your weather city is, and the
+  moon's phase.
+- **Game of Life, Fireplace** — calm animations for between the busy screens.
+
+Screens with options (the countdown's date, the world clock's places, the focus timer's
+lengths) are set in **App settings**.
 
 Nothing a screen reads leaves your Mac.
 
