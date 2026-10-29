@@ -146,9 +146,18 @@ main { position: relative; overflow-y: auto; outline: none; }
 .page-head p { margin: var(--space-4) 0 0; color: var(--muted); }
 .page-head .actions { margin-left: auto; display: flex; gap: var(--space-8); }
 
+/* a phone: the sidebar is always the icon rail, and the top bar keeps only its icons */
 @media (max-width: 760px) {
   .app, .app.collapsed { grid-template-columns: var(--sidebar-rail-w) minmax(0, 1fr); }
   .page { padding-inline: var(--space-16); }
+  .brand-text, .nav-label, .nav-item span, .config-path, #collapse, .crumb,
+  .kbd-btn kbd, .status-pill span { display: none; }
+  .brand { justify-content: center; padding-inline: 0; }
+  .nav-item { justify-content: center; padding: 0; }
+  .nav-group + .nav-group { margin-top: var(--space-10); padding-top: var(--space-10); }
+  .row { flex-wrap: wrap; }
+  .row-control { flex-wrap: wrap; max-width: 100%; }
+  .row-control .wide-field { width: 100%; min-width: 0; }
 }
 
 /* ---- panels and rows ------------------------------------------------------------- */

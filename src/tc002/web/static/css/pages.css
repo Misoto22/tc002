@@ -174,6 +174,12 @@ a.link:hover { color: var(--accent-text); }
 
 @media (max-width: 720px) {
   .library-options { margin-left: var(--space-16); }
-  .library-row { flex-wrap: wrap; }
+  .library-row, .slot { flex-wrap: wrap; }
   .library-row .led-thumb, .now-strip .led-thumb { width: 100%; }
+  .slot .led-thumb { width: calc(100% - 18px - var(--space-14)); } /* beside the drag handle */
+  .library-row .row-text, .slot .row-text { flex: 1 1 60%; }
+  .library-options .row { flex-wrap: wrap; }
+  .library-options .row-control { flex: 1 1 100%; flex-wrap: wrap; min-width: 0; }
+  .zones { width: 100%; }
+  .zones .field { flex: 1 1 100%; min-width: 0; }
 }
