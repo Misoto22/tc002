@@ -72,3 +72,21 @@ release-please for versions and changelog, Dependabot for `uv` and GitHub Action
   light mode, against the real clock.
 - **Choice:** (b), on the current web platform (ES modules, `structuredClone`, CSS custom
   properties, `prefers-color-scheme`, Web Animations). Revisit if the UI outgrows it.
+
+## 2026-10-29 — Live preview holds the playlist through a file
+
+- **Problem:** "preview on the hardware" must show a draft on the clock without the
+  background playlist switching it away, and must never strand the clock in a draft.
+- **Options:** (a) the UI stops the service while previewing; (b) a short-lived hold file
+  the playlist checks each step.
+- **Evidence:** (a) also stops the Claude/CPU screens and needs launchd access from the
+  UI; (b) is one small file, expires on its own (≤5 min, renewed every minute while
+  live), and the page restores tc002.toml on exit.
+- **Choice:** (b), `runtime/hold.py`. Verified on the clock: timeFormat went to
+  `HH:MM:SS` while live and back to `HH:MM` on stop.
+
+## 2026-10-29 — Icons from Lucide, vendored as a sprite
+
+Lucide (ISC) is the icon set closest to Linear's; `scripts/vendor_icons.py` pulls the
+icons the UI uses from a pinned `lucide-static` release into `web/static/icons.svg`, so
+the UI works offline and the sprite changes only through the script.

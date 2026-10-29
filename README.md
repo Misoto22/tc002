@@ -35,15 +35,31 @@ tc002 ui            # opens http://127.0.0.1:8742
 
 ![Settings UI — playlist](docs/ui-playlist.png)
 
-A local web app for everything tc002 manages: drag the playlist into order, choose which
-built-in apps stay on, set brightness, volume, time zone and the built-in apps' options,
-send a test message with a live LED preview, and check the service and hooks. Every change
-goes to `tc002.toml` first, is applied to the clock, and reloads the background service —
-the file stays the single source of truth, so a fresh clone reproduces your setup.
+A local web app for everything tc002 manages, in English or Chinese, dark or light:
 
-It listens on 127.0.0.1 only, rejects foreign `Host` headers, and requires a per-session
-token on every change, so other web pages cannot reconfigure your clock. Keyboard: `⌘S`
-saves; in the playlist, focus a row and press `Alt+↑/↓` to move it.
+- **Playlist** — drag slots into order (or `Alt+↑/↓`), set durations, add screens and kept built-ins.
+- **Built-in apps, Display, App settings** — which apps stay on; brightness, volume, time
+  zone, date and week; clock format, weather (pick a city — it fills in coordinates),
+  focus timers.
+- **Preview** — a live LED preview beside every page: the playlist cycling with real
+  durations, or the built-in app you are editing, drawn with your draft settings
+  (brightness included). Built-in apps are close approximations of the clock's own.
+- **Live on the clock** — one switch plays the draft on the hardware before saving
+  (the playlist pauses); switching it off restores tc002.toml.
+- **Status** — the top bar always says where things stand: in sync, *n* unsaved, saving,
+  applied, saved-but-offline, failed, or live; click it for this session's activity.
+  Unsaved rows are marked in place.
+- **⌘K** — jump anywhere, save, discard, apply, show any screen on the clock, send a test
+  alert, switch theme or language. `⌘S` saves.
+
+![Settings UI — app settings](docs/ui-apps.png)
+
+Every change goes to `tc002.toml` first, is applied to the clock, and reloads the
+background service, so the file stays the single source of truth and a fresh clone
+reproduces your setup. The server listens on 127.0.0.1 only, rejects foreign `Host`
+headers and needs a per-session token for every change, so other web pages cannot
+reconfigure your clock. Icons are [Lucide](https://lucide.dev) (ISC), vendored by
+`scripts/vendor_icons.py`.
 
 ## Requirements
 

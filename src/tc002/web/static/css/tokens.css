@@ -1,0 +1,84 @@
+/* Design tokens. Dark is the default; light applies when chosen, or when following a
+   light system theme. Keep the two light blocks identical (CSS has no mixins). */
+
+:root {
+  color-scheme: dark;
+  --bg: #08090a;
+  --sidebar: #0b0c0d;
+  --panel: #101112;
+  --panel-raised: #151618;
+  --hover: #17181b;
+  --field: #18191b;
+  --border: #1f2023;
+  --border-strong: #2c2e33;
+  --text: #f7f8f8;
+  --text-2: #d0d6e0;
+  --muted: #8a8f98;
+  --faint: #5d6169;
+  --accent: #5e6ad2;
+  --accent-hover: #7078e0;
+  --accent-soft: rgb(94 106 210 / 16%);
+  --accent-text: #9aa3ff;
+  --green: #4cb782;
+  --green-soft: rgb(76 183 130 / 14%);
+  --yellow: #f2c94c;
+  --yellow-soft: rgb(242 201 76 / 12%);
+  --red: #eb5757;
+  --red-soft: rgb(235 87 87 / 12%);
+  --shadow: 0 12px 40px rgb(0 0 0 / 50%), 0 0 0 1px var(--border-strong);
+  --shadow-sm: 0 2px 8px rgb(0 0 0 / 35%);
+  --radius: 8px;
+  --radius-sm: 6px;
+  --font: "Inter Variable", "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+  --mono: "SF Mono", ui-monospace, "JetBrains Mono", Menlo, monospace;
+  --ease: cubic-bezier(0.3, 0.7, 0.4, 1);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #fbfbfc;
+  --sidebar: #f4f5f8;
+  --panel: #ffffff;
+  --panel-raised: #ffffff;
+  --hover: #f1f2f5;
+  --field: #f4f5f8;
+  --border: #e6e7eb;
+  --border-strong: #d4d6dc;
+  --text: #1b1c1f;
+  --text-2: #3c3f46;
+  --muted: #6b6f76;
+  --faint: #9a9da4;
+  --accent-soft: rgb(94 106 210 / 12%);
+  --accent-text: #4c57c4;
+  --green: #2e9c66;
+  --yellow: #b8860b;
+  --red: #d64545;
+  --shadow: 0 12px 40px rgb(17 24 39 / 14%), 0 0 0 1px var(--border-strong);
+  --shadow-sm: 0 2px 8px rgb(17 24 39 / 8%);
+}
+
+@media (prefers-color-scheme: light) {
+  :root[data-theme="system"] {
+    color-scheme: light;
+    --bg: #fbfbfc;
+    --sidebar: #f4f5f8;
+    --panel: #ffffff;
+    --panel-raised: #ffffff;
+    --hover: #f1f2f5;
+    --field: #f4f5f8;
+    --border: #e6e7eb;
+    --border-strong: #d4d6dc;
+    --text: #1b1c1f;
+    --text-2: #3c3f46;
+    --muted: #6b6f76;
+    --faint: #9a9da4;
+    --accent-soft: rgb(94 106 210 / 12%);
+    --accent-text: #4c57c4;
+    --green: #2e9c66;
+    --yellow: #b8860b;
+    --red: #d64545;
+    --shadow: 0 12px 40px rgb(17 24 39 / 14%), 0 0 0 1px var(--border-strong);
+    --shadow-sm: 0 2px 8px rgb(17 24 39 / 8%);
+  }
+}
