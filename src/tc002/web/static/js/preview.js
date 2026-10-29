@@ -61,7 +61,7 @@ function tick() {
   const key = JSON.stringify(src);
   if (key !== lastSource) { // cross-fade between sources
     lastSource = key;
-    els.stage.animate([{ opacity: 0.2 }, { opacity: 1 }], { duration: ms("--normal"), easing: token("--ease") });
+    els.stage.animate([{ opacity: 0 }, { opacity: 1 }], { duration: ms("--led-fade"), easing: token("--ease") });
     els.title.replaceChildren(...[ // native replaceChildren would print a null as "null"
       src.key ? appIcon(src.key, "sm") : icon("message-square-text"),
       h("span", {}, src.label),

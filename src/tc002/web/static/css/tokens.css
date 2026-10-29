@@ -1,61 +1,101 @@
-/* Design tokens — the only place a colour, radius, size, shadow or duration is written.
-   Every other stylesheet uses these variables. Dark is the default; light applies when
-   chosen, or when following a light system theme. Keep the two light blocks identical
-   (CSS has no mixins). Icons are monochrome: no per-app colours. */
+/* Design tokens — the only place a colour, radius, size, shadow, font or duration is
+   written. Every other stylesheet uses these variables.
+
+   Look: paper, ink and one vermilion accent. Light ("paper") is the default; dark
+   ("ink") applies when chosen, or when following a dark system theme. Keep the two dark
+   blocks identical (CSS has no mixins). Icons are monochrome: no per-app colours.
+   Decision and mock-ups: docs/decisions.md, 2026-10-29. */
+
+@font-face {
+  font-family: "Inter Tight";
+  font-weight: 300 600;
+  font-display: swap;
+  src: url("/fonts/inter-tight-300-600.woff2") format("woff2");
+}
+@font-face {
+  font-family: "DM Mono";
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/dm-mono-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "DM Mono";
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/dm-mono-500.woff2") format("woff2");
+}
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
   /* surfaces */
-  --bg: #08090a;
-  --sidebar: #0b0c0d;
-  --panel: #101112;
-  --panel-raised: #151618;
-  --hover: #17181b;
-  --active: #1d1e22;
-  --field: #18191b;
-  --border: #1f2023;
-  --border-strong: #2c2e33;
+  --bg: #f5f3ee;
+  --sidebar: #efece5;
+  --panel: #fbfaf7;
+  --panel-raised: #ffffff;
+  --hover: #ebe8e0;
+  --active: #e4e0d6;
+  --field: #efece5;
+  --border: #e3dfd6;
+  --border-strong: #d3cec2;
+  --track: #e9e5dc; /* empty part of bars and meters */
+  --track-strong: #d9d5cb;
 
   /* text */
-  --text: #f7f8f8;
-  --text-2: #d0d6e0;
-  --muted: #8a8f98;
-  --faint: #5d6169;
-  --on-accent: #ffffff; /* text and glyphs on accent or brand-coloured fills */
+  --text: #22211f;
+  --text-2: #3d3b37;
+  --muted: #55534e;
+  --faint: #6f6c66;
+  --on-accent: #fbfaf7; /* text and glyphs on accent, ink or brand-coloured fills */
 
-  /* accent and states */
-  --accent: #5e6ad2;
-  --accent-hover: #7078e0;
-  --accent-deep: #2b2f6b;
-  --accent-soft: rgb(94 106 210 / 16%);
-  --accent-glow: rgb(94 106 210 / 35%);
-  --accent-text: #9aa3ff;
-  --green: #4cb782;
-  --green-soft: rgb(76 183 130 / 14%);
-  --yellow: #f2c94c;
-  --yellow-soft: rgb(242 201 76 / 12%);
-  --red: #eb5757;
-  --red-soft: rgb(235 87 87 / 12%);
+  /* ink: primary actions, selected states, data */
+  --primary: #22211f;
+  --primary-hover: #3d3b37;
+  --on-primary: #fbfaf7;
+
+  /* the one accent, vermilion: what needs you */
+  --accent: #c2482f;
+  --accent-hover: #a93d27;
+  --accent-deep: #f3dfd9;
+  --accent-soft: rgb(194 72 47 / 10%);
+  --accent-glow: rgb(194 72 47 / 25%);
+  --accent-text: #a93d27;
+
+  /* states */
+  --green: #4f6b45;
+  --green-soft: rgb(79 107 69 / 12%);
+  --yellow: #a86a12;
+  --yellow-soft: rgb(168 106 18 / 12%);
+  --red: #b3261e;
+  --red-soft: rgb(179 38 30 / 10%);
+  --state-working: var(--primary);
+  --state-waiting: var(--accent);
+  --state-done: var(--green);
+  --state-idle: var(--faint);
+
+  /* agents, for limit bars (muted so the accent stays the loudest colour) */
+  --agent-claude: #c2482f;
+  --agent-codex: #3d6f63;
 
   /* controls */
   --knob: #ffffff;
-  --knob-shadow: 0 1px 2px rgb(0 0 0 / 30%);
-  --button-shadow: 0 1px 2px rgb(0 0 0 / 25%);
-  --inner-highlight: rgb(255 255 255 / 6%);
+  --knob-shadow: 0 1px 3px rgb(34 33 31 / 18%);
+  --button-shadow: 0 1px 2px rgb(34 33 31 / 10%);
+  --inner-highlight: rgb(255 255 255 / 60%);
 
-  /* the clock and its previews */
-  --stage-bg: #050506;
-  --stage-ring: #000000;
-  --stage-shine: rgb(255 255 255 / 5%);
-  --stage-shadow: 0 10px 30px rgb(0 0 0 / 35%);
+  /* the clock and its previews: a physical object, dark in both themes */
+  --stage-bg: #1c1b19;
+  --stage-ring: #2c2a27;
+  --stage-shine: rgb(255 255 255 / 4%);
+  --stage-shadow: 0 10px 30px rgb(34 33 31 / 18%);
   --led-panel: #0b0c0e;
   --led-label: #9aa0aa;
 
   /* overlays and elevation */
-  --backdrop: rgb(0 0 0 / 35%);
-  --shadow: 0 12px 40px rgb(0 0 0 / 50%), 0 0 0 1px var(--border-strong);
-  --shadow-sm: 0 2px 8px rgb(0 0 0 / 35%);
+  --backdrop: rgb(34 33 31 / 22%);
+  --shadow: 0 12px 40px rgb(34 33 31 / 14%), 0 0 0 1px var(--border-strong);
+  --shadow-sm: 0 2px 8px rgb(34 33 31 / 8%);
+  --shadow-lift: 0 12px 28px rgb(34 33 31 / 14%), 0 0 0 1px var(--border);
 
   /* shape */
   --radius-xs: 4px;
@@ -63,89 +103,140 @@
   --radius: 8px;
   --radius-lg: 10px;
   --radius-xl: 12px;
+  --radius-2xl: 16px;
   --radius-pill: 999px;
 
   /* sizes */
-  --control-h: 28px;
-  --control-sm-h: 24px;
-  --row-h: 52px;
+  --control-h: 32px;
+  --control-sm-h: 26px;
+  --row-h: 56px;
   --icon: 16px;
   --icon-sm: 14px;
   --app-icon: 28px;
   --sidebar-w: 232px;
   --sidebar-rail-w: 56px;
-  --topbar-h: 48px;
-  --content-w: 760px;
-  --thumb-w: 104px;
+  --topbar-h: 52px;
+  --content-w: 960px;
+  --thumb-w: 176px;
 
-  /* type and motion */
-  --font: "Inter Variable", "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text",
-    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
-  --mono: "SF Mono", ui-monospace, "JetBrains Mono", Menlo, monospace;
+  /* type */
+  --font: "Inter Tight", -apple-system, BlinkMacSystemFont, "Hiragino Sans", "PingFang SC",
+    "Microsoft YaHei", system-ui, sans-serif;
+  --display: "Inter Tight", -apple-system, "Hiragino Sans", "PingFang SC", system-ui, sans-serif;
+  --mono: "DM Mono", "SF Mono", ui-monospace, Menlo, monospace;
+  --text-xs: 11px;
   --text-sm: 12px;
   --text-base: 13px;
   --text-lg: 15px;
-  --text-xl: 20px;
-  --ease: cubic-bezier(0.3, 0.7, 0.4, 1);
+  --text-xl: 18px;
+  --text-2xl: 28px;
+  --text-num: 36px; /* big figures: counts, percentages */
+  --tracking-label: 0.12em; /* small upper-case labels */
+
+  /* motion */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --press: 80ms;
   --fast: 120ms;
-  --normal: 200ms;
-  --slow: 300ms;
+  --normal: 240ms;
+  --slow: 320ms;
+  --led-fade: 400ms;
   --stagger: 25ms; /* delay between rows entering */
 }
 
-:root[data-theme="light"] {
-  color-scheme: light;
-  --bg: #fbfbfc;
-  --sidebar: #f4f5f8;
-  --panel: #ffffff;
-  --panel-raised: #ffffff;
-  --hover: #f1f2f5;
-  --active: #eaebef;
-  --field: #f4f5f8;
-  --border: #e6e7eb;
-  --border-strong: #d4d6dc;
-  --text: #1b1c1f;
-  --text-2: #3c3f46;
-  --muted: #6b6f76;
-  --faint: #9a9da4;
-  --accent-soft: rgb(94 106 210 / 12%);
-  --accent-text: #4c57c4;
-  --green: #2e9c66;
-  --yellow: #b8860b;
-  --red: #d64545;
-  --knob-shadow: 0 1px 2px rgb(17 24 39 / 25%);
-  --button-shadow: 0 1px 2px rgb(17 24 39 / 15%);
-  --backdrop: rgb(17 24 39 / 20%);
-  --shadow: 0 12px 40px rgb(17 24 39 / 14%), 0 0 0 1px var(--border-strong);
-  --shadow-sm: 0 2px 8px rgb(17 24 39 / 8%);
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #161513;
+  --sidebar: #1b1a18;
+  --panel: #1f1e1b;
+  --panel-raised: #252421;
+  --hover: #2a2926;
+  --active: #302f2b;
+  --field: #232220;
+  --border: #2f2d29;
+  --border-strong: #3c3a35;
+  --track: #2c2a27;
+  --track-strong: #3c3a35;
+  --text: #f1eee7;
+  --text-2: #d6d2c8;
+  --muted: #b0aca2;
+  --faint: #8d897f;
+  --on-accent: #161513;
+  --primary: #f1eee7;
+  --primary-hover: #d6d2c8;
+  --on-primary: #161513;
+  --accent: #e5694e;
+  --accent-hover: #ee8068;
+  --accent-deep: #4a2017;
+  --accent-soft: rgb(229 105 78 / 16%);
+  --accent-glow: rgb(229 105 78 / 30%);
+  --accent-text: #f08a70;
+  --green: #9cbc8c;
+  --green-soft: rgb(156 188 140 / 14%);
+  --yellow: #e0b050;
+  --yellow-soft: rgb(224 176 80 / 14%);
+  --red: #ef6a5f;
+  --red-soft: rgb(239 106 95 / 14%);
+  --agent-claude: #e5694e;
+  --agent-codex: #6fb3a2;
+  --knob: #f1eee7;
+  --knob-shadow: 0 1px 2px rgb(0 0 0 / 40%);
+  --button-shadow: 0 1px 2px rgb(0 0 0 / 30%);
+  --inner-highlight: rgb(255 255 255 / 5%);
+  --stage-bg: #0f0e0d;
+  --stage-ring: #2f2d29;
+  --stage-shadow: 0 10px 30px rgb(0 0 0 / 40%);
+  --backdrop: rgb(0 0 0 / 40%);
+  --shadow: 0 12px 40px rgb(0 0 0 / 50%), 0 0 0 1px var(--border-strong);
+  --shadow-sm: 0 2px 8px rgb(0 0 0 / 35%);
+  --shadow-lift: 0 12px 28px rgb(0 0 0 / 45%), 0 0 0 1px var(--border-strong);
 }
 
-@media (prefers-color-scheme: light) {
+@media (prefers-color-scheme: dark) {
   :root[data-theme="system"] {
-    color-scheme: light;
-    --bg: #fbfbfc;
-    --sidebar: #f4f5f8;
-    --panel: #ffffff;
-    --panel-raised: #ffffff;
-    --hover: #f1f2f5;
-    --active: #eaebef;
-    --field: #f4f5f8;
-    --border: #e6e7eb;
-    --border-strong: #d4d6dc;
-    --text: #1b1c1f;
-    --text-2: #3c3f46;
-    --muted: #6b6f76;
-    --faint: #9a9da4;
-    --accent-soft: rgb(94 106 210 / 12%);
-    --accent-text: #4c57c4;
-    --green: #2e9c66;
-    --yellow: #b8860b;
-    --red: #d64545;
-    --knob-shadow: 0 1px 2px rgb(17 24 39 / 25%);
-    --button-shadow: 0 1px 2px rgb(17 24 39 / 15%);
-    --backdrop: rgb(17 24 39 / 20%);
-    --shadow: 0 12px 40px rgb(17 24 39 / 14%), 0 0 0 1px var(--border-strong);
-    --shadow-sm: 0 2px 8px rgb(17 24 39 / 8%);
+    color-scheme: dark;
+    --bg: #161513;
+    --sidebar: #1b1a18;
+    --panel: #1f1e1b;
+    --panel-raised: #252421;
+    --hover: #2a2926;
+    --active: #302f2b;
+    --field: #232220;
+    --border: #2f2d29;
+    --border-strong: #3c3a35;
+    --track: #2c2a27;
+    --track-strong: #3c3a35;
+    --text: #f1eee7;
+    --text-2: #d6d2c8;
+    --muted: #b0aca2;
+    --faint: #8d897f;
+    --on-accent: #161513;
+    --primary: #f1eee7;
+    --primary-hover: #d6d2c8;
+    --on-primary: #161513;
+    --accent: #e5694e;
+    --accent-hover: #ee8068;
+    --accent-deep: #4a2017;
+    --accent-soft: rgb(229 105 78 / 16%);
+    --accent-glow: rgb(229 105 78 / 30%);
+    --accent-text: #f08a70;
+    --green: #9cbc8c;
+    --green-soft: rgb(156 188 140 / 14%);
+    --yellow: #e0b050;
+    --yellow-soft: rgb(224 176 80 / 14%);
+    --red: #ef6a5f;
+    --red-soft: rgb(239 106 95 / 14%);
+    --agent-claude: #e5694e;
+    --agent-codex: #6fb3a2;
+    --knob: #f1eee7;
+    --knob-shadow: 0 1px 2px rgb(0 0 0 / 40%);
+    --button-shadow: 0 1px 2px rgb(0 0 0 / 30%);
+    --inner-highlight: rgb(255 255 255 / 5%);
+    --stage-bg: #0f0e0d;
+    --stage-ring: #2f2d29;
+    --stage-shadow: 0 10px 30px rgb(0 0 0 / 40%);
+    --backdrop: rgb(0 0 0 / 40%);
+    --shadow: 0 12px 40px rgb(0 0 0 / 50%), 0 0 0 1px var(--border-strong);
+    --shadow-sm: 0 2px 8px rgb(0 0 0 / 35%);
+    --shadow-lift: 0 12px 28px rgb(0 0 0 / 45%), 0 0 0 1px var(--border-strong);
   }
 }

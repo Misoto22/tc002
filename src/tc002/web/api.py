@@ -15,11 +15,12 @@ from ..integrations import claude_hooks, executable, launchd, statusline
 from ..render import font, mockup
 from ..render.palette import hex_palette
 from ..runtime import hold
-from ..screens import SCREENS, message
+from ..screens import SCREENS, builtin_previews, message
 from ..screens.examples import examples
 from . import cities, host_actions, setup
 from .agents import Agents
 
+LIVE_SCREENS = {"claude", "usage"}  # cheap to sample: previewed with real data
 SECRET_KEYS = {"token", "password", "username", "url", "tokens"}
 
 
@@ -163,6 +164,14 @@ class Api:
             anim = message.alert_animation(
                 query.get("text", "DONE")[:12], query.get("kind", "done"), query.get("color")
             )
+        elif name.removeprefix("live-") in LIVE_SCREENS and name.startswith("live-"):
+            screen = SCREENS[name.removeprefix("live-")]()
+            anim = screen.render(screen.sample())
+        elif name.startswith("builtin-"):
+            try:
+                anim = builtin_previews.render(name.removeprefix("builtin-"))
+            except ValueError:
+                raise ApiError(404, "Unknown preview", f"No built-in app {name!r}.") from None
         else:
             anims = examples()
             if name not in anims:

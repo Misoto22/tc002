@@ -22,6 +22,9 @@ TYPES = {
     ".css": "text/css",
     ".js": "text/javascript",
     ".svg": "image/svg+xml",
+    ".woff2": "font/woff2",
+    ".json": "application/json",
+    ".md": "text/plain; charset=utf-8",
 }
 STATIC = resources.files("tc002.web").joinpath("static")
 

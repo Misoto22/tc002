@@ -1,0 +1,151 @@
+/* Sessions, plan limits, integrations and first-run setup. Values come from tokens.css. */
+
+.block { margin-top: 8px; }
+.section-title .link, a.link { color: var(--muted); font-size: var(--text-sm); font-weight: 400; text-decoration: none; }
+a.link:hover { color: var(--accent-text); }
+
+/* ---- state figures: four counts on hairlines ------------------------------------ */
+
+.figures {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-block: 1px solid var(--border);
+}
+
+.figure { padding: 14px 0 14px 18px; }
+.figure:first-child { padding-left: 0; }
+.figure + .figure { border-left: 1px solid var(--border); }
+.figure-num { font: 300 var(--text-num)/1.1 var(--display); font-variant-numeric: tabular-nums; }
+.figure-label { color: var(--text-2); }
+.figure-hint { color: var(--faint); font-size: var(--text-sm); }
+.figure.state-waiting .figure-num { color: var(--state-waiting); }
+.figure.state-idle .figure-num { color: var(--state-idle); }
+
+@media (max-width: 640px) {
+  .figures { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .figure:nth-child(3) { padding-left: 0; border-left: 0; }
+}
+
+/* ---- session rows --------------------------------------------------------------- */
+
+.session-list { display: flex; flex-direction: column; margin-top: 16px; border-top: 1px solid var(--border); }
+
+.session {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) auto auto;
+  gap: 14px;
+  align-items: center;
+  min-height: var(--row-h);
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--border);
+  animation: row-in var(--normal) var(--ease) both;
+}
+
+.session.state-waiting { background: var(--accent-soft); }
+.state-dot { width: 7px; height: 7px; border-radius: var(--radius-pill); background: var(--state-working); }
+.state-waiting .state-dot { background: var(--state-waiting); box-shadow: 0 0 0 4px var(--accent-soft); }
+.state-done .state-dot { background: none; box-shadow: inset 0 0 0 1.5px var(--state-done); }
+.state-idle .state-dot { background: var(--track-strong); }
+.session-title { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.session-project { font-weight: 500; }
+.session-state { color: var(--muted); font-size: var(--text-sm); }
+.state-waiting .session-state { color: var(--state-waiting); }
+.state-done .session-state { color: var(--state-done); }
+.session-message { overflow: hidden; color: var(--muted); font-size: var(--text-sm); text-overflow: ellipsis; white-space: nowrap; }
+.session-age { color: var(--faint); }
+.session-actions { display: flex; gap: 2px; }
+.session-list.compact .session-actions { display: none; }
+
+/* ---- plan limit cards ----------------------------------------------------------- */
+
+.limit-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+
+.limit-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px;
+  border-radius: var(--radius-xl);
+  background: var(--panel);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.limit-card.unknown { background: transparent; }
+.limit-head { display: flex; align-items: center; gap: 10px; }
+.limit-name { font-weight: 500; }
+.meters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.meter { display: flex; flex-direction: column; gap: 6px; }
+.meter-label { color: var(--muted); }
+.meter-num { font: 300 var(--text-num)/1 var(--display); font-variant-numeric: tabular-nums; }
+.meter-num span { font-size: var(--text-xl); }
+.meter.warn .meter-num { color: var(--accent); }
+.meter-track { height: 6px; overflow: hidden; border-radius: var(--radius-pill); background: var(--track); }
+.meter-fill { display: block; height: 100%; border-radius: inherit; transition: width var(--slow) var(--ease); }
+.meter-fill.agent-claude { background: var(--agent-claude); }
+.meter-fill.agent-codex { background: var(--agent-codex); }
+.meter-hint { color: var(--faint); font-size: var(--text-sm); }
+.limit-note { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 0; }
+.limit-note p { flex: 1 1 220px; margin: 0; color: var(--muted); }
+
+/* ---- integrations --------------------------------------------------------------- */
+
+.chips .chip.missing { color: var(--accent-text); border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); }
+.row .chips { margin-top: 8px; }
+
+.log {
+  max-height: 320px;
+  margin: 0;
+  padding: 14px 16px;
+  overflow: auto;
+  border-top: 1px solid var(--border);
+  background: var(--field);
+  color: var(--text-2);
+  font: var(--text-sm)/1.6 var(--mono);
+  white-space: pre-wrap;
+}
+
+/* ---- first-run setup ------------------------------------------------------------ */
+
+.step { padding: 22px 0; border-bottom: 1px solid var(--border); }
+.step-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.step-head h2 { margin: 0; font: 600 var(--text-xl) var(--display); }
+
+.step-num {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-pill);
+  background: var(--primary);
+  color: var(--on-primary);
+  font: 500 var(--text-xs) var(--mono);
+}
+
+.choices { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin: 12px 0; }
+
+.choice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 14px;
+  border: 0;
+  border-radius: var(--radius-xl);
+  background: var(--panel);
+  box-shadow: inset 0 0 0 1px var(--border);
+  text-align: left;
+  cursor: pointer;
+  transition: box-shadow var(--fast);
+}
+
+.choice:hover { box-shadow: inset 0 0 0 1px var(--border-strong); }
+.choice[aria-pressed="true"] { box-shadow: inset 0 0 0 1.5px var(--primary); }
+.choice-title { font-weight: 500; }
+.choice-icons { display: flex; gap: 4px; }
+
+.field-label { display: grid; gap: 6px; max-width: 320px; color: var(--muted); }
+.check { display: flex; align-items: flex-start; gap: 12px; cursor: pointer; }
+.check input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--primary); }
+.check > span { display: grid; }
+.check-title { font-weight: 500; }
+.step-actions { display: flex; justify-content: flex-end; padding-top: 24px; }

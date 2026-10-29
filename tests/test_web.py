@@ -282,3 +282,11 @@ def test_discovery_keeps_only_clocks(monkeypatch):
     monkeypatch.setattr(setup, "probe", lambda h, t: {"host": h} if h.endswith(".7") else None)
     found = setup.discover("10.1.2")
     assert found == {"subnet": "10.1.2.0/24", "clocks": [{"host": "10.1.2.7"}]}
+
+
+def test_live_previews_render_current_state(ui):
+    url, _, _ = ui
+    for name in ("live-claude", "live-usage"):
+        status, _, body = call(url, f"/api/preview/{name}.gif")
+        assert status == 200 and body[:6] == b"GIF89a"
+    assert call(url, "/api/preview/live-sys.gif")[0] == 404

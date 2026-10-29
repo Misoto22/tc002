@@ -2,10 +2,11 @@
 
 import pytest
 
+from tc002 import builtins
 from tc002.render import font
 from tc002.render.anim import MAX_FRAMES
 from tc002.render.canvas import WIDTH, Canvas, rgb
-from tc002.screens import claude, message, sysmon, usage
+from tc002.screens import builtin_previews, claude, message, sysmon, usage
 
 VM_STAT = """Mach Virtual Memory Statistics: (page size of 16384 bytes)
 Pages free:                                     7185.
@@ -109,3 +110,10 @@ def test_alert_lights_chase_and_loop_seamlessly():
     assert frames[0].px != frames[1].px
     # border pattern advances 1 px per frame over a 6 px period: frame 6 would equal frame 0
     assert len(frames) == 6
+
+
+@pytest.mark.parametrize("key", sorted(builtins.CATALOGUE))
+def test_every_builtin_has_a_preview_that_fits(key):
+    anim = builtin_previews.render(key)
+    assert lit(anim.frames[0]) > 0
+    anim.payload()
