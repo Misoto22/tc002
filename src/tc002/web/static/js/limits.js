@@ -5,8 +5,6 @@ import { t, until } from "./i18n.js";
 import { store } from "./store.js";
 import { appIcon, button, countUp, h } from "./ui.js";
 
-const AGENTS = { claude: "Claude Code", codex: "Codex" };
-const WARN = 80;
 
 function shortTokens(n) {
   for (const [size, suffix] of [[1e9, "B"], [1e6, "M"], [1e3, "K"]]) {
@@ -26,7 +24,7 @@ function resetText(unix) {
 function meter(label, pct, reset, agent, key) {
   const known = pct !== null && pct !== undefined;
   const value = known ? Math.round(pct) : null;
-  return h("div", { class: `meter${known && value >= WARN ? " warn" : ""}` },
+  return h("div", { class: `meter${known && value >= store.state.limits.warn ? " warn" : ""}` },
     h("div", { class: "meter-label" }, label),
     h("div", { class: "meter-num" }, known ? countUp(h("span", { class: "num" }), value, key) : "—",
       known ? h("span", {}, "%") : null),
@@ -48,7 +46,7 @@ export function limitCard(agent) {
   }
   return h("div", { class: `limit-card${known ? "" : " unknown"}` },
     h("div", { class: "limit-head" }, appIcon(agent === "claude" ? "claude" : "codex"),
-      h("span", { class: "limit-name" }, AGENTS[agent]),
+      h("span", { class: "limit-name" }, t(`agent.${agent}`)),
       h("span", { class: "spacer" }),
       h("span", { class: "muted mono" }, t("limits.tokensToday", { n: shortTokens(u.today) }))),
     h("div", { class: "meters" },

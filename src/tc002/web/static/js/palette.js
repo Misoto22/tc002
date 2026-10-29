@@ -29,7 +29,7 @@ export function openPalette(commands) {
   const input = h("input", { class: "palette-input", placeholder: t("pal.placeholder"),
     "aria-label": t("pal.placeholder"), role: "combobox", "aria-expanded": "true", "aria-controls": "palette-list" });
   const list = h("div", { class: "palette-list", id: "palette-list", role: "listbox" });
-  const dialog = h("div", { class: "palette", role: "dialog", "aria-modal": "true", "aria-label": "Command palette" },
+  const dialog = h("div", { class: "palette", role: "dialog", "aria-modal": "true", "aria-label": t("pal.dialog") },
     h("div", { class: "palette-search" }, icon("search"), input, h("kbd", {}, "esc")), list);
   const backdrop = h("div", { class: "backdrop", onPointerdown: (e) => { if (e.target === backdrop) close(); } }, dialog);
 
@@ -103,7 +103,7 @@ export function commands({ pages, go, store, actions, setPref }) {
   list.push(
     { group: t("pal.actions"), icon: "refresh-cw", label: t("pal.apply"), run: actions.applySaved },
     { group: t("pal.actions"), icon: "radio", label: store.live.on ? t("pal.liveOff") : t("pal.liveOn"), run: () => actions.setLive(!store.live.on) },
-    { group: t("pal.actions"), icon: "bell", label: t("pal.testAlert"), run: () => actions.send({ type: "alert", text: "DONE", kind: "done" }) },
+    { group: t("pal.actions"), icon: "bell", label: t("pal.testAlert"), run: () => actions.send({ type: "alert", text: t("msg.sampleAlert"), kind: "done" }) },
     { group: t("pal.actions"), icon: "history", label: t("pal.activity"), run: actions.openActivity },
     { group: t("pal.actions"), icon: "refresh-cw", label: t("pal.refresh"), run: actions.refresh },
   );

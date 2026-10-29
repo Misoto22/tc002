@@ -1,4 +1,5 @@
 import { assets } from "./assets.js";
+import { TIMING } from "./timing.js";
 
 // Small DOM toolkit: one element helper, Lucide icons from the local sprite, and the
 // controls every page shares.
@@ -176,7 +177,7 @@ export function toast(title, detail, kind = "info") {
     icon(ico), h("div", {}, title, detail && h("span", { class: "muted" }, detail)));
   document.getElementById("toasts").append(el);
   setTimeout(() => { el.classList.add("leaving"); setTimeout(() => el.remove(), ms("--normal")); },
-    kind === "error" ? 8000 : 4000);
+    kind === "error" ? TIMING.toastErrorMs : TIMING.toastMs);
 }
 
 // Show a fixed popover under `anchor` (above it when there is no room below; right-aligned
@@ -217,7 +218,7 @@ export function menu(anchor, groups, onPick, emptyText) {
     el.append(h("div", { class: "menu-label" }, label));
     // item: [value, text, icon, app, { swatch, current }]
     for (const [value, text, ico, app, extra = {}] of items) {
-      const lead = extra.swatch ? h("span", { class: "swatch", "data-palette": extra.swatch })
+      const lead = extra.swatch ? h("span", { class: "palette-swatch", "data-palette": extra.swatch })
         : app ? appIcon(app, "sm") : ico && icon(ico);
       el.append(h("button", {
         type: "button", role: "menuitem", "aria-current": extra.current ? "true" : undefined,
@@ -246,7 +247,7 @@ export function transition(update, finished) {
   const run = () => { if (!done) { done = true; update(); } };
   const vt = document.startViewTransition(run);
   vt.finished.finally(() => finished?.());
-  setTimeout(() => { if (!done) { vt.skipTransition(); run(); } }, 250);
+  setTimeout(() => { if (!done) { vt.skipTransition(); run(); } }, TIMING.transitionStartMs);
 }
 
 // Count a number up (or down) to `to` from what the element with this `key` showed last

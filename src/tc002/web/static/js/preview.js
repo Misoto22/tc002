@@ -2,11 +2,12 @@
 // and the switch that plays the draft on the real hardware before saving.
 
 import { appName, t } from "./i18n.js";
-import { draw } from "./led.js";
+import { H, SCALE, W, draw } from "./led.js";
 import { screenPreview } from "./media.js";
 import { simulate } from "./sims.js";
 import { setLive, store, subscribe } from "./store.js";
 import { appIcon, h, icon, ms, toggle, token } from "./ui.js";
+import { TIMING } from "./timing.js";
 
 let els = null;
 let playing = true;
@@ -24,10 +25,12 @@ function merged() {
   return { settings, apps };
 }
 
+const PREVIEW_MIN_LIGHT = 0.25; // the dimmest setting still has to be readable on screen
+
 function brightness(settings) {
   const b = settings.brightness ?? {};
   const pct = b[b.level ?? "high"] ?? 100;
-  return 0.25 + 0.75 * (pct / 100);
+  return PREVIEW_MIN_LIGHT + (1 - PREVIEW_MIN_LIGHT) * (pct / 100);
 }
 
 // What to draw now: { kind: "sim" | "gif", key, src, label }.
@@ -110,7 +113,7 @@ function renderControls() {
 
 function mount(container) {
   els = {
-    canvas: h("canvas", { width: 520, height: 160, class: "led-canvas", "aria-label": t("preview.title") }),
+    canvas: h("canvas", { width: W * SCALE, height: H * SCALE, class: "led-canvas", "aria-label": t("preview.title") }),
     img: h("img", { class: "led-img", alt: "", hidden: true }),
     title: h("div", { class: "device-title" }),
     chips: h("div", { class: "chips" }),
@@ -127,7 +130,7 @@ function mount(container) {
 
 export function startPreview(container) {
   mount(container);
-  setInterval(tick, 100);
+  setInterval(tick, TIMING.previewTickMs);
   subscribe((what) => {
     if (what === "status") renderControls();
     if (what === "focus" || what === "render") mount(container);

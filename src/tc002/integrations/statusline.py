@@ -13,12 +13,11 @@ import os
 import subprocess
 from pathlib import Path
 
+from .. import paths
 from ..usage import limits
 from .claude_hooks import SETTINGS, _load, _save
 
-SAVED = Path(
-    os.environ.get("TC002_STATUSLINE_FILE", "~/.config/tc002/statusline.json")
-).expanduser()
+SAVED = Path(os.environ.get("TC002_STATUSLINE_FILE", paths.STATE_DIR / "statusline.json"))
 TIMEOUT = 5  # Claude Code waits on the status line; never hold it up for long
 
 

@@ -11,9 +11,10 @@ import os
 import time
 from datetime import datetime
 
+from .. import paths
 from . import FIVE_HOURS, Usage, claude_login, day_start, limits
 
-PROJECTS = os.path.expanduser("~/.claude/projects")
+PROJECTS = str(paths.CLAUDE_PROJECTS)
 KEEP = 26 * 3600  # entries older than this can never count again
 
 

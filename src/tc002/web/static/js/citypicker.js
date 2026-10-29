@@ -6,6 +6,7 @@
 import { get } from "./api.js";
 import { lang, t } from "./i18n.js";
 import { h, icon } from "./ui.js";
+import { TIMING } from "./timing.js";
 
 export function cityPicker(current, onPick) {
   let results = [];
@@ -75,9 +76,9 @@ export function cityPicker(current, onPick) {
     input.setAttribute("aria-activedescendant", active >= 0 ? `city-${active}` : "");
   }
 
-  input.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(search, 220); });
+  input.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(search, TIMING.citySearchMs); });
   input.addEventListener("focus", search);
-  input.addEventListener("blur", () => setTimeout(close, 120));
+  input.addEventListener("blur", () => setTimeout(close, TIMING.cityBlurMs));
   input.addEventListener("keydown", (e) => {
     if (e.key === "ArrowDown") { e.preventDefault(); active = Math.min(results.length - 1, active + 1); paint(); }
     else if (e.key === "ArrowUp") { e.preventDefault(); active = Math.max(0, active - 1); paint(); }

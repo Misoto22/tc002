@@ -55,7 +55,7 @@ function findStep(rerender) {
     h("p", { class: "muted" }, status, " ", s && !s.pending ? button(t("setup.scan"), () => scan(rerender), { kind: "ghost", ico: "refresh-cw" }) : null),
     found.length ? h("div", { class: "choices" }, ...found) : null,
     h("label", { class: "field-label" }, t("setup.address"),
-      h("input", { class: "field mono", value: draft.host, placeholder: "192.168.1.50", autocomplete: "off",
+      h("input", { class: "field mono", value: draft.host, placeholder: t("setup.addressPlaceholder"), autocomplete: "off",
         onInput: (e) => { draft.host = e.target.value; } })));
 }
 

@@ -4,6 +4,7 @@
 
 import { assets } from "./assets.js";
 import { Frame, W } from "./led.js";
+import { TIMING } from "./timing.js";
 
 // colours by name from the shared LED palette (render/palette.py)
 const c = (name) => assets.palette[name];
@@ -40,7 +41,7 @@ function clock(settings, apps, now) {
   } else {
     const fmt = apps.clock?.timeFormat ?? "HH:MM";
     let hours = d.getUTCHours();
-    const blink = Math.floor(now / 500) % 2 ? ":" : " ";
+    const blink = Math.floor(now / TIMING.clockBlinkMs) % 2 ? ":" : " ";
     if (fmt === "HH:MM AP") {
       const ap = hours < 12 ? "AM" : "PM";
       hours = hours % 12 || 12;
@@ -66,7 +67,7 @@ function weather(settings, apps, now) {
   ].filter(([key]) => flags[key]);
   const f = new Frame();
   if (!items.length) return f;
-  const [, icon, colour, value, degree] = items[Math.floor(now / 2500) % items.length];
+  const [, icon, colour, value, degree] = items[Math.floor(now / TIMING.simCycleMs) % items.length];
   f.sprite(3, 4, icon, colour);
   const x = f.text(12, 4, value, c("soft_white"), value.length <= 4);
   if (degree) f.rect(x, 4, 2, 2, c("soft_white"));

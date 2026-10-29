@@ -2,6 +2,7 @@
 // scripts/vendor_icons.py) and the LED fonts and palette (owned by the Python renderer).
 
 import { get } from "./api.js";
+import { setSize } from "./led.js";
 
 export const assets = { icons: {}, font: null, palette: {} };
 
@@ -10,4 +11,5 @@ export async function loadAssets() {
   assets.icons = icons;
   assets.font = led.font;
   assets.palette = led.palette;
+  setSize(led.size);
 }

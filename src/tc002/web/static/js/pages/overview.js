@@ -46,7 +46,8 @@ export function overview() {
       section(t("limits.title"), h("span", { class: "spacer" }),
         h("a", { class: "link", href: "#rotation" }, `${t("limits.onClock")} →`)),
       limitCards()),
-    clock.online && section(t("quick.title")),
+    clock.online && section(t("quick.title"), h("span", { class: "spacer" }),
+      h("a", { class: "link", href: "#display" }, `${t("quick.more")} →`)),
     clock.online && h("div", { class: "panel quick-grid" }, ...quickControls()),
     section(t("section.status")), statusPanel(),
   );

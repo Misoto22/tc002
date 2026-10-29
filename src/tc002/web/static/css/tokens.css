@@ -61,6 +61,11 @@
   --accent-glow: rgb(194 72 47 / 25%);
   --accent-text: #a93d27;
 
+  /* derived: tinted borders and the frosted bar background follow any palette */
+  --border-accent: color-mix(in srgb, var(--accent) 45%, var(--border));
+  --border-ok: color-mix(in srgb, var(--green) 30%, var(--border));
+  --glass: color-mix(in srgb, var(--bg) 86%, transparent);
+
   /* states */
   --green: #4f6b45;
   --green-soft: rgb(79 107 69 / 12%);
@@ -79,6 +84,7 @@
 
   /* controls */
   --knob: #ffffff;
+  --knob-on: #ffffff; /* the knob on a switched-on (ink) track */
   --knob-shadow: 0 1px 3px rgb(34 33 31 / 18%);
   --button-shadow: 0 1px 2px rgb(34 33 31 / 10%);
   --inner-highlight: rgb(255 255 255 / 60%);
@@ -105,6 +111,73 @@
   --radius-xl: 12px;
   --radius-2xl: 16px;
   --radius-pill: 999px;
+
+  /* spacing: one scale for every padding, margin and gap (the number is its px) */
+  --space-1: 1px;
+  --space-2: 2px;
+  --space-3: 3px;
+  --space-4: 4px;
+  --space-5: 5px;
+  --space-6: 6px;
+  --space-8: 8px;
+  --space-9: 9px;
+  --space-10: 10px;
+  --space-12: 12px;
+  --space-14: 14px;
+  --space-16: 16px;
+  --space-18: 18px;
+  --space-20: 20px;
+  --space-22: 22px;
+  --space-24: 24px;
+  --space-28: 28px;
+  --space-30: 30px;
+  --space-32: 32px;
+  --space-36: 36px;
+  --space-40: 40px;
+  --space-120: 120px; /* room under a page for the save bar */
+  --hairline: 1px;
+  --hairline-strong: 2px;
+
+  /* layers, lowest to highest */
+  --z-raised: 1;
+  --z-sticky: 5;
+  --z-popover: 30;
+  --z-overlay: 40;
+  --z-modal: 50;
+  --z-toast: 60;
+
+  /* blur behind translucent bars and overlays */
+  --blur-sm: 2px;
+  --blur: 8px;
+  --blur-lg: 10px;
+
+  /* components */
+  --brand-h: 40px;
+  --brand-mark: 30px;
+  --dot: 6px;
+  --toggle-w: 30px;
+  --toggle-h: 18px;
+  --knob-size: 14px;
+  --slider-w: 160px;
+  --slider-sm-w: 130px;
+  --field-num-w: 60px;
+  --field-wide-w: 260px;
+  --city-w: 240px;
+  --popover-min: 220px;
+  --popover-max: 420px;
+  --quick-min: 280px;
+  --quick-cell-min: 340px;
+  --preset-min: 160px;
+  --card-min: 300px;
+  --choice-min: 200px;
+  --preview-min: 200px;
+  --preview-max: 300px;
+  --list-max-h: 380px;
+  --log-max-h: 320px;
+  --toast-max: 380px;
+  --step-num: 24px;
+  /* layout breakpoints (CSS variables cannot be used in @media, so these are written
+     there as literals and listed here as the reference): 640px, 760px, 900px */
 
   /* sizes */
   --control-h: 32px;
@@ -144,6 +217,10 @@
   --count: 650ms; /* numbers counting to a new value */
   --reveal: 560ms; /* a new theme spreading from the control that chose it */
   --stagger: 25ms; /* delay between rows entering */
+  --loop-spin: 0.9s; /* repeating animations */
+  --loop-shimmer: 1.2s;
+  --loop-pulse: 1.6s;
+  --loop-breath: 1.8s;
 }
 
 :root[data-theme="dark"] {
@@ -182,6 +259,7 @@
   --agent-claude: #e5694e;
   --agent-codex: #6fb3a2;
   --knob: #f1eee7;
+  --knob-on: #161513;
   --knob-shadow: 0 1px 2px rgb(0 0 0 / 40%);
   --button-shadow: 0 1px 2px rgb(0 0 0 / 30%);
   --inner-highlight: rgb(255 255 255 / 5%);
@@ -231,6 +309,7 @@
     --agent-claude: #e5694e;
     --agent-codex: #6fb3a2;
     --knob: #f1eee7;
+  --knob-on: #161513;
     --knob-shadow: 0 1px 2px rgb(0 0 0 / 40%);
     --button-shadow: 0 1px 2px rgb(0 0 0 / 30%);
     --inner-highlight: rgb(255 255 255 / 5%);

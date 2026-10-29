@@ -1,0 +1,18 @@
+// How long the UI waits, repeats and keeps things up: the one place these numbers live.
+// (Animation durations are CSS tokens in tokens.css; these are behaviour, read by scripts.)
+
+export const TIMING = {
+  agentPollMs: 5000, // sessions and limits refresh
+  statusSettleMs: 6000, // "Applied" shows this long before "In sync"
+  liveDebounceMs: 450, // a burst of edits sends one live preview
+  quickDebounceMs: 200, // dragging a slider sends one change
+  toastMs: 4000,
+  toastErrorMs: 8000,
+  transitionStartMs: 250, // a view transition that has not started by then is skipped
+  citySearchMs: 220,
+  cityBlurMs: 120, // lets a click on a result land before the list closes
+  messagePreviewMs: 250,
+  previewTickMs: 100, // LED preview frame
+  clockBlinkMs: 500, // the colon of the simulated clock
+  simCycleMs: 2500, // each item of a simulated built-in
+};

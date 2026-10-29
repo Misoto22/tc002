@@ -126,9 +126,9 @@
 }
 
 /* The swatch each palette shows in the theme menu: its own accent, in any mode. */
-.swatch { width: 12px; height: 12px; flex: none; border-radius: var(--radius-pill); box-shadow: inset 0 0 0 1px rgb(0 0 0 / 12%); }
-.swatch[data-palette="paper"] { background: #c2482f; }
-.swatch[data-palette="matcha"] { background: #4f7a3a; }
-.swatch[data-palette="ai"] { background: #2f5d9e; }
-.swatch[data-palette="sakura"] { background: #b84a6f; }
-.swatch[data-palette="kohaku"] { background: #9a6412; }
+.palette-swatch { width: var(--space-12); height: var(--space-12); flex: none; border-radius: var(--radius-pill); box-shadow: inset 0 0 0 var(--hairline) rgb(0 0 0 / 12%); }
+.palette-swatch[data-palette="paper"] { background: #c2482f; }
+.palette-swatch[data-palette="matcha"] { background: #4f7a3a; }
+.palette-swatch[data-palette="ai"] { background: #2f5d9e; }
+.palette-swatch[data-palette="sakura"] { background: #b84a6f; }
+.palette-swatch[data-palette="kohaku"] { background: #9a6412; }

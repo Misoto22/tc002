@@ -32,7 +32,7 @@
 :root[data-refresh] .panel > .row { animation: none; }
 
 /* what needs you breathes; nothing else moves on its own */
-.state-waiting .state-dot, .nav-item .count.alert { animation: waiting-ring 1.8s var(--ease) infinite; }
+.state-waiting .state-dot, .nav-item .count.alert { animation: waiting-ring var(--loop-breath) var(--ease) infinite; }
 
 /* bars fill from empty when they first appear */
 .meter-fill { transform-origin: left; animation: grow var(--count) var(--ease) both; }
@@ -52,7 +52,7 @@
 .panel > .row:nth-child(5) { animation-delay: calc(var(--stagger) * 4); }
 .panel > .row:nth-child(n + 6) { animation-delay: calc(var(--stagger) * 5); }
 
-.icon.spin { animation: spin 0.9s linear infinite; }
+.icon.spin { animation: spin var(--loop-spin) linear infinite; }
 
 .backdrop.closing { animation: fade-in var(--fast) reverse forwards; }
 .palette.closing { animation: palette-in var(--fast) reverse forwards; }

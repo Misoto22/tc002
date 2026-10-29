@@ -36,7 +36,7 @@ export function integrations() {
   return page(
     pageHead(t("page.integrations"), t("desc.integrations")),
     section(t("int.clock")),
-    panel(row(clock.host ? `TC002 · ${clock.host}` : t("int.notSet"),
+    panel(row(clock.host ? t("int.clockAt", { host: clock.host }) : t("int.notSet"),
       clock.online ? `${t("fact.firmware")} ${clock.base.appVer}` : { text: clock.error ?? "", warn: true },
       [badge(clock.online ? t("badge.online") : t("badge.offline"), clock.online ? "ok" : "bad"),
         h("a", { class: "btn", href: "#setup" }, t("int.change"))], { icon: "tv" })),

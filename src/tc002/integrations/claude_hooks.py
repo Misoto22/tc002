@@ -7,11 +7,11 @@ versions (`tc002 event <kind>`) are recognised and replaced.
 """
 
 import json
-import os
 import shutil
-from pathlib import Path
 
-SETTINGS = Path(os.environ.get("CLAUDE_CONFIG_DIR", "~/.claude")).expanduser() / "settings.json"
+from .. import paths
+
+SETTINGS = paths.CLAUDE_DIR / "settings.json"
 EVENTS = ("SessionStart", "UserPromptSubmit", "Notification", "Stop", "SessionEnd")
 MARKERS = (" hook", " event ")  # `<exe> hook`, and `<exe> event <kind>` from older versions
 

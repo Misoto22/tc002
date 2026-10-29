@@ -5,6 +5,10 @@ import { appIcon, button, h, icon, menu, pageHead, panel, row, section, toggle }
 import { page, thumb } from "./common.js";
 
 const slotKey = (s) => s.screen ?? s.builtin;
+const clampSeconds = (v) => {
+  const { min, max } = store.state.slotSeconds;
+  return Math.min(max, Math.max(min, Number(v) || min));
+};
 const same = (a, b) => JSON.stringify(a.map(slotKey)) === JSON.stringify(b.map(slotKey));
 
 function presetCards(slots) {
@@ -30,10 +34,10 @@ function slotRow(slot, i) {
     h("div", { class: "row-hint" }, slot.screen ? t("rotation.screen") : t("rotation.builtin"))),
   h("div", { class: "row-control" },
     h("div", { class: "seconds" },
-      h("input", { class: "field num", type: "number", min: 3, max: 600, value: slot.seconds,
+      h("input", { class: "field num", type: "number", min: store.state.slotSeconds.min, max: store.state.slotSeconds.max, value: slot.seconds,
         "aria-label": `${appName(key)} ${t("rotation.seconds")}`,
-        onChange: (e) => edit((dr) => { dr.rotation.slots[i].seconds = Math.max(3, Number(e.target.value) || 3); }) }),
-      h("span", { class: "muted" }, "s")),
+        onChange: (e) => edit((dr) => { dr.rotation.slots[i].seconds = clampSeconds(e.target.value); }) }),
+      h("span", { class: "muted" }, t("unit.seconds"))),
     button("", () => show(slot.screen ? { screen: key } : { builtin: key }), { kind: "ghost icon", ico: "eye", title: t("btn.showNow") }),
     button("", () => edit((dr) => { dr.rotation.slots.splice(i, 1); }, { rerender: true }), { kind: "ghost icon", ico: "x", title: t("btn.remove") })));
 }

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 30"><!-- the tc002 mark; colours are tokens.css --primary, --bg and --accent (checked by tests/test_web.py) -->
+<rect width="30" height="30" rx="8" fill="#22211f"/>
+<g fill="#f5f3ee"><circle cx="8" cy="12" r="1.6"/><circle cx="13" cy="12" r="1.6"/><circle cx="17" cy="12" r="1.6"/><circle cx="8" cy="18" r="1.6"/><circle cx="13" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></g>
+<circle cx="22.5" cy="15" r="2.6" fill="#c2482f"/>
+</svg>

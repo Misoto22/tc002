@@ -19,6 +19,8 @@ DISPLAY = {
     "lowBatteryAutoSleep": ("bool", "Sleep on low battery", None),
 }
 BRIGHTNESS_LEVELS = ["low", "mid", "high"]
+BRIGHTNESS_RANGE = (5, 100)  # % the firmware accepts per level
+BRIGHTNESS_DEFAULTS = {"level": "high", "low": 50, "mid": 80, "high": 100}
 
 APPS = {
     "clock": {"timeFormat": ("choice", "Time format", ["HH:MM", "HH:MM:SS", "HH:MM AP"])},
@@ -85,8 +87,9 @@ def _validate_brightness(value):
         problems.append(f"display.brightness.level must be one of {BRIGHTNESS_LEVELS}")
     percents = [value.get(k) for k in BRIGHTNESS_LEVELS]
     if any(p is not None for p in percents):
-        if not all(isinstance(p, int) and 5 <= p <= 100 for p in percents):
-            problems.append("display.brightness low/mid/high must all be set, 5-100")
+        lo, hi = BRIGHTNESS_RANGE
+        if not all(isinstance(p, int) and lo <= p <= hi for p in percents):
+            problems.append(f"display.brightness low/mid/high must all be set, {lo}-{hi}")
         elif not percents[0] < percents[1] < percents[2]:
             problems.append("display.brightness must rise: low < mid < high")
     if extra := set(value) - {"level", *BRIGHTNESS_LEVELS}:
@@ -122,5 +125,7 @@ def schema():
     return {
         "display": describe(DISPLAY),
         "brightnessLevels": BRIGHTNESS_LEVELS,
+        "brightnessRange": list(BRIGHTNESS_RANGE),
+        "brightnessDefaults": BRIGHTNESS_DEFAULTS,
         "apps": {app: describe(rules) for app, rules in APPS.items()},
     }
