@@ -116,7 +116,9 @@ const en = {
   "preset.agents.name": "AI agents", "preset.agents.desc": "Claude Code and Codex at a glance",
   "preset.ambient.name": "Ambient", "preset.ambient.desc": "Clock and weather, nothing else",
   "preset.clock.name": "Just the clock", "preset.clock.desc": "The built-in clock on its own",
-  "ui.search": "Search", "ui.theme": "Theme", "ui.language": "Language",
+  "ui.search": "Search", "ui.theme": "Theme", "ui.language": "Language", "ui.palette": "Colour",
+  "palette.paper": "Paper · vermilion", "palette.matcha": "Matcha · green", "palette.ai": "Ai · indigo",
+  "palette.sakura": "Sakura · pink", "palette.kohaku": "Kohaku · amber",
   "ago.s": "{n}s ago", "ago.m": "{n} min ago", "ago.h": "{n} h ago", "ago.now": "just now",
   "err.load": "Could not load: {msg}",
 };
@@ -234,7 +236,9 @@ const zh = {
   "preset.agents.name": "AI 代理", "preset.agents.desc": "一眼看清 Claude Code 和 Codex",
   "preset.ambient.name": "氛围", "preset.ambient.desc": "只有时钟和天气",
   "preset.clock.name": "只看时钟", "preset.clock.desc": "只显示自带时钟",
-  "ui.search": "搜索", "ui.theme": "主题", "ui.language": "语言",
+  "ui.search": "搜索", "ui.theme": "主题", "ui.language": "语言", "ui.palette": "配色",
+  "palette.paper": "和纸 · 朱", "palette.matcha": "抹茶 · 绿", "palette.ai": "藍 · 靛蓝",
+  "palette.sakura": "樱 · 粉", "palette.kohaku": "琥珀 · 金",
   "ago.s": "{n} 秒前", "ago.m": "{n} 分钟前", "ago.h": "{n} 小时前", "ago.now": "刚刚",
   "err.load": "无法加载：{msg}",
 };

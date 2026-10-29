@@ -77,7 +77,7 @@ a.link:hover { color: var(--accent-text); }
 .meter { display: flex; flex-direction: column; gap: 6px; }
 .meter-label { color: var(--muted); }
 .meter-num { font: 300 var(--text-num)/1 var(--display); font-variant-numeric: tabular-nums; }
-.meter-num span { font-size: var(--text-xl); }
+.meter-num span:not(.num) { font-size: var(--text-xl); }
 .meter.warn .meter-num { color: var(--accent); }
 .meter-track { height: 6px; overflow: hidden; border-radius: var(--radius-pill); background: var(--track); }
 .meter-fill { display: block; height: 100%; border-radius: inherit; transition: width var(--slow) var(--ease); }

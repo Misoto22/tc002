@@ -17,6 +17,16 @@ PROJECTS = os.path.expanduser("~/.claude/projects")
 KEEP = 26 * 3600  # entries older than this can never count again
 
 
+# Where transcripts live: sessions, their sub-agents, and workflow agents. A recursive
+# glob also walks whatever tools leave in a project folder (thousands of files) on every
+# sample, roughly 15x slower.
+LAYOUT = ("*/*.jsonl", "*/*/subagents/*.jsonl", "*/*/subagents/workflows/*/*.jsonl")
+
+
+def _transcripts(projects):
+    return [p for pattern in LAYOUT for p in glob.glob(os.path.join(projects, pattern))]
+
+
 def _tokens(usage):
     return sum(
         int(usage.get(k) or 0)
@@ -74,11 +84,7 @@ class ClaudeUsage:
     def collect(self):
         now = self.clock()
         since = min(day_start(now), now - FIVE_HOURS)
-        files = [
-            p
-            for p in glob.glob(os.path.join(self.projects, "**", "*.jsonl"), recursive=True)
-            if os.path.getmtime(p) >= since
-        ]
+        files = [p for p in _transcripts(self.projects) if os.path.getmtime(p) >= since]
         for path in list(self._files):
             if path not in files:
                 del self._files[path]

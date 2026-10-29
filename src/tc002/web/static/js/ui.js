@@ -215,9 +215,14 @@ export function menu(anchor, groups, onPick, emptyText) {
   for (const [label, items] of groups) {
     if (!items.length) continue;
     el.append(h("div", { class: "menu-label" }, label));
-    for (const [value, text, ico, app] of items) {
-      el.append(h("button", { type: "button", role: "menuitem", onClick: () => { close(); onPick(value); } },
-        app ? appIcon(app, "sm") : ico && icon(ico), text));
+    // item: [value, text, icon, app, { swatch, current }]
+    for (const [value, text, ico, app, extra = {}] of items) {
+      const lead = extra.swatch ? h("span", { class: "swatch", "data-palette": extra.swatch })
+        : app ? appIcon(app, "sm") : ico && icon(ico);
+      el.append(h("button", {
+        type: "button", role: "menuitem", "aria-current": extra.current ? "true" : undefined,
+        onClick: (e) => { close(); onPick(value, e); },
+      }, lead, text, extra.current ? icon("check", "icon menu-check") : null));
     }
   }
   if (!el.querySelector("button")) el.append(h("div", { class: "menu-label" }, emptyText));
@@ -234,11 +239,32 @@ export function menu(anchor, groups, onPick, emptyText) {
 // Run a DOM update inside a View Transition when the browser can animate it. The update
 // must never wait on the animation: if the transition has not started within 250 ms
 // (background tab, busy renderer) it is skipped and the update runs anyway.
-export function transition(update) {
+export function transition(update, finished) {
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (!document.startViewTransition || reduce) return update();
+  if (!document.startViewTransition || reduce) { update(); finished?.(); return; }
   let done = false;
   const run = () => { if (!done) { done = true; update(); } };
   const vt = document.startViewTransition(run);
+  vt.finished.finally(() => finished?.());
   setTimeout(() => { if (!done) { vt.skipTransition(); run(); } }, 250);
+}
+
+// Count a number up (or down) to `to` from what the element with this `key` showed last
+// time; the first showing counts up from zero. Text only: no layout work per frame.
+const shown = new Map();
+export function countUp(el, to, key, format = (n) => String(Math.round(n))) {
+  const from = shown.get(key) ?? 0;
+  shown.set(key, to);
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (from === to || reduce) { el.textContent = format(to); return el; }
+  const start = performance.now();
+  const span = ms("--count");
+  const step = (now) => {
+    const k = Math.min(1, (now - start) / span);
+    el.textContent = format(from + (to - from) * (1 - (1 - k) ** 3));
+    if (k < 1) requestAnimationFrame(step);
+  };
+  el.textContent = format(from);
+  requestAnimationFrame(step);
+  return el;
 }
