@@ -2,6 +2,7 @@
 
 import os
 import plistlib
+import shutil
 import subprocess
 import time
 from pathlib import Path
@@ -9,6 +10,11 @@ from pathlib import Path
 LABEL = "dev.tc002.watch"
 PLIST = Path.home() / "Library/LaunchAgents" / f"{LABEL}.plist"
 LOG = Path.home() / "Library/Logs/tc002.log"
+# ps, iostat, vm_stat, sysctl and osascript live here; launchd's default PATH is minimal
+SYSTEM_PATH = ("/usr/bin", "/bin", "/usr/sbin", "/sbin")
+# command-line tools screens run, found where the user's shell finds them at install time
+# (Homebrew, mise, asdf...): the GitHub screen's `gh`
+TOOLS = ("gh",)
 
 
 def _domain():
@@ -19,7 +25,13 @@ def _launchctl(*args, check=True):
     return subprocess.run(["launchctl", *args], capture_output=True, text=True, check=check)
 
 
-def plist(executable):
+def service_path(which=shutil.which):
+    """PATH for the agent: the folders of the tools screens need, then the system's."""
+    found = [str(Path(w).parent) for tool in TOOLS if (w := which(tool))]
+    return ":".join(dict.fromkeys([*found, *SYSTEM_PATH]))
+
+
+def plist(executable, path=None):
     return {
         "Label": LABEL,
         "ProgramArguments": [executable, "watch"],  # screens + rotation come from tc002.toml
@@ -29,8 +41,7 @@ def plist(executable):
         "ProcessType": "Background",
         "StandardOutPath": str(LOG),
         "StandardErrorPath": str(LOG),
-        # ps, iostat, vm_stat and sysctl live here; launchd's default PATH is minimal.
-        "EnvironmentVariables": {"PATH": "/usr/bin:/bin:/usr/sbin:/sbin"},
+        "EnvironmentVariables": {"PATH": path or service_path()},
     }
 
 
