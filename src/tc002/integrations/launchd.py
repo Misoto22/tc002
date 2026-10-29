@@ -2,7 +2,6 @@
 
 import os
 import plistlib
-import shutil
 import subprocess
 import time
 from pathlib import Path
@@ -12,9 +11,10 @@ PLIST = Path.home() / "Library/LaunchAgents" / f"{LABEL}.plist"
 LOG = Path.home() / "Library/Logs/tc002.log"
 # ps, iostat, vm_stat, sysctl and osascript live here; launchd's default PATH is minimal
 SYSTEM_PATH = ("/usr/bin", "/bin", "/usr/sbin", "/sbin")
-# command-line tools screens run, found where the user's shell finds them at install time
-# (Homebrew, mise, asdf...): the GitHub screen's `gh`
+# command-line tools screens run: the GitHub screen's `gh`
 TOOLS = ("gh",)
+# where tools live besides the user's PATH (Homebrew on Apple silicon, then Intel)
+TOOL_DIRS = ("/opt/homebrew/bin", "/usr/local/bin")
 
 
 def _domain():
@@ -25,9 +25,37 @@ def _launchctl(*args, check=True):
     return subprocess.run(["launchctl", *args], capture_output=True, text=True, check=check)
 
 
-def service_path(which=shutil.which):
+def _runs(exe):
+    """Whether `exe --version` works the way the agent would run it: from /, with the
+    system PATH. A version manager's shim (mise, asdf) often fails there, because it picks
+    the version from the folder it is run in."""
+    try:
+        done = subprocess.run(
+            [exe, "--version"],
+            capture_output=True,
+            timeout=10,
+            cwd="/",
+            env={"HOME": str(Path.home()), "PATH": ":".join(SYSTEM_PATH)},
+            check=False,
+        )
+    except OSError, subprocess.SubprocessError:
+        return False
+    return done.returncode == 0
+
+
+def find_tool(tool, path=None, runs=_runs):
+    """The folder of the first `tool` on the user's PATH (then Homebrew's) that runs."""
+    dirs = [*(path if path is not None else os.environ.get("PATH", "")).split(":"), *TOOL_DIRS]
+    for folder in dict.fromkeys(d for d in dirs if d):
+        exe = Path(folder) / tool
+        if exe.is_file() and os.access(exe, os.X_OK) and runs(str(exe)):
+            return folder
+    return None
+
+
+def service_path(find=find_tool):
     """PATH for the agent: the folders of the tools screens need, then the system's."""
-    found = [str(Path(w).parent) for tool in TOOLS if (w := which(tool))]
+    found = [folder for tool in TOOLS if (folder := find(tool))]
     return ":".join(dict.fromkeys([*found, *SYSTEM_PATH]))
 
 
