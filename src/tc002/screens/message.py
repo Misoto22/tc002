@@ -3,16 +3,9 @@
 from ..render import font
 from ..render.anim import MAX_FRAMES, Animation
 from ..render.canvas import HEIGHT, WIDTH, Canvas, dim, mix
+from ..render.palette import LED, MESSAGE_COLORS
 
-COLORS = {
-    "white": "#FFFFFF",
-    "green": "#3EE08A",
-    "yellow": "#FFD000",
-    "red": "#FF5A52",
-    "blue": "#4285F4",
-    "orange": "#D97757",
-    "cyan": "#00E5FF",
-}
+COLORS = {name: f"#{LED[name]:06X}" for name in MESSAGE_COLORS}
 MAX_CHARS = 60
 SCROLL_MS, SCROLL_STEP = 60, 2  # marquee speed: 2 px every 60 ms
 SHIMMER_MS, ALERT_MS = 60, 90
@@ -20,15 +13,15 @@ SHIMMER_MS, ALERT_MS = 60, 90
 # Alert kinds: colour plus a 7x7 icon drawn left of the text.
 ICONS = {
     "done": (
-        "#3EE08A",
+        LED["green"],
         ["......#", ".....##", "#...##.", "##.##..", ".###...", "..#....", "......."],
     ),
     "wait": (
-        "#D97757",
+        LED["orange"],
         [".#####.", "#.....#", "....##.", "...#...", "...#...", ".......", "...#..."],
     ),
     "error": (
-        "#FF5A52",
+        LED["red"],
         ["...#...", "..#.#..", "..#.#..", ".#.#.#.", ".#...#.", "#..#..#", "#######"],
     ),
 }
@@ -48,7 +41,7 @@ def _shine(c, x0, x1, amount):
         for y in range(HEIGHT):
             p = c.get(x, y)
             if p:
-                c.set(x, y, mix(p, 0xFFFFFF, amount))
+                c.set(x, y, mix(p, LED["white"], amount))
 
 
 def text_animation(text, color):

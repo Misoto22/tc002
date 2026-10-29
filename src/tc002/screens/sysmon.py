@@ -14,10 +14,11 @@ from dataclasses import dataclass
 from ..render import font
 from ..render.anim import Animation
 from ..render.canvas import WIDTH, Canvas, dim, mix
+from ..render.palette import LED
 
 CHART_TOP, CHART_H = 6, 10
-LABEL, GRID = "#8A929D", "#1A1F26"
-GREEN, YELLOW, RED = "#3EE08A", "#FFD000", "#FF5A52"
+LABEL, GRID = LED["label"], LED["grid"]
+GREEN, YELLOW, RED = LED["green"], LED["yellow"], LED["red"]
 
 
 @dataclass(frozen=True)
