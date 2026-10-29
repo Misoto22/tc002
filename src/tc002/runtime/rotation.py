@@ -1,4 +1,4 @@
-"""Decides what the clock shows: a playlist of slots, interrupted by alerts.
+"""Decides what the clock shows: a rotation of slots, interrupted by alerts.
 
 The device's own carousel is switched off by `tc002 layout apply`; this driver takes
 its place, stepping through custom screens (`/api/switchDiyApp`) and the built-in apps
@@ -34,7 +34,7 @@ class Attention:
             return self._app
 
 
-class Playlist:
+class Rotation:
     def __init__(
         self, device, slots, attention, takeover=True, clock=time.monotonic, held=hold.active
     ):
@@ -86,7 +86,7 @@ class Playlist:
 
     def run(self, stop):
         if self.slots:
-            log("playlist: " + " -> ".join(f"{s.label} {s.seconds:g}s" for s in self.slots))
+            log("rotation: " + " -> ".join(f"{s.label} {s.seconds:g}s" for s in self.slots))
         state = (0, None)
         while not stop.is_set():
             state = self.step(state)

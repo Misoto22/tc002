@@ -70,7 +70,7 @@ def build():
     e = sub.add_parser("event", help="record a Claude Code hook event (used by the hooks)")
     e.add_argument("kind", choices=events.KINDS)
 
-    w = sub.add_parser("watch", help="run screens + playlist in the foreground")
+    w = sub.add_parser("watch", help="run screens + rotation in the foreground")
     w.add_argument("--once", action="store_true", help="push one animation per screen, exit")
 
     lay = sub.add_parser("layout", help="which built-in apps stay on, and the carousel")

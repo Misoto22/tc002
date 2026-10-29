@@ -18,7 +18,7 @@ def write(tmp_path, body):
 def test_repository_config_is_valid():
     settings = config.load(REPO_CONFIG)
     assert settings.screens == ("claude", "sys")
-    assert [s.label for s in settings.playlist] == ["claude", "sys", "builtin:clock"]
+    assert [s.label for s in settings.rotation] == ["claude", "sys", "builtin:clock"]
 
 
 def test_no_config_means_builtin_defaults(monkeypatch, tmp_path):
@@ -31,9 +31,9 @@ def test_no_config_means_builtin_defaults(monkeypatch, tmp_path):
     ("body", "message"),
     [
         ('[screens]\nenabled = ["nope"]', "unknown screens"),
-        ('[playlist]\nslots = [{ screen = "claude", builtin = "clock" }]', "exactly one"),
-        ('[playlist]\nslots = [{ builtin = "weather" }]', "keep_builtins"),
-        ('[playlist]\nslots = [{ screen = "claude", seconds = 1 }]', "seconds"),
+        ('[rotation]\nslots = [{ screen = "claude", builtin = "clock" }]', "exactly one"),
+        ('[rotation]\nslots = [{ builtin = "weather" }]', "keep_builtins"),
+        ('[rotation]\nslots = [{ screen = "claude", seconds = 1 }]', "seconds"),
         ('[device]\nkeep_builtins = ["fax"]', "unknown built-in"),
         ('[device]\nbrightness = "max"', "unknown key"),
         ('[display]\nbrightness = { level = "max" }', "brightness.level"),
@@ -67,3 +67,13 @@ def test_local_state_round_trip(monkeypatch, tmp_path):
     assert config.local() == {"host": "10.0.0.9", "config": "/x/tc002.toml"}
     assert config.host() == "10.0.0.9"
     assert config.host("1.2.3.4") == "1.2.3.4"
+
+
+def test_legacy_playlist_section_is_read_as_rotation(tmp_path):
+    settings = config.load(
+        write(tmp_path, '[playlist]\nslots = [{ screen = "claude", seconds = 9 }]')
+    )
+    assert [s.label for s in settings.rotation] == ["claude"]
+    both = "[playlist]\nslots = []\n[rotation]\nslots = []"
+    with pytest.raises(config.ConfigError, match="old name"):
+        config.load(write(tmp_path, both))

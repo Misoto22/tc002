@@ -22,7 +22,7 @@ def _launchctl(*args, check=True):
 def plist(executable):
     return {
         "Label": LABEL,
-        "ProgramArguments": [executable, "watch"],  # screens + playlist come from tc002.toml
+        "ProgramArguments": [executable, "watch"],  # screens + rotation come from tc002.toml
         "RunAtLoad": True,
         "KeepAlive": True,
         "ThrottleInterval": 10,

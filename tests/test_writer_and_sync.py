@@ -18,7 +18,7 @@ FULL = {
         "clock": {"timeFormat": "HH:MM:SS"},
         "weather": {"city": 'Syd "ney"', "displayInfo": {"displayAqi": True}},
     },
-    "playlist": {
+    "rotation": {
         "slots": [{"screen": "sys", "seconds": 12.5}, {"builtin": "weather", "seconds": 20}]
     },
     "alerts": {"takeover": False},

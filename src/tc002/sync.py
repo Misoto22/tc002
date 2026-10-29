@@ -39,8 +39,8 @@ def apply(device, settings, state_dir):
     if "brightness" in update and isinstance(current.get("brightness"), dict):
         # send the whole object: the device wants low < mid < high every time
         update["brightness"] = current["brightness"] | update["brightness"]
-    if settings.playlist:
-        update["carouselSpeed"] = 0  # the tc002 playlist drives the screen
+    if settings.rotation:
+        update["carouselSpeed"] = 0  # the tc002 rotation drives the screen
     changed = {k: v for k, v in update.items() if current.get(k) != v}
     if changed:
         device.set_config(**changed)
