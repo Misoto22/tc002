@@ -62,12 +62,26 @@ def test_missing_settings_file_is_created(tmp_path):
 def test_service_path_finds_the_tools_screens_run():
     from tc002.integrations import launchd
 
-    found = {"gh": "/Users/me/.local/share/mise/shims/gh"}
-    path = launchd.service_path(which=found.get)
+    found = {"gh": "/Users/me/.local/share/mise/shims"}
+    path = launchd.service_path(find=found.get)
     assert path.split(":")[0] == "/Users/me/.local/share/mise/shims"
     assert path.endswith("/usr/bin:/bin:/usr/sbin:/sbin")
-    assert launchd.service_path(which=lambda tool: None) == "/usr/bin:/bin:/usr/sbin:/sbin"
+    assert launchd.service_path(find=lambda tool: None) == "/usr/bin:/bin:/usr/sbin:/sbin"
     assert launchd.plist("/x/tc002", "/a:/b")["EnvironmentVariables"] == {"PATH": "/a:/b"}
+
+
+def test_a_shim_that_fails_outside_a_project_is_skipped(tmp_path):
+    from tc002.integrations import launchd
+
+    shims, brew = tmp_path / "shims", tmp_path / "brew"
+    for folder in (shims, brew):
+        folder.mkdir()
+        (folder / "gh").write_text("#!/bin/sh\n")
+        (folder / "gh").chmod(0o755)
+    working = {str(brew / "gh")}
+    found = launchd.find_tool("gh", f"{shims}:{brew}", runs=working.__contains__)
+    assert found == str(brew)
+    assert launchd.find_tool("gh", str(shims), runs=lambda exe: False) is None
 
 
 def test_github_without_gh_says_how_to_fix_it(monkeypatch):
