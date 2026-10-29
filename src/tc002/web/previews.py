@@ -1,5 +1,12 @@
 """LED previews the UI shows: example screens, live screens, built-in apps, games and
-message drafts, each as a mock-up GIF."""
+message drafts, each as a mock-up GIF.
+
+Example screens, built-in apps and games are fixed pictures, so each is drawn once per
+LED theme and kept (`_fixed`): a page full of thumbnails then loads at once instead of
+re-rendering every example on each request.
+"""
+
+from functools import lru_cache
 
 from ..games import GAMES
 from ..games.demo import demo
@@ -38,16 +45,31 @@ class Previews:
         elif name.removeprefix("live-") in LIVE_SCREENS and name.startswith("live-"):
             screen = build(name.removeprefix("live-"), self._settings_or_none())
             anim = screen.render(screen.sample())
-        elif name.startswith("game-") and name.removeprefix("game-") in GAMES:
-            anim = demo(name.removeprefix("game-"))
-        elif name.startswith("builtin-"):
-            try:
-                anim = builtin_previews.render(name.removeprefix("builtin-"))
-            except ValueError:
-                raise ApiError(404, "Unknown preview", f"No built-in app {name!r}.") from None
         else:
-            anims = examples()
-            if name not in anims:
+            gif = _fixed(name, theme)
+            if gif is None:
                 raise ApiError(404, "Unknown preview", f"No preview named {name!r}.")
-            anim = anims[name]
+            return gif
         return mockup.led_gif(anim, theme)
+
+
+@lru_cache(maxsize=1)
+def _examples():
+    return examples()
+
+
+@lru_cache(maxsize=512)
+def _fixed(name, theme):
+    """GIF bytes of an example screen, a built-in app or a game demo; None if unknown."""
+    if name.startswith("game-") and name.removeprefix("game-") in GAMES:
+        anim = demo(name.removeprefix("game-"))
+    elif name.startswith("builtin-"):
+        try:
+            anim = builtin_previews.render(name.removeprefix("builtin-"))
+        except ValueError:
+            return None
+    elif name in _examples():
+        anim = _examples()[name]
+    else:
+        return None
+    return mockup.led_gif(anim, theme)

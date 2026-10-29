@@ -40,6 +40,8 @@ GETS = {
     "/api/log": "log",
     "/api/wifi/status": "wifi_status",
     "/api/game/frame": "game_frame",
+    "/api/symbols": "symbols",
+    "/api/home/entities": "home_entities",
 }
 
 

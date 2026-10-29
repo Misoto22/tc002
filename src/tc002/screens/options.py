@@ -6,11 +6,18 @@ once, next to the screen that uses it.
 
 Kinds: "text" (spec: max length), "date" (YYYY-MM-DD), "zones" (IANA time zones; spec:
 how many), "list" (short texts; spec: how many), "int" (spec: (min, max)), "choice"
-(spec: allowed values).
+(spec: allowed values), "symbols" (market symbols as Yahoo Finance writes them, picked
+by search in the UI; spec: how many), "entities" (Home Assistant entity ids, picked from
+the user's Home Assistant; spec: how many).
 """
 
 import datetime as dt
+import re
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
+SYMBOL = re.compile(r"^[A-Z0-9^][A-Z0-9^.=\-]{0,14}$")  # AAPL, ^GSPC, 0700.HK, BTC-USD
+ENTITY = re.compile(r"^[a-z_]+\.[a-z0-9_]+$")  # sensor.living_room_temperature
+PATTERNS = {"symbols": SYMBOL, "entities": ENTITY}
 
 
 def rules(screen_class):
@@ -38,6 +45,13 @@ def _check(where, rule, value):
         and all(isinstance(v, str) and 0 < len(v) <= 64 for v in value)
     ):
         return f"{where} must list 1 to {spec} names"
+    if kind in PATTERNS and not (
+        isinstance(value, list)
+        and 1 <= len(value) <= spec
+        and all(isinstance(v, str) and PATTERNS[kind].match(v) for v in value)
+    ):
+        what = "symbols like AAPL or 0700.HK" if kind == "symbols" else "entity ids"
+        return f"{where} must list 1 to {spec} {what}"
     if kind == "zones":
         if not isinstance(value, list) or not 1 <= len(value) <= spec:
             return f"{where} must list 1 to {spec} time zones"

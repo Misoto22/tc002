@@ -1,5 +1,5 @@
 """API actions on this Mac and the services screens use: Claude Code and the service,
-the log, Finder, social tokens for the clock, connection secrets and trying a screen.
+the log, Finder, social tokens for the clock and connection secrets.
 
 Mixed into web.api.Api; the work itself is in host_actions.py, keychain.py and
 connections.py."""
@@ -9,7 +9,6 @@ import subprocess
 from .. import builtins, connections, device_settings, keychain
 from ..device import CATEGORY_ENDPOINTS
 from ..integrations import launchd
-from ..screens import SCREENS, build
 from . import host_actions
 from .errors import ApiError
 
@@ -36,17 +35,6 @@ class HostActions:
         else:
             keychain.delete(key)
         return {"saved": bool(value)}
-
-    def try_screen(self, body):
-        """Sample one screen now and say whether it works, without touching the clock."""
-        name = body.get("screen")
-        if name not in SCREENS:
-            raise ApiError(422, "Unknown screen", f"No screen named {name!r}.")
-        try:
-            build(name, self._settings_or_none()).sample()
-        except (OSError, ValueError, KeyError, subprocess.SubprocessError) as exc:
-            return {"ok": False, "error": str(exc)[:200]}
-        return {"ok": True}
 
     def social_token(self, body):
         """Hand a social app its OAuth token. Write-only: sent to the clock and forgotten;

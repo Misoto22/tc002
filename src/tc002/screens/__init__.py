@@ -56,12 +56,14 @@ _LOCATED = {"sun", "air"}
 _CONNECTED = {"agenda", "home"}
 
 
-def build(name, settings=None):
-    """A screen with its options from tc002.toml; the sun screen takes the weather city."""
+def build(name, settings=None, draft=None):
+    """A screen with its options from tc002.toml (or `draft`, options not yet saved); the
+    sun and air screens take the weather city."""
     cls = SCREENS[name]
     if name not in _TAKES_OPTIONS:
         return cls()
-    values = dict((settings.screen_options if settings else {}).get(name, {}))
+    saved = (settings.screen_options if settings else {}).get(name, {})
+    values = dict(saved if draft is None else draft)
     if name in _LOCATED and settings is not None:
         weather = settings.apps.get("weather", {})
         values.setdefault("lat", weather.get("lat"))

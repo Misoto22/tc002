@@ -13,18 +13,148 @@ from ..render.palette import LED
 SUN = ["....#....", ".#.....#.", "...###...", "#.#####.#", "...###...", ".#.....#.", "....#...."]
 TOMATO = ["...#...", ".#####.", "#######", "#######", "#######", ".#####.", "..###.."]
 HOLD_MS = 4000
-# social apps: two-letter tag and the colour of their mark
-SOCIAL = {
-    "xhs": ("XH", "red"),
-    "douyin": ("DY", "cyan"),
-    "bilibili": ("BL", "sky"),
-    "weibo": ("WB", "orange"),
-    "youtube": ("YT", "red"),
-    "instagram": ("IG", "violet"),
-    "facebook": ("FB", "blue"),
-    "tiktok": ("TT", "cyan"),
-    "x": ("X", "white"),
+# social apps: each one's mark as 12x12 pixel art, then a follower count. Letters map to
+# palette colours (ICON_COLOURS); "." is off.
+ICON_COLOURS = {
+    "r": "red",
+    "w": "white",
+    "b": "blue",
+    "s": "sky",
+    "c": "cyan",
+    "v": "violet",
+    "o": "orange",
+    "y": "yellow",
+    "p": "peach",
+    "g": "gray",
 }
+SOCIAL = {
+    "youtube": [
+        "............",
+        ".rrrrrrrrrr.",
+        "rrrrrrrrrrrr",
+        "rrrrrwrrrrrr",
+        "rrrrrwwrrrrr",
+        "rrrrrwwwrrrr",
+        "rrrrrwwrrrrr",
+        "rrrrrwrrrrrr",
+        "rrrrrrrrrrrr",
+        ".rrrrrrrrrr.",
+        "............",
+        "............",
+    ],
+    "facebook": [
+        ".bbbbbbbbbb.",
+        "bbbbbbbbbbbb",
+        "bbbbbbbwwwbb",
+        "bbbbbbwbbbbb",
+        "bbbbbbwbbbbb",
+        "bbbbwwwwwbbb",
+        "bbbbbbwbbbbb",
+        "bbbbbbwbbbbb",
+        "bbbbbbwbbbbb",
+        "bbbbbbwbbbbb",
+        "bbbbbbwbbbbb",
+        ".bbbbbwbbbb.",
+    ],
+    "instagram": [
+        ".vvvvvvvvvv.",
+        "v..........v",
+        "v........v.v",
+        "v...vvvv...v",
+        "v..v....v..v",
+        "o..o....o..o",
+        "o..o....o..o",
+        "o...oooo...o",
+        "o..........o",
+        "y..........y",
+        ".yyyyyyyyyy.",
+        "............",
+    ],
+    "bilibili": [
+        "..s......s..",
+        "...s....s...",
+        "....s..s....",
+        ".ssssssssss.",
+        "s..........s",
+        "s..s....s..s",
+        "s..s....s..s",
+        "s..........s",
+        "s...s..s...s",
+        "s....ss....s",
+        ".ssssssssss.",
+        "............",
+    ],
+    "weibo": [
+        ".........oo.",
+        "..........o.",
+        "...rrrrr....",
+        "..rrrrrrr...",
+        ".rrr.y.rrr..",
+        ".rr.yyy.rr..",
+        ".rrr.y.rrr..",
+        "..rrrrrrr...",
+        "...rrrrr....",
+        "............",
+        "............",
+        "............",
+    ],
+    "xhs": [
+        ".rrrrrrrrrr.",
+        "rrrrrrrrrrrr",
+        "rrrrrrrrrrrr",
+        "rwwrwwwrwwrr",
+        "rwrrwrrrwrwr",
+        "rwwrwwrrwrwr",
+        "rwrwwrrrwrwr",
+        "rwrrwwwrwwrr",
+        "rrrrrrrrrrrr",
+        "rrrrrrrrrrrr",
+        ".rrrrrrrrrr.",
+        "............",
+    ],
+    "x": [
+        "ww........ww",
+        ".ww......ww.",
+        "..ww....ww..",
+        "...ww..ww...",
+        "....wwww....",
+        ".....ww.....",
+        "....wwww....",
+        "...ww..ww...",
+        "..ww....ww..",
+        ".ww......ww.",
+        "ww........ww",
+        "............",
+    ],
+}
+NOTE = [
+    "......##....",
+    "......#.#...",
+    "......#..#..",
+    "......#.....",
+    "......#.....",
+    "......#.....",
+    "...####.....",
+    "..#####.....",
+    "..####......",
+    "............",
+]
+SOCIAL_NOTE = {"douyin", "tiktok"}  # the note mark: cyan and red shadows under white
+
+
+def _icon(c, x, y, rows):
+    for dy, row in enumerate(rows):
+        for dx, ch in enumerate(row):
+            if ch != ".":
+                c.set(x + dx, y + dy, LED[ICON_COLOURS[ch]])
+
+
+def _note(c, x, y):
+    for colour, (ox, oy) in (("cyan", (-1, -1)), ("red", (1, 1)), ("white", (0, 0))):
+        for dy, row in enumerate(NOTE):
+            for dx, ch in enumerate(row):
+                if ch == "#":
+                    c.set(x + dx + ox, y + dy + oy, LED[colour])
 
 
 def _clock(c):
@@ -75,9 +205,10 @@ def _ipshow(c):
 
 
 def _social(c, key):
-    tag, colour = SOCIAL[key]
-    c.rect(1, 2, 13, 12, LED[colour])
-    c.text(2 if len(tag) == 2 else 6, 6, tag, 0, big=False)
+    if key in SOCIAL_NOTE:
+        _note(c, 1, 3)
+    else:
+        _icon(c, 1, 2, SOCIAL[key])
     c.text(18, 4, "12.4K", LED["white"])
 
 

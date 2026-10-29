@@ -91,3 +91,24 @@ def test_screen_options_are_validated_and_written_back(tmp_path):
         with pytest.raises(config.ConfigError):
             config.parse({"screen": bad})
     assert set(NEW) <= set(SCREENS)
+
+
+def test_moon_mirrors_for_the_south_and_counts_days_to_full():
+    first_quarter = moon.NEW_MOON + dt.timedelta(days=moon.SYNODIC_DAYS / 4)
+    north = moon.MoonScreen(clock=lambda: first_quarter)
+    south = moon.MoonScreen({"hemisphere": "south", "detail": "full"}, clock=lambda: first_quarter)
+    state = north.sample()
+    assert state.to_full in (7, 8)
+    a, b = north.render(state).frames[0], south.render(state).frames[0]
+    row = 7 * 52
+    assert [a.px[row + x] for x in range(1, 14)] == [b.px[row + x] for x in range(13, 0, -1)]
+
+
+def test_life_options_change_speed_and_colour():
+    from tc002.render.palette import LED
+    from tc002.screens import life
+
+    fast = life.LifeScreen({"speed": "fast", "colour": "amber", "density": 50})
+    anim = fast.render(life.State(3))
+    assert anim.delays()[0] == life.SPEEDS["fast"]
+    assert LED["yellow"] in set(anim.frames[0].px)

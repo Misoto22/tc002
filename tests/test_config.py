@@ -102,3 +102,27 @@ def test_legacy_playlist_section_is_read_as_rotation(tmp_path):
     both = "[playlist]\nslots = []\n[rotation]\nslots = []"
     with pytest.raises(config.ConfigError, match="old name"):
         config.load(write(tmp_path, both))
+
+
+@pytest.mark.parametrize(
+    ("body", "ok"),
+    [
+        (
+            '[screens]\nenabled = ["stocks"]\n[screen.stocks]\nsymbols = ["AAPL", "^GSPC"]',
+            True,
+        ),
+        ('[screens]\nenabled = ["stocks"]\n[screen.stocks]\nsymbols = ["aapl; rm"]', False),
+        (
+            '[screens]\nenabled = ["home"]\n[screen.home]\nentities = ["sensor.den", "person.me"]',
+            True,
+        ),
+        ('[screens]\nenabled = ["home"]\n[screen.home]\nentities = ["den"]', False),
+        ('[screen.hackernews]\nlist = "jobs"', False),
+    ],
+)
+def test_picked_options_are_validated(tmp_path, body, ok):
+    if ok:
+        config.load(write(tmp_path, body))
+    else:
+        with pytest.raises(config.ConfigError):
+            config.load(write(tmp_path, body))
