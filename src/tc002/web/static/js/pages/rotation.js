@@ -30,8 +30,9 @@ function modeCard(mode, ico) {
         dr.rotation.mode = "single";
         const first = dr.rotation.slots[0] ?? choices(dr)[0];
         if (!dr.rotation.show && first) dr.rotation.show = first.screen ? { screen: first.screen } : { builtin: first.builtin };
-      } else {
+      } else { // rotating again: the pin is forgotten, so it holds nothing back
         delete dr.rotation.mode;
+        delete dr.rotation.show;
       }
     }, { rerender: true }),
   }, h("span", { class: "choice-head" }, icon(ico), h("span", { class: "choice-title" }, t(`mode.${mode}`))),

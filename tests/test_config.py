@@ -50,6 +50,7 @@ def test_no_config_means_builtin_defaults(monkeypatch, tmp_path):
         ('[rotation]\nmode = "single"', "needs rotation.show"),
         ('[rotation]\nmode = "single"\nshow = { screen = "moon" }', "not in screens.enabled"),
         ('[rotation]\nshow = { builtin = "weather" }', "keep_builtins"),
+        ('[rotation]\nshow = "clock"', "must be a table"),
         ("[screens\n", "Expected"),
     ],
 )

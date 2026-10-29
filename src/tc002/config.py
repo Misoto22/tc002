@@ -114,6 +114,8 @@ def _parse(data, source):
         raise ConfigError(f"{source}: rotation.mode must be {CYCLE!r} or {SINGLE!r}")
     pinned = None
     if "show" in rotation:
+        if not isinstance(rotation["show"], dict):
+            raise ConfigError(f'{source}: rotation.show must be a table, e.g. {{ screen = "sys" }}')
         pinned = _slot(
             {**rotation["show"], "seconds": MAX_SLOT_SECONDS}, f"{source}: rotation.show", screens
         )

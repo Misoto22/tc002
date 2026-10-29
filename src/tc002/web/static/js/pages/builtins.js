@@ -35,7 +35,8 @@ function appItem(key, inRotation) {
 export function builtins() {
   if (store.focus.type !== "builtin") setFocus({ type: "builtin", key: "clock" });
   const d = store.draft;
-  const inRotation = new Set([...d.rotation.slots, d.rotation.show].filter(Boolean).map((s) => s.builtin).filter(Boolean));
+  const held = d.rotation.mode === "single" ? [d.rotation.show] : [];
+  const inRotation = new Set([...d.rotation.slots, ...held].filter(Boolean).map((s) => s.builtin).filter(Boolean));
   const groups = ["tools", "social", "calendar"].flatMap((cat) => {
     const apps = store.state.catalogue.filter((a) => a.category === cat);
     return [section(t(`builtins.cat.${cat}`)), h("div", { class: "panel library" }, ...apps.map(({ key }) => appItem(key, inRotation)))];
