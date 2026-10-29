@@ -1,4 +1,4 @@
-"""`tc002 watch`: one thread per screen plus the playlist driver, until Ctrl-C or SIGTERM."""
+"""`tc002 watch`: one thread per screen plus the rotation driver, until Ctrl-C or SIGTERM."""
 
 import signal
 import subprocess
@@ -6,7 +6,7 @@ import threading
 
 from ..screens import SCREENS
 from .output import Output, log
-from .playlist import Attention, Playlist
+from .rotation import Attention, Rotation
 
 
 def screen_loop(out, screen, stop, attention, once=False):
@@ -31,7 +31,7 @@ def screen_loop(out, screen, stop, attention, once=False):
 
 
 def watch(device, settings, preview_dir=None, once=False):
-    """Run the configured screens (and, on a real clock, the playlist driver)."""
+    """Run the configured screens (and, on a real clock, the rotation driver)."""
     out = Output(device, preview_dir)
     screens = [SCREENS[name]() for name in settings.screens]
     stop = threading.Event()
@@ -43,8 +43,8 @@ def watch(device, settings, preview_dir=None, once=False):
         for s in screens
     ]
     if device is not None and not once:
-        playlist = Playlist(device, settings.playlist, attention, settings.alert_takeover)
-        threads.append(threading.Thread(target=playlist.run, args=(stop,), daemon=True))
+        rotation = Rotation(device, settings.rotation, attention, settings.alert_takeover)
+        threads.append(threading.Thread(target=rotation.run, args=(stop,), daemon=True))
     for t in threads:
         t.start()
     log(f"watching {', '.join(s.APP for s in screens)} (config: {settings.source})")

@@ -15,7 +15,7 @@ TOML = """\
 enabled = ["claude", "sys"]
 [device]
 keep_builtins = ["clock"]
-[playlist]
+[rotation]
 slots = [{ screen = "claude", seconds = 30 }]
 [alerts]
 takeover = true
@@ -63,7 +63,7 @@ def test_index_embeds_a_token_and_strict_headers(ui):
     status, headers, body = call(url, "/")
     assert status == 200 and len(token) > 20 and b"{{TOKEN}}" not in body
     assert "script-src 'self'" in headers["Content-Security-Policy"]
-    for asset in ("/js/app.js", "/js/pages/playlist.js", "/css/tokens.css", "/icons.svg"):
+    for asset in ("/js/app.js", "/js/pages/rotation.js", "/css/tokens.css", "/icons.svg"):
         assert call(url, asset)[0] == 200
 
 
@@ -73,7 +73,7 @@ def test_state_reports_config_and_offline_clock(ui):
     state = json.loads(body)
     assert status == 200
     assert state["config"]["path"] == str(cfg)
-    assert state["config"]["data"]["playlist"]["slots"][0]["screen"] == "claude"
+    assert state["config"]["data"]["rotation"]["slots"][0]["screen"] == "claude"
     assert state["clock"]["online"] is False
     assert "volume" in state["schema"]["display"]
 
@@ -83,7 +83,7 @@ def test_save_validates_and_writes_toml(ui):
     _, _, body = call(url, "/api/state")
     data = json.loads(body)["config"]["data"]
     data["display"] = {"volume": 3}
-    data["playlist"]["slots"].append({"screen": "sys", "seconds": 10})
+    data["rotation"]["slots"].append({"screen": "sys", "seconds": 10})
     status, _, body = call(url, "/api/config", data, {"X-TC002-Token": token})
     assert status == 200, body
     text = cfg.read_text()
@@ -143,12 +143,43 @@ def test_nested_static_paths_cannot_escape(ui):
     assert call(url, "/%2e%2e/web/api.py")[0] == 404
 
 
-def test_font_matches_the_python_renderer(ui):
+def test_led_assets_match_the_python_renderer(ui):
     from tc002.render import font
+    from tc002.render.palette import hex_palette
 
     url, _, _ = ui
-    status, _, body = call(url, "/api/font")
-    assert status == 200 and json.loads(body) == {"big": font.BIG, "small": font.SMALL}
+    status, _, body = call(url, "/api/led")
+    data = json.loads(body)
+    assert status == 200
+    assert data == {"font": {"big": font.BIG, "small": font.SMALL}, "palette": hex_palette()}
+
+
+def test_quick_settings_write_only_display(ui):
+    url, token, cfg = ui
+    status, _, body = call(url, "/api/quick", {"display": {"volume": 4}}, {"X-TC002-Token": token})
+    assert status == 200, body
+    text = cfg.read_text()
+    assert "volume = 4" in text and 'screen = "claude"' in text  # rotation untouched
+    status, _, _ = call(url, "/api/quick", {"display": {"volume": 40}}, {"X-TC002-Token": token})
+    assert status == 422 and "volume = 4" in cfg.read_text()
+
+
+def test_presets_are_listed_and_applied_to_a_draft(ui):
+    url, token, _ = ui
+    state = json.loads(call(url, "/api/state")[2])
+    assert {p["id"] for p in state["presets"]} >= {"focus", "ambient"}
+    draft = state["config"]["data"]
+    status, _, body = call(
+        url, "/api/preset", {"data": draft, "preset": "ambient"}, {"X-TC002-Token": token}
+    )
+    data = json.loads(body)["data"]
+    assert status == 200
+    assert [s.get("builtin") for s in data["rotation"]["slots"]] == ["clock", "weather"]
+    assert "weather" in data["device"]["keep_builtins"]
+    assert (
+        call(url, "/api/preset", {"data": draft, "preset": "nope"}, {"X-TC002-Token": token})[0]
+        == 422
+    )
 
 
 def test_cities_fall_back_offline_and_need_no_token(ui, monkeypatch):
@@ -175,3 +206,30 @@ def test_live_preview_needs_a_clock_and_validates(ui):
     assert status == 409  # no clock configured in the test server
     status, _, body = call(url, "/api/live/stop", {}, {"X-TC002-Token": token})
     assert status == 200 and json.loads(body) == {"changes": []}
+
+
+def test_show_pushes_a_screen_the_clock_does_not_have_yet(monkeypatch):
+    from tc002.web import api as api_module
+
+    calls = []
+
+    class Clock:
+        def apps(self):
+            return []
+
+        def push(self, app, payload):
+            calls.append(("push", app, "image" in payload))
+
+        def switch_custom(self, app):
+            calls.append(("switch", app))
+
+    api = api_module.Api("192.0.2.1", None)
+    monkeypatch.setattr(api, "_device", lambda: Clock())
+    api.show({"screen": "claude"})  # samples local files only, so it runs on any OS
+    assert calls == [("push", "claude", True), ("switch", "claude")]
+
+
+def test_device_http_errors_keep_their_status():
+    from tc002.device import DeviceError
+
+    assert DeviceError("x", 404).status == 404 and DeviceError("y").status is None

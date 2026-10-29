@@ -1,11 +1,11 @@
 // ⌘K command palette: fuzzy-search pages, actions, "show on clock" targets and preferences.
 
 import { appName, lang, t } from "./i18n.js";
-import { h, icon } from "./ui.js";
+import { h, icon, ms } from "./ui.js";
 
 let open = null;
 
-// Subsequence match, so "plst" finds "Playlist"; earlier and tighter matches rank higher.
+// Subsequence match, so "plst" finds "Rotation"; earlier and tighter matches rank higher.
 function score(query, text) {
   if (!query) return 1;
   const q = query.toLowerCase();
@@ -69,7 +69,7 @@ export function openPalette(commands) {
   function close() {
     dialog.classList.add("closing");
     backdrop.classList.add("closing");
-    setTimeout(() => backdrop.remove(), 140);
+    setTimeout(() => backdrop.remove(), ms("--fast") + 20);
     open = null;
     previous?.focus();
   }

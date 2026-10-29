@@ -1,8 +1,8 @@
 """A short-lived "hands off the screen" flag, set by the UI's live preview.
 
-While it is active the playlist driver does not switch screens, so a setting being
+While it is active the rotation driver does not switch screens, so a setting being
 previewed on the clock is not replaced by the next slot. It expires on its own, so a
-closed browser tab can never freeze the playlist for long.
+closed browser tab can never freeze the rotation for long.
 """
 
 import json

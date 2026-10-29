@@ -1,15 +1,15 @@
 // Pieces shared by several pages.
 
-import { appName, t } from "../i18n.js";
+import { t } from "../i18n.js";
+import { screenPreview } from "../media.js";
 import { load } from "../store.js";
-import { button, h, panel, row } from "../ui.js";
+import { appIcon, button, h, panel, row } from "../ui.js";
 
-const PREVIEWS = { claude: "claude-busy", sys: "sys" };
-
+// A rotation item's thumbnail: a screen's live-looking LED preview, or a built-in's icon.
 export function thumb(key, isScreen) {
   return isScreen
-    ? h("img", { class: "led-thumb", src: `/api/preview/${PREVIEWS[key] ?? key}.gif`, alt: "", loading: "lazy" })
-    : h("span", { class: "builtin-tile" }, appName(key));
+    ? h("img", { class: "led-thumb", src: screenPreview(key), alt: "", loading: "lazy" })
+    : h("span", { class: "thumb-tile" }, appIcon(key));
 }
 
 export function offlineNotice(clock) {

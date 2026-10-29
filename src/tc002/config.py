@@ -1,7 +1,7 @@
 """Settings: the versioned `tc002.toml` plus machine-local state.
 
 The repository's `tc002.toml` is the single source of every setting tc002 manages:
-screens, playlist, which built-in apps stay on, display settings and built-in app
+screens, rotation, which built-in apps stay on, display settings and built-in app
 settings. `tc002 layout apply` and the web UI push it to the clock.
 
 Machine-local facts — the clock's IP, which config file to use, the clock's original
@@ -26,7 +26,7 @@ SECTION_KEYS = {
     "device": {"keep_builtins"},
     "display": None,
     "apps": None,
-    "playlist": {"slots"},
+    "rotation": {"slots"},
     "alerts": {"takeover"},
 }
 
@@ -37,7 +37,7 @@ class ConfigError(ValueError):
 
 @dataclass(frozen=True)
 class Slot:
-    """One playlist entry: a custom screen (`screen`) or a built-in app (`builtin`)."""
+    """One rotation entry: a custom screen (`screen`) or a built-in app (`builtin`)."""
 
     seconds: float
     screen: str | None = None
@@ -51,7 +51,7 @@ class Slot:
 @dataclass(frozen=True)
 class Settings:
     screens: tuple[str, ...] = ("claude", "sys")
-    playlist: tuple[Slot, ...] = ()
+    rotation: tuple[Slot, ...] = ()
     keep_builtins: tuple[str, ...] = ("clock",)
     alert_takeover: bool = True
     display: dict = field(default_factory=dict)  # global settings, keys as in /setConfig
@@ -63,6 +63,10 @@ def _parse(data, source):
     from .screens import SCREENS  # deferred: screens import runtime modules
 
     known_screens = set(SCREENS)
+    if "playlist" in data:  # the section's name before 0.2; read it, write [rotation]
+        if "rotation" in data:
+            raise ConfigError(f"{source}: use [rotation] only; [playlist] is its old name")
+        data = {("rotation" if k == "playlist" else k): v for k, v in data.items()}
     for section, keys in SECTION_KEYS.items():
         if section not in data:
             continue
@@ -75,8 +79,8 @@ def _parse(data, source):
         raise ConfigError(f"{source}: unknown screens {sorted(bad)}; known {sorted(known_screens)}")
 
     slots = []
-    for i, raw in enumerate(data.get("playlist", {}).get("slots", [])):
-        where = f"{source}: playlist.slots[{i}]"
+    for i, raw in enumerate(data.get("rotation", {}).get("slots", [])):
+        where = f"{source}: rotation.slots[{i}]"
         if ("screen" in raw) == ("builtin" in raw):
             raise ConfigError(f"{where}: set exactly one of `screen` or `builtin`")
         if "screen" in raw and raw["screen"] not in screens:
@@ -101,7 +105,7 @@ def _parse(data, source):
     for slot in slots:
         if slot.builtin and slot.builtin not in keep:
             raise ConfigError(
-                f"{source}: playlist uses built-in {slot.builtin!r}, "
+                f"{source}: rotation uses built-in {slot.builtin!r}, "
                 "which must also be listed in device.keep_builtins"
             )
     display, apps = data.get("display", {}), data.get("apps", {})
@@ -110,7 +114,7 @@ def _parse(data, source):
 
     return Settings(
         screens=screens,
-        playlist=tuple(slots),
+        rotation=tuple(slots),
         keep_builtins=keep,
         alert_takeover=bool(data.get("alerts", {}).get("takeover", True)),
         display=display,
@@ -131,12 +135,12 @@ def to_data(settings):
         "device": {"keep_builtins": list(settings.keep_builtins)},
         "display": settings.display,
         "apps": settings.apps,
-        "playlist": {
+        "rotation": {
             "slots": [
                 {"screen": s.screen, "seconds": s.seconds}
                 if s.screen
                 else {"builtin": s.builtin, "seconds": s.seconds}
-                for s in settings.playlist
+                for s in settings.rotation
             ]
         },
         "alerts": {"takeover": settings.alert_takeover},

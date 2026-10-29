@@ -29,9 +29,15 @@
       </nav>
       <div class="workspace">
         <header class="topbar">
+          <button class="btn ghost icon" id="collapse" type="button">
+            <svg class="icon" aria-hidden="true"><use href="/icons.svg#panel-left"></use></svg>
+          </button>
           <div class="crumb" id="crumb"></div>
           <span class="spacer"></span>
           <button class="status-pill" id="status" type="button" aria-live="polite"></button>
+          <button class="btn ghost icon" id="quick" type="button">
+            <svg class="icon" aria-hidden="true"><use href="/icons.svg#sun-dim"></use></svg>
+          </button>
           <button class="btn ghost kbd-btn" id="palette-btn" type="button">
             <svg class="icon" aria-hidden="true"><use href="/icons.svg#search"></use></svg>
             <kbd>⌘K</kbd>
@@ -39,12 +45,12 @@
           <button class="btn ghost icon" id="theme" type="button"></button>
           <button class="btn ghost icon lang-btn" id="lang" type="button"></button>
         </header>
-        <div class="content">
-          <main id="main" tabindex="-1">
+        <main id="main" tabindex="-1">
+          <section class="device-bar" id="device" aria-label="Preview"></section>
+          <div id="page">
             <div class="page"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton short"></div></div>
-          </main>
-          <aside class="preview" id="preview" aria-label="Preview"></aside>
-        </div>
+          </div>
+        </main>
       </div>
     </div>
     <div class="savebar" id="savebar" hidden role="status">

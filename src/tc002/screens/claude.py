@@ -16,21 +16,26 @@ import subprocess
 import time
 from dataclasses import dataclass
 
+from .. import usage as tokens
 from ..render.anim import Animation
 from ..render.canvas import Canvas, dim, mix
+from ..render.palette import LED
 from ..runtime import events
+from ..usage.claude import ClaudeUsage
 from . import message
+from . import usage as usage_screen
 
 PROJECTS = os.path.expanduser("~/.claude/projects")
 SESSION_WINDOW = 180  # a transcript touched this recently counts as a live session
 SUBAGENT_WINDOW = 40
 BUSY_CPU = 8.0  # summed CPU% of `claude` processes above this = generating
+USAGE_EVERY = 30.0  # seconds between token re-counts
 BUSY_HOLD = 6.0  # stay BUSY this long after the last hot sample, so tool waits don't flicker
 DONE_SECONDS = 15  # how long DONE stays up after a turn ends
 WAIT_SECONDS = 600  # give up on WAIT if nobody answers for this long
 
-ORANGE, PEACH, GREEN, WHITE = "#D97757", "#FFD9C7", "#3EE08A", "#E9EBEE"
-GRAY, DARK, YELLOW = "#5B626D", "#1E242C", "#FFD000"
+ORANGE, PEACH, GREEN, WHITE = LED["orange"], LED["peach"], LED["green"], LED["soft_white"]
+GRAY, DARK, YELLOW = LED["gray"], LED["track"], LED["yellow"]
 CX, CY = 8, 7  # spark centre
 ARMS = [
     (0, -1, 4),
@@ -53,6 +58,8 @@ class State:
     subagents: int
     busy: bool
     alert: str | None = None  # "done" or "wait" from a hook event
+    today: int = 0  # tokens since midnight (two significant figures)
+    window: int = 0  # tokens in the last five hours
 
 
 def claude_cpu():
@@ -102,6 +109,15 @@ class ClaudeScreen:
         self.projects, self.cpu, self.clock = projects, cpu, clock
         self.event_path = event_path or events.PATH
         self._last_hot = float("-inf")
+        self.usage = ClaudeUsage(projects, clock)
+        self._usage = (float("-inf"), 0, 0)  # (sampled at, today, window)
+
+    def _tokens(self, now):
+        """Token totals, re-read at most every USAGE_EVERY seconds (transcripts can be large)."""
+        if now - self._usage[0] >= USAGE_EVERY:
+            u = self.usage.collect()
+            self._usage = (now, tokens.rough(u.today), tokens.rough(u.window))
+        return self._usage[1:]
 
     def sample(self):
         now = self.clock()
@@ -109,7 +125,7 @@ class ClaudeScreen:
         if sessions and self.cpu() > BUSY_CPU:
             self._last_hot = now
         busy = sessions > 0 and now - self._last_hot <= BUSY_HOLD
-        return State(sessions, min(subagents, 6), busy, self._alert(now))
+        return State(sessions, min(subagents, 6), busy, self._alert(now), *self._tokens(now))
 
     def _alert(self, now):
         kind, at = events.latest(self.event_path)
@@ -128,13 +144,17 @@ class ClaudeScreen:
             anim.key = state
             return anim
         if state.busy:
-            count, delay = 16, 80
+            count, delay, repeat = 16, 80, 2
         elif state.sessions:
-            count, delay = 32, 80
+            count, delay, repeat = 32, 80, 1
         else:
-            count, delay = 24, 120
-        frames = [_frame(state, f, count) for f in range(count)]
-        return Animation(frames, delay, key=state)
+            count, delay, repeat = 24, 120, 1
+        frames = [_frame(state, f, count) for f in range(count)] * repeat
+        delays = [delay] * len(frames)
+        # then a stats card: today's tokens counting up, held for a few seconds
+        card = usage_screen.Page("claude", state.today, state.window)
+        stats, stat_delays = usage_screen.page_frames(card)
+        return Animation(frames + stats, delays + stat_delays, key=state)
 
 
 def _frame(state, f, count):

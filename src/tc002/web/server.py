@@ -121,7 +121,12 @@ def make_handler(api, token, port):
             except ApiError as exc:
                 self._fail(exc.status, exc.title, exc.detail, exc.errors)
             except DeviceError as exc:
-                self._fail(502, "Clock unreachable", str(exc))
+                if exc.status is None:
+                    self._fail(502, "Clock unreachable", str(exc))
+                elif exc.status == 404:
+                    self._fail(404, "Not on the clock", f"The clock has no such app: {exc}")
+                else:
+                    self._fail(502, "Clock refused the request", str(exc))
             except (OSError, RuntimeError, ValueError) as exc:
                 self._fail(500, "Request failed", str(exc))
 
@@ -130,8 +135,8 @@ def make_handler(api, token, port):
             query = dict(parse_qsl(url.query))
             if path == "/api/state":
                 self._send(200, api.state())
-            elif path == "/api/font":
-                self._send(200, api.font())
+            elif path == "/api/led":
+                self._send(200, api.led())
             elif path == "/api/cities":
                 self._send(200, api.cities(query))
             elif path.startswith("/api/preview/") and path.endswith(".gif"):
@@ -152,6 +157,8 @@ def make_handler(api, token, port):
                 "/api/show": api.show,
                 "/api/message": api.send_message,
                 "/api/live": api.live,
+                "/api/quick": api.quick,
+                "/api/preset": api.apply_preset,
                 "/api/live/stop": api.live_stop,
             }
             if path not in routes:

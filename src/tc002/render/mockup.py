@@ -2,9 +2,10 @@
 
 from . import gif
 from .canvas import HEIGHT, WIDTH
+from .palette import LED
 
 CELL = 8
-BG, OFF = 0x0B0C0E, 0x16181C
+BG, OFF = LED["panel"], LED["off"]
 
 
 def _lamp_mask():

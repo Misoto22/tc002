@@ -1,6 +1,6 @@
 # tc002
 
-Animated screens, a playlist that replaces the built-in carousel, and live Claude Code
+Animated screens, a rotation that replaces the built-in carousel, and live Claude Code
 status for the **Ulanzi TC002** pixel clock (52×16 RGB). Talks to the clock's stock
 firmware over the LAN — no flashing, no cloud, no runtime dependencies beyond Python.
 
@@ -8,20 +8,23 @@ firmware over the LAN — no flashing, no cloud, no runtime dependencies beyond 
 |---|---|---|---|
 | ![](docs/screens/claude-busy.gif) | ![](docs/screens/claude-idle.gif) | ![](docs/screens/claude-done.gif) | ![](docs/screens/claude-wait.gif) |
 
-| System | Text | Alert | No session |
+| AI usage | System | Text | Alert |
 |---|---|---|---|
-| ![](docs/screens/sys.gif) | ![](docs/screens/text.gif) | ![](docs/screens/alert-error.gif) | ![](docs/screens/claude-off.gif) |
+| ![](docs/screens/usage.gif) | ![](docs/screens/sys.gif) | ![](docs/screens/text.gif) | ![](docs/screens/alert-error.gif) |
 
 ## What it does
 
 - **`claude` screen** — the spark spins while Claude Code is generating and breathes when
-  idle; live sub-agents orbit it; an equalizer or heartbeat runs beside the session count.
-  Claude Code hooks turn it into a green **DONE** when a turn ends and an orange **WAIT**
-  when Claude needs you.
+  idle; live sub-agents orbit it; then a card shows today's tokens. Claude Code hooks turn
+  it into a green **DONE** when a turn ends and an orange **WAIT** when Claude needs you.
+- **`usage` screen** — Claude Code and Codex token usage: today (counting up) and the last
+  five hours, plus Codex's 5-hour and weekly allowance when Codex reports it. Read from
+  each agent's local files; nothing leaves the machine.
 - **`sys` screen** — scrolling CPU chart of the last 52 seconds plus memory.
-- **Playlist** — switches the clock between your screens and the built-in apps you keep
-  (for example the clock), on your timing. The device's own carousel and every built-in
-  app you did not keep are turned off, and restored by `tc002 uninstall`.
+- **Rotation** — cycles the clock between your screens and the built-in apps you keep, on
+  your timing, replacing the device's own carousel; start from a preset (Coding focus,
+  Developer desk, AI agents, Ambient, Just the clock). Built-in apps you did not keep are
+  turned off, and restored by `tc002 uninstall`.
 - **One-off messages** — `tc002 text` and `tc002 alert` from any script or CI job.
 
 Every animation is rendered locally and sent as one looping GIF, so the clock animates by
@@ -33,33 +36,32 @@ itself and the screen is re-sent only when its content changes.
 tc002 ui            # opens http://127.0.0.1:8742
 ```
 
-![Settings UI — playlist](docs/ui-playlist.png)
+![Settings UI — rotation](docs/ui-rotation.png)
 
 A local web app for everything tc002 manages, in English or Chinese, dark or light:
 
-- **Playlist** — drag slots into order (or `Alt+↑/↓`), set durations, add screens and kept built-ins.
-- **Built-in apps, Display, App settings** — which apps stay on; brightness, volume, time
-  zone, date and week; clock format, weather (pick a city — it fills in coordinates),
-  focus timers.
-- **Preview** — a live LED preview beside every page: the playlist cycling with real
-  durations, or the built-in app you are editing, drawn with your draft settings
-  (brightness included). Built-in apps are close approximations of the clock's own.
-- **Live on the clock** — one switch plays the draft on the hardware before saving
-  (the playlist pauses); switching it off restores tc002.toml.
+- **Device bar** — a live LED preview pinned above every page: the rotation cycling with
+  real durations, or the built-in app you are editing, drawn with your draft settings
+  (brightness included). One switch, **Live on the clock**, plays the draft on the
+  hardware before saving (the rotation pauses); switching it off restores tc002.toml.
+- **Quick settings** — brightness and volume from the top bar (and the overview), applied
+  at once without touching unsaved edits.
+- **Rotation** — presets, drag to reorder (or `Alt+↑/↓`), durations, screens and kept built-ins.
+- **Built-in apps, Display, App settings** — which apps stay on; time zone, date and week;
+  clock format, weather (search a city — it fills in coordinates), focus timers.
 - **Status** — the top bar always says where things stand: in sync, *n* unsaved, saving,
   applied, saved-but-offline, failed, or live; click it for this session's activity.
-  Unsaved rows are marked in place.
-- **⌘K** — jump anywhere, save, discard, apply, show any screen on the clock, send a test
-  alert, switch theme or language. `⌘S` saves.
+- **⌘K** for anything, `⌘S` to save, `[` to collapse the sidebar.
 
 ![Settings UI — app settings](docs/ui-apps.png)
 
 Every change goes to `tc002.toml` first, is applied to the clock, and reloads the
 background service, so the file stays the single source of truth and a fresh clone
 reproduces your setup. The server listens on 127.0.0.1 only, rejects foreign `Host`
-headers and needs a per-session token for every change, so other web pages cannot
-reconfigure your clock. Icons are [Lucide](https://lucide.dev) (ISC), vendored by
-`scripts/vendor_icons.py`.
+headers and needs a per-session token for every change. Styling comes from one file of
+design tokens (`web/static/css/tokens.css`); icons are monochrome — Lucide for the
+interface and the apps' official marks (Simple Icons, plus a few from Iconify), vendored
+by `scripts/vendor_icons.py`.
 
 ## Requirements
 
@@ -85,7 +87,7 @@ Find the IP in Ulanzi Studio, your router's client list, or `tc002 --host <ip> i
 
 | Step | Command | Undo |
 |---|---|---|
-| Keep only the built-in apps in `device.keep_builtins`; turn off the device carousel when a playlist is set | `tc002 layout apply` | `tc002 layout restore` |
+| Keep only the built-in apps in `device.keep_builtins`; turn off the device carousel when a rotation is set | `tc002 layout apply` | `tc002 layout restore` |
 | Start the background service (launchd, at login, restarted if it dies) | `tc002 service install` | `tc002 service uninstall` |
 | Add Claude Code hooks to `~/.claude/settings.json` (existing hooks are kept; a backup is written first) | `tc002 hooks install` | `tc002 hooks uninstall` |
 
@@ -104,7 +106,7 @@ tc002 alert "PROD DOWN" --kind error --keep
 tc002 layout show                    built-in apps currently on, carousel setting
 tc002 apps / tc002 rm [app...]       list / remove custom apps on the clock
 tc002 info                           firmware, Wi-Fi, brightness
-tc002 watch                          run screens + playlist in the foreground (Ctrl-C clears)
+tc002 watch                          run screens + rotation in the foreground (Ctrl-C clears)
 tc002 --preview out/ watch --once    write LED mock-up GIFs instead of touching the clock
 tc002 service status                 is the background service running
 ```
@@ -138,7 +140,7 @@ brightness = { level = "mid" }
 [apps.weather]                     # optional: built-in app settings (never credentials)
 city = "Sydney"
 
-[playlist]
+[rotation]
 slots = [
   { screen = "claude", seconds = 30 },
   { screen = "sys", seconds = 15 },
@@ -155,7 +157,7 @@ An empty `slots` list leaves the device's own carousel in charge.
 
 ```text
 tc002.toml ─► config ─► watcher ─┬─ screen threads ── sample → render → Output ─► POST /api/custom
-                                 └─ playlist ─────── switchDiyApp / switchApp ──► clock
+                                 └─ rotation ─────── switchDiyApp / switchApp ──► clock
 Claude Code hooks ─► tc002 event ─► ~/.cache/tc002/event.json ─► claude screen
 ```
 
@@ -170,7 +172,7 @@ including the limits that shaped the animations.
 |---|---|
 | Every request times out, but `curl http://<ip>/getBase` works | An `HTTP_PROXY` (e.g. Clash on `:7890`) — tc002 already bypasses it; if you call the clock from other tools, add the IP to `NO_PROXY`. |
 | Log shows `No route to host` | macOS Local Network permission for the uv Python: System Settings → Privacy & Security → Local Network. |
-| Screens never appear | The clock is not on the DIY page and no playlist is set — add slots, or press the knob to DIY. |
+| Screens never appear | The clock is not on the DIY page and no rotation is set — add slots, or press the knob to DIY. |
 | `firmware ... update for switching` in `doctor` | Firmware older than V1.1.0 cannot switch screens remotely; update in Ulanzi Studio. |
 | Clock unplugged | The service keeps retrying quietly and re-sends everything when it is back. |
 
@@ -183,6 +185,7 @@ uv sync
 uv run pytest
 uv run ruff check . && uv run ruff format --check .
 uv run python scripts/render_docs.py   # refresh docs/screens/*.gif
+uv run python scripts/vendor_icons.py  # refresh the icon sprite and app-icons.json
 ```
 
 Commits and pull-request titles follow [Conventional Commits](https://www.conventionalcommits.org/);

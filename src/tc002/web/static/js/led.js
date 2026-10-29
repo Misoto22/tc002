@@ -1,17 +1,11 @@
-// A 52x16 LED matrix in a <canvas>, using the same pixel fonts as the Python renderer
-// (served by /api/font), so previews drawn here match what tc002 pushes.
+// A 52x16 LED matrix in a <canvas>, using the Python renderer's pixel fonts and palette
+// (served by /api/led), so previews drawn here match what tc002 pushes.
 
-import { get } from "./api.js";
+import { assets } from "./assets.js";
 
 export const W = 52;
 export const H = 16;
-const BG = "#0b0c0e";
-const OFF = "#16181c";
-let font = null;
-
-export async function loadFont() {
-  font ??= await get("/api/font");
-}
+const font = () => assets.font;
 
 const rgb = (c) => (typeof c === "number" ? c : parseInt(c.slice(1), 16));
 
@@ -32,12 +26,12 @@ export class Frame {
   }
 
   width(text, big = true) {
-    const table = big ? font.big : font.small;
+    const table = big ? font().big : font().small;
     return [...text].reduce((w, ch) => w + glyph(table, ch)[0].length + 1, 0) - (text ? 1 : 0);
   }
 
   text(x, y, text, c, big = true) {
-    const table = big ? font.big : font.small;
+    const table = big ? font().big : font().small;
     for (const ch of text) {
       const rows = glyph(table, ch);
       this.sprite(x, y, rows, c);
@@ -54,12 +48,12 @@ export function draw(canvas, frame) {
   const g = canvas.getContext("2d");
   const cell = canvas.width / W;
   const r = cell / 2 - Math.max(0.6, cell * 0.09);
-  g.fillStyle = BG;
+  g.fillStyle = assets.palette.panel;
   g.fillRect(0, 0, canvas.width, canvas.height);
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
       const p = frame.px[y * W + x];
-      g.fillStyle = p ? `#${p.toString(16).padStart(6, "0")}` : OFF;
+      g.fillStyle = p ? `#${p.toString(16).padStart(6, "0")}` : assets.palette.off;
       g.beginPath();
       g.arc(x * cell + cell / 2, y * cell + cell / 2, r, 0, Math.PI * 2);
       g.fill();

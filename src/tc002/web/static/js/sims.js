@@ -2,14 +2,11 @@
 // change to time format, week start or weather items can be seen before it is saved.
 // The firmware draws these itself; these are close stand-ins, labelled as such in the UI.
 
+import { assets } from "./assets.js";
 import { Frame, W } from "./led.js";
 
-const WHITE = "#f2f4f7";
-const DIM = "#2a3038";
-const GREEN = "#3ee08a";
-const BLUE = "#5b8def";
-const AMBER = "#ffb020";
-const RED = "#ff5a52";
+// colours by name from the shared LED palette (render/palette.py)
+const c = (name) => assets.palette[name];
 
 const SUN = ["..#..", "#.#.#", ".###.", "#####", ".###.", "#.#.#", "..#.."];
 const DROP = ["..#..", "..#..", ".###.", ".###.", "#####", "#####", ".###."];
@@ -29,7 +26,7 @@ function weekBar(f, settings, d) {
   const start = Number(settings.weekStart ?? 1);
   const today = (d.getUTCDay() - start + 7) % 7;
   const x0 = Math.floor((W - (7 * 5 + 6 * 2)) / 2);
-  for (let i = 0; i < 7; i++) f.rect(x0 + i * 7, 15, 5, 1, i === today ? GREEN : DIM);
+  for (let i = 0; i < 7; i++) f.rect(x0 + i * 7, 15, 5, 1, i === today ? c("green") : c("dim"));
 }
 
 function clock(settings, apps, now) {
@@ -39,7 +36,7 @@ function clock(settings, apps, now) {
   const y = settings.showWeek ? 3 : 4;
   if (showDate) {
     const [m, day] = [pad(d.getUTCMonth() + 1), pad(d.getUTCDate())];
-    f.centred(y, settings.dateFormat === "DD/MM" ? `${day}/${m}` : `${m}/${day}`, BLUE);
+    f.centred(y, settings.dateFormat === "DD/MM" ? `${day}/${m}` : `${m}/${day}`, c("sky"));
   } else {
     const fmt = apps.clock?.timeFormat ?? "HH:MM";
     let hours = d.getUTCHours();
@@ -47,12 +44,12 @@ function clock(settings, apps, now) {
     if (fmt === "HH:MM AP") {
       const ap = hours < 12 ? "AM" : "PM";
       hours = hours % 12 || 12;
-      const x = f.text(4, y, `${pad(hours)}${blink}${pad(d.getUTCMinutes())}`, WHITE);
-      f.text(x + 3, y + 2, ap, AMBER, false);
+      const x = f.text(4, y, `${pad(hours)}${blink}${pad(d.getUTCMinutes())}`, c("soft_white"));
+      f.text(x + 3, y + 2, ap, c("amber"), false);
     } else if (fmt === "HH:MM:SS") {
-      f.centred(y, `${pad(hours)}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`, WHITE);
+      f.centred(y, `${pad(hours)}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`, c("soft_white"));
     } else {
-      f.centred(y, `${pad(hours)}${blink}${pad(d.getUTCMinutes())}`, WHITE);
+      f.centred(y, `${pad(hours)}${blink}${pad(d.getUTCMinutes())}`, c("soft_white"));
     }
   }
   weekBar(f, settings, d);
@@ -62,17 +59,17 @@ function clock(settings, apps, now) {
 function weather(settings, apps, now) {
   const flags = apps.weather?.displayInfo ?? { displayTemperature: true };
   const items = [
-    ["displayTemperature", SUN, AMBER, "23", true],
-    ["displayHumidity", DROP, BLUE, "48%", false],
-    ["displayPressure", GAUGE, WHITE, "1013", false],
-    ["displayAqi", LEAF, GREEN, "AQI 42", false],
+    ["displayTemperature", SUN, c("amber"), "23", true],
+    ["displayHumidity", DROP, c("sky"), "48%", false],
+    ["displayPressure", GAUGE, c("soft_white"), "1013", false],
+    ["displayAqi", LEAF, c("green"), "AQI 42", false],
   ].filter(([key]) => flags[key]);
   const f = new Frame();
   if (!items.length) return f;
   const [, icon, colour, value, degree] = items[Math.floor(now / 2500) % items.length];
   f.sprite(3, 4, icon, colour);
-  const x = f.text(12, 4, value, WHITE, value.length <= 4);
-  if (degree) f.rect(x, 4, 2, 2, WHITE);
+  const x = f.text(12, 4, value, c("soft_white"), value.length <= 4);
+  if (degree) f.rect(x, 4, 2, 2, c("soft_white"));
   return f;
 }
 
@@ -80,15 +77,15 @@ function timer(settings, apps, now, key) {
   const minutes = Number(apps[key]?.focusTime ?? (key === "busy" ? 30 : 10));
   const left = minutes * 60 - (Math.floor(now / 1000) % (minutes * 60));
   const f = new Frame();
-  if (key === "tomato") f.sprite(3, 4, TOMATO, RED);
-  else f.text(2, 1, "BUSY", RED, false);
-  f.text(key === "tomato" ? 12 : 14, key === "tomato" ? 4 : 7, `${pad(Math.floor(left / 60))}:${pad(left % 60)}`, WHITE);
+  if (key === "tomato") f.sprite(3, 4, TOMATO, c("red"));
+  else f.text(2, 1, "BUSY", c("red"), false);
+  f.text(key === "tomato" ? 12 : 14, key === "tomato" ? 4 : 7, `${pad(Math.floor(left / 60))}:${pad(left % 60)}`, c("soft_white"));
   return f;
 }
 
 function nameTile(label) {
   const f = new Frame();
-  f.centred(5, label.slice(0, 12), WHITE, false);
+  f.centred(5, label.slice(0, 12), c("soft_white"), false);
   return f;
 }
 

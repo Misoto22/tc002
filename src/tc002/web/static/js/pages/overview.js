@@ -1,12 +1,12 @@
-import { ago, appName, t } from "../i18n.js";
+import { ago, t } from "../i18n.js";
+import { quickControls } from "../quick.js";
 import { applySaved, load, setFocus, store } from "../store.js";
 import { badge, button, h, pageHead, panel, row, section } from "../ui.js";
 import { page } from "./common.js";
 
 export function overview() {
-  setFocus({ type: "playlist" });
+  setFocus({ type: "rotation" });
   const { clock, integrations } = store.state;
-  const slots = store.draft.playlist.slots;
   const hooks = integrations.hooks ?? {};
   const hooksOn = Object.values(hooks).filter((v) => v === true).length;
   const drift = clock.drift ?? [];
@@ -33,8 +33,8 @@ export function overview() {
 
   return page(
     pageHead(t("page.overview"), t("desc.overview"), button(t("btn.refresh"), load, { ico: "refresh-cw" })),
-    h("div", { class: "summary" },
-      ...slots.map((s) => h("span", { class: "summary-chip" }, appName(s.screen ?? s.builtin), h("span", { class: "muted" }, `${s.seconds}s`)))),
+    clock.online && section(t("quick.title")),
+    clock.online && h("div", { class: "panel quick-grid" }, ...quickControls()),
     section(t("section.status")), status,
     facts && section(t("section.device")), facts,
     clock.online && section(t("row.customApps")),

@@ -1,4 +1,4 @@
-"""Built-in app layout and the playlist driver, against an in-memory clock."""
+"""Built-in app layout and the rotation driver, against an in-memory clock."""
 
 import copy
 
@@ -7,7 +7,7 @@ import pytest
 from tc002 import builtins
 from tc002.config import Slot
 from tc002.device import DeviceError
-from tc002.runtime.playlist import Attention, Playlist
+from tc002.runtime.rotation import Attention, Rotation
 
 SECRET = "oauth-token-must-not-leak"
 
@@ -102,26 +102,26 @@ def test_unknown_builtin_fails_before_touching_the_clock():
     assert clock.cfg == before
 
 
-def run(playlist, ticks, clock_values):
+def run(rotation, ticks, clock_values):
     state = (0, None)
     for _ in range(ticks):
-        state = playlist.step(state)
+        state = rotation.step(state)
         clock_values[0] += 1
 
 
 SLOTS = [Slot(3, screen="claude"), Slot(2, builtin="clock")]
 
 
-def test_playlist_rotates_custom_and_builtin_slots():
+def test_rotation_rotates_custom_and_builtin_slots():
     clock, now = FakeClock(), [0.0]
-    pl = Playlist(clock, SLOTS, Attention(), clock=lambda: now[0])
+    pl = Rotation(clock, SLOTS, Attention(), clock=lambda: now[0])
     run(pl, 7, now)
     assert clock.switches == [("custom", "claude"), ("tools", 1), ("custom", "claude")]
 
 
-def test_alert_takes_over_then_playlist_resumes():
+def test_alert_takes_over_then_rotation_resumes():
     clock, now, attention = FakeClock(), [0.0], Attention()
-    pl = Playlist(clock, SLOTS, attention, clock=lambda: now[0])
+    pl = Rotation(clock, SLOTS, attention, clock=lambda: now[0])
     state = pl.step((0, None))  # claude
     state = pl.step((1, None))  # clock
     attention.set("claude")
@@ -139,7 +139,7 @@ def test_alert_takes_over_then_playlist_resumes():
 
 def test_takeover_off_ignores_alerts():
     clock, now, attention = FakeClock(), [0.0], Attention()
-    pl = Playlist(
+    pl = Rotation(
         clock, [Slot(10, builtin="clock")], attention, takeover=False, clock=lambda: now[0]
     )
     attention.set("claude")
@@ -150,7 +150,7 @@ def test_takeover_off_ignores_alerts():
 def test_offline_clock_is_retried_without_advancing():
     clock, now = FakeClock(), [0.0]
     clock.up = False
-    pl = Playlist(clock, SLOTS, Attention(), clock=lambda: now[0])
+    pl = Rotation(clock, SLOTS, Attention(), clock=lambda: now[0])
     state = pl.step((0, None))
     assert state == (0, None) and clock.switches == []
     clock.up = True

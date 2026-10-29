@@ -1,23 +1,35 @@
-/* Design tokens. Dark is the default; light applies when chosen, or when following a
-   light system theme. Keep the two light blocks identical (CSS has no mixins). */
+/* Design tokens — the only place a colour, radius, size, shadow or duration is written.
+   Every other stylesheet uses these variables. Dark is the default; light applies when
+   chosen, or when following a light system theme. Keep the two light blocks identical
+   (CSS has no mixins). Icons are monochrome: no per-app colours. */
 
 :root {
   color-scheme: dark;
+
+  /* surfaces */
   --bg: #08090a;
   --sidebar: #0b0c0d;
   --panel: #101112;
   --panel-raised: #151618;
   --hover: #17181b;
+  --active: #1d1e22;
   --field: #18191b;
   --border: #1f2023;
   --border-strong: #2c2e33;
+
+  /* text */
   --text: #f7f8f8;
   --text-2: #d0d6e0;
   --muted: #8a8f98;
   --faint: #5d6169;
+  --on-accent: #ffffff; /* text and glyphs on accent or brand-coloured fills */
+
+  /* accent and states */
   --accent: #5e6ad2;
   --accent-hover: #7078e0;
+  --accent-deep: #2b2f6b;
   --accent-soft: rgb(94 106 210 / 16%);
+  --accent-glow: rgb(94 106 210 / 35%);
   --accent-text: #9aa3ff;
   --green: #4cb782;
   --green-soft: rgb(76 183 130 / 14%);
@@ -25,14 +37,61 @@
   --yellow-soft: rgb(242 201 76 / 12%);
   --red: #eb5757;
   --red-soft: rgb(235 87 87 / 12%);
+
+  /* controls */
+  --knob: #ffffff;
+  --knob-shadow: 0 1px 2px rgb(0 0 0 / 30%);
+  --button-shadow: 0 1px 2px rgb(0 0 0 / 25%);
+  --inner-highlight: rgb(255 255 255 / 6%);
+
+  /* the clock and its previews */
+  --stage-bg: #050506;
+  --stage-ring: #000000;
+  --stage-shine: rgb(255 255 255 / 5%);
+  --stage-shadow: 0 10px 30px rgb(0 0 0 / 35%);
+  --led-panel: #0b0c0e;
+  --led-label: #9aa0aa;
+
+  /* overlays and elevation */
+  --backdrop: rgb(0 0 0 / 35%);
   --shadow: 0 12px 40px rgb(0 0 0 / 50%), 0 0 0 1px var(--border-strong);
   --shadow-sm: 0 2px 8px rgb(0 0 0 / 35%);
-  --radius: 8px;
+
+  /* shape */
+  --radius-xs: 4px;
   --radius-sm: 6px;
+  --radius: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-pill: 999px;
+
+  /* sizes */
+  --control-h: 28px;
+  --control-sm-h: 24px;
+  --row-h: 52px;
+  --icon: 16px;
+  --icon-sm: 14px;
+  --app-icon: 28px;
+  --sidebar-w: 232px;
+  --sidebar-rail-w: 56px;
+  --topbar-h: 48px;
+  --content-w: 760px;
+  --thumb-w: 104px;
+
+  /* type and motion */
   --font: "Inter Variable", "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text",
     "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
   --mono: "SF Mono", ui-monospace, "JetBrains Mono", Menlo, monospace;
+  --text-sm: 12px;
+  --text-base: 13px;
+  --text-lg: 15px;
+  --text-xl: 20px;
   --ease: cubic-bezier(0.3, 0.7, 0.4, 1);
+  --press: 80ms;
+  --fast: 120ms;
+  --normal: 200ms;
+  --slow: 300ms;
+  --stagger: 25ms; /* delay between rows entering */
 }
 
 :root[data-theme="light"] {
@@ -42,6 +101,7 @@
   --panel: #ffffff;
   --panel-raised: #ffffff;
   --hover: #f1f2f5;
+  --active: #eaebef;
   --field: #f4f5f8;
   --border: #e6e7eb;
   --border-strong: #d4d6dc;
@@ -54,6 +114,9 @@
   --green: #2e9c66;
   --yellow: #b8860b;
   --red: #d64545;
+  --knob-shadow: 0 1px 2px rgb(17 24 39 / 25%);
+  --button-shadow: 0 1px 2px rgb(17 24 39 / 15%);
+  --backdrop: rgb(17 24 39 / 20%);
   --shadow: 0 12px 40px rgb(17 24 39 / 14%), 0 0 0 1px var(--border-strong);
   --shadow-sm: 0 2px 8px rgb(17 24 39 / 8%);
 }
@@ -66,6 +129,7 @@
     --panel: #ffffff;
     --panel-raised: #ffffff;
     --hover: #f1f2f5;
+    --active: #eaebef;
     --field: #f4f5f8;
     --border: #e6e7eb;
     --border-strong: #d4d6dc;
@@ -78,6 +142,9 @@
     --green: #2e9c66;
     --yellow: #b8860b;
     --red: #d64545;
+    --knob-shadow: 0 1px 2px rgb(17 24 39 / 25%);
+    --button-shadow: 0 1px 2px rgb(17 24 39 / 15%);
+    --backdrop: rgb(17 24 39 / 20%);
     --shadow: 0 12px 40px rgb(17 24 39 / 14%), 0 0 0 1px var(--border-strong);
     --shadow-sm: 0 2px 8px rgb(17 24 39 / 8%);
   }

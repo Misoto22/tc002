@@ -28,7 +28,7 @@ COMMENTS = {
     ),
     "display": "Clock-wide settings, applied with /setConfig. Omit a key to leave it as is.",
     "apps": "Settings of built-in apps (no credentials: those stay on the device).",
-    "playlist": "Replaces the device's own carousel. Each slot is a screen or a kept built-in.",
+    "rotation": "Replaces the device's own carousel. Each slot is a screen or a kept built-in.",
     "alerts": "Jump straight to the Claude screen when a hook reports DONE or WAIT.",
 }
 
@@ -48,11 +48,11 @@ def _value(v):
 
 
 def _table(name, body, lines):
-    scalars = {k: v for k, v in body.items() if not isinstance(v, dict) or name == "playlist"}
-    nested = {k: v for k, v in body.items() if isinstance(v, dict) and name != "playlist"}
+    scalars = {k: v for k, v in body.items() if not isinstance(v, dict) or name == "rotation"}
+    nested = {k: v for k, v in body.items() if isinstance(v, dict) and name != "rotation"}
     lines.append(f"[{name}]")
     for key, value in scalars.items():
-        if name == "playlist" and key == "slots":
+        if name == "rotation" and key == "slots":
             lines.append("slots = [")
             lines.extend(f"  {_value(slot)}," for slot in value)
             lines.append("]")

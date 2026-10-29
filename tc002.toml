@@ -27,7 +27,7 @@ keep_builtins = ["clock"]
 # city = "Sydney"
 
 # Replaces the device's own carousel. Each slot is a screen or a kept built-in.
-[playlist]
+[rotation]
 slots = [
   { screen = "claude", seconds = 30 },
   { screen = "sys", seconds = 15 },

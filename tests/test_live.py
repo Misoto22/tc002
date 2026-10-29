@@ -1,10 +1,10 @@
-"""Live preview: the hold that pauses the playlist, and city search merging."""
+"""Live preview: the hold that pauses the rotation, and city search merging."""
 
 import json
 
 from tc002.config import Slot
 from tc002.runtime import hold
-from tc002.runtime.playlist import Attention, Playlist
+from tc002.runtime.rotation import Attention, Rotation
 from tc002.web import cities
 
 
@@ -30,9 +30,9 @@ def test_hold_expires_and_releases(tmp_path):
     assert hold.active(path) == 0
 
 
-def test_playlist_switches_nothing_while_held_then_reshows():
+def test_rotation_switches_nothing_while_held_then_reshows():
     clock, held = Clock(), [True]
-    pl = Playlist(clock, [Slot(10, screen="claude")], Attention(), held=lambda: held[0])
+    pl = Rotation(clock, [Slot(10, screen="claude")], Attention(), held=lambda: held[0])
     state = pl.step((0, None))
     assert clock.switches == []
     held[0] = False
@@ -43,7 +43,7 @@ def test_playlist_switches_nothing_while_held_then_reshows():
 def test_alerts_also_wait_for_the_hold():
     clock, attention = Clock(), Attention()
     attention.set("claude")
-    pl = Playlist(clock, [], attention, held=lambda: True)
+    pl = Rotation(clock, [], attention, held=lambda: True)
     pl.step((0, None))
     assert clock.switches == []
 
