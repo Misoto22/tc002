@@ -6,9 +6,11 @@ and live screens of your own. It talks to the clock's stock firmware over your l
 network — no flashing, no account, no cloud, no runtime dependencies beyond Python.
 
 ```bash
-uv tool install git+https://github.com/Misoto22/tc002
+uv tool install tc002
 tc002 ui            # opens http://127.0.0.1:8742 and walks you through setup
 ```
+
+Or try it without installing: `uvx tc002 ui`.
 
 ## What you can do
 
@@ -34,7 +36,7 @@ tc002 ui            # opens http://127.0.0.1:8742 and walks you through setup
 The interface is in English or Chinese, light or dark, in five colour themes, with ⌘K for
 anything and ⌘S to save.
 
-![Settings UI — overview](docs/ui-rotation.png)
+![Settings UI — overview](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/ui-rotation.png)
 
 ## Requirements
 
@@ -46,7 +48,8 @@ anything and ⌘S to save.
 ## Install
 
 ```bash
-uv tool install git+https://github.com/Misoto22/tc002
+uv tool install tc002              # or, the latest from GitHub:
+                                   # uv tool install git+https://github.com/Misoto22/tc002
 tc002 ui
 ```
 
@@ -73,27 +76,27 @@ Screens tc002 draws itself, each exactly 52×16 pixels. Turn them on in **Rotati
 
 | Sessions | Waiting for you | Finished | Plan limits |
 |---|---|---|---|
-| ![](docs/screens/claude.gif) | ![](docs/screens/claude-wait.gif) | ![](docs/screens/claude-done.gif) | ![](docs/screens/usage.gif) |
+| ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/claude.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/claude-wait.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/claude-done.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/usage.gif) |
 
 | System | Text | Alert | Limits, one unknown |
 |---|---|---|---|
-| ![](docs/screens/sys.gif) | ![](docs/screens/text.gif) | ![](docs/screens/alert-error.gif) | ![](docs/screens/usage-unknown.gif) |
+| ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/sys.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/text.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/alert-error.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/usage-unknown.gif) |
 
 | Focus timer | Day progress | Countdown | World clock |
 |---|---|---|---|
-| ![](docs/screens/focus.gif) | ![](docs/screens/progress.gif) | ![](docs/screens/countdown.gif) | ![](docs/screens/worldclock.gif) |
+| ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/focus.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/progress.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/countdown.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/worldclock.gif) |
 
 | Sunrise & sunset | Moon | Game of Life | Fireplace |
 |---|---|---|---|
-| ![](docs/screens/sun.gif) | ![](docs/screens/moon.gif) | ![](docs/screens/life.gif) | ![](docs/screens/fire.gif) |
+| ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/sun.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/moon.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/life.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/fire.gif) |
 
 | Calendar | GitHub | Now playing | Air quality |
 |---|---|---|---|
-| ![](docs/screens/agenda.gif) | ![](docs/screens/github.gif) | ![](docs/screens/nowplaying.gif) | ![](docs/screens/air.gif) |
+| ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/agenda.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/github.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/nowplaying.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/air.gif) |
 
 | Crypto | Stocks | Hacker News | Home Assistant |
 |---|---|---|---|
-| ![](docs/screens/crypto.gif) | ![](docs/screens/stocks.gif) | ![](docs/screens/hackernews.gif) | ![](docs/screens/home.gif) |
+| ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/crypto.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/stocks.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/hackernews.gif) | ![](https://raw.githubusercontent.com/Misoto22/tc002/main/docs/screens/home.gif) |
 
 - **Sessions** (for Claude Code users) — how many sessions are running, asking for you,
   and finished but unread. A session that starts waiting takes over the clock with its
@@ -152,7 +155,7 @@ tc002 alert "TESTS GREEN" --kind done || true
 
 `tc002 ui` writes everything to one file, `~/.config/tc002/tc002.toml`, then applies it to
 the clock; you can also edit the file and run `tc002 layout apply`.
-[`tc002.example.toml`](tc002.example.toml) describes every option. In short:
+[`tc002.example.toml`](https://github.com/Misoto22/tc002/blob/main/tc002.example.toml) describes every option. In short:
 
 ```toml
 [screens]
@@ -187,9 +190,9 @@ tc002.toml ─► config ─► watcher ─┬─ screen threads ── sample �
 tc002 ui ─► local server (127.0.0.1 only, per-session token) ─► tc002.toml ─► clock, service
 ```
 
-[docs/architecture.md](docs/architecture.md) has the module map,
-[docs/decisions.md](docs/decisions.md) why it is built this way, and
-[docs/device-notes.md](docs/device-notes.md) what the firmware actually does.
+[docs/architecture.md](https://github.com/Misoto22/tc002/blob/main/docs/architecture.md) has the module map,
+[docs/decisions.md](https://github.com/Misoto22/tc002/blob/main/docs/decisions.md) why it is built this way, and
+[docs/device-notes.md](https://github.com/Misoto22/tc002/blob/main/docs/device-notes.md) what the firmware actually does.
 
 ## Troubleshooting
 
@@ -222,5 +225,5 @@ releases and `CHANGELOG.md` come from release-please.
 
 ## License
 
-[MIT](LICENSE). Fonts: Inter Tight and DM Mono (SIL OFL 1.1) in the UI, Fusion Pixel Font
+[MIT](https://github.com/Misoto22/tc002/blob/main/LICENSE). Fonts: Inter Tight and DM Mono (SIL OFL 1.1) in the UI, Fusion Pixel Font
 (SIL OFL 1.1) on the clock. Not affiliated with Ulanzi.
