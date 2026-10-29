@@ -37,7 +37,13 @@ PAGE = 50  # notifications read in one call; more than that shows as 50+
 
 
 def gh(args):
-    done = subprocess.run(["gh", *args], capture_output=True, text=True, timeout=20, check=True)
+    try:
+        done = subprocess.run(["gh", *args], capture_output=True, text=True, timeout=20, check=True)
+    except FileNotFoundError:
+        raise OSError(
+            "GitHub CLI (gh) not found by the background service: install it, then run "
+            "`tc002 service install` again so the service can find it"
+        ) from None
     out = done.stdout.strip() or "0"
     try:
         return json.loads(out)

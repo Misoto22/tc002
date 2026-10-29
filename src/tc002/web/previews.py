@@ -6,6 +6,7 @@ LED theme and kept (`_fixed`): a page full of thumbnails then loads at once inst
 re-rendering every example on each request.
 """
 
+import threading
 from functools import lru_cache
 
 from ..games import GAMES
@@ -53,13 +54,22 @@ class Previews:
         return mockup.led_gif(anim, theme)
 
 
+_warming = threading.Lock()
+
+
 def warm(theme):
-    """Draw every fixed preview in `theme` once (run in the background at start-up)."""
+    """Draw every fixed preview in `theme` once (run in the background at start-up). One
+    warm-up at a time: a second server in the same process finds the pictures kept."""
     from ..builtins import CATALOGUE
 
-    names = [*_examples(), *(f"builtin-{k}" for k in CATALOGUE), *(f"game-{g}" for g in GAMES)]
-    for name in names:
-        _fixed(name, theme)
+    if not _warming.acquire(blocking=False):
+        return
+    try:
+        names = [*_examples(), *(f"builtin-{k}" for k in CATALOGUE), *(f"game-{g}" for g in GAMES)]
+        for name in names:
+            _fixed(name, theme)
+    finally:
+        _warming.release()
 
 
 @lru_cache(maxsize=1)

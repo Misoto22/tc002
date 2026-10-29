@@ -57,3 +57,29 @@ def test_missing_settings_file_is_created(tmp_path):
     path = tmp_path / "nested" / "settings.json"
     claude_hooks.install(EXE, path)
     assert all(claude_hooks.status(EXE, path).values())
+
+
+def test_service_path_finds_the_tools_screens_run():
+    from tc002.integrations import launchd
+
+    found = {"gh": "/Users/me/.local/share/mise/shims/gh"}
+    path = launchd.service_path(which=found.get)
+    assert path.split(":")[0] == "/Users/me/.local/share/mise/shims"
+    assert path.endswith("/usr/bin:/bin:/usr/sbin:/sbin")
+    assert launchd.service_path(which=lambda tool: None) == "/usr/bin:/bin:/usr/sbin:/sbin"
+    assert launchd.plist("/x/tc002", "/a:/b")["EnvironmentVariables"] == {"PATH": "/a:/b"}
+
+
+def test_github_without_gh_says_how_to_fix_it(monkeypatch):
+    import subprocess
+
+    import pytest
+
+    from tc002.screens import github
+
+    def missing(*args, **kwargs):
+        raise FileNotFoundError("gh")
+
+    monkeypatch.setattr(subprocess, "run", missing)
+    with pytest.raises(OSError, match="service install"):
+        github.gh(["api", "user"])
