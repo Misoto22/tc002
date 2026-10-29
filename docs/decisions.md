@@ -145,3 +145,29 @@ the `claude` screen with a takeover while a session waits. Hooks write one file 
 session (no shared-file races); `tc002 statusline` wraps the user's status line and keeps
 the previous command in its own file instead of re-quoting it. The UI moves to a light
 paper, ink and single vermilion accent style with a modern sans (Inter Tight).
+
+## 2026-10-29 — From a personal setup to a manager for every TC002
+
+**Problem.** tc002 grew around one person's desk: Claude Code screens first, the clock's
+own settings second, a tracked personal `tc002.toml`, one fixed LED palette, setup that
+assumed the clock was already on Wi-Fi, and no way to add data from other services.
+
+**Evidence.** A new TC002 opens a `U-Clock` hotspot (WPA2 `12345678`, clock at
+`192.168.100.1`) and accepts `POST /setWifiConfig {ssid, password}` (official protocol
+file; community reports on a factory unit). Joined clocks broadcast on UDP 55555. The
+`draw` command takes a full-frame `db` bitmap; about 8 frames/s over HTTP is reported to
+work, enough for simple games driven from the Mac's keyboard. Open-Meteo, Coinbase, Hacker
+News and the `gh` CLI need no key; Home Assistant, YouTube and private calendar URLs do.
+
+**Choices** (owner's answers, recorded in order of delivery):
+1. LED palettes for tc002's own screens (the firmware's apps cannot be recoloured), chosen
+   in Display & sound or set to follow the UI's colour theme.
+2. Setup from a factory-fresh clock: hotspot → Wi-Fi details sent to the clock (never
+   stored) → discovery by broadcast → firmware check → time zone and city → layout.
+3. More screens that need no API: Pomodoro, countdown, world clock, sunrise/sunset, moon
+   phase, day/week/year progress, Game of Life, ambient fire and sand.
+4. Keyboard mini-games (Breakout, Snake, Pong) streamed as `draw` frames; written from
+   scratch, taking ideas only from permissively licensed projects.
+5. API screens with a Connections page; keys and private URLs live in the macOS Keychain
+   (an `op://` reference is also accepted), never in `tc002.toml`.
+6. Public repository and a PyPI release, so `uvx tc002 ui` works for anyone.
