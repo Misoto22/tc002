@@ -1,9 +1,11 @@
-"""Claude Code's plan limits (5-hour and 7-day, % used), as its status line reports them.
+"""Claude Code's plan limits (5-hour and 7-day, % used), saved where every reader finds them.
 
-Claude Code pipes a JSON document to the status line command after each reply; on a
-Claude subscription it carries `rate_limits.five_hour` and `rate_limits.seven_day`,
-each with `used_percentage` and `resets_at`. `tc002 statusline` saves that part here
-and then runs your own status line command, so nothing you see changes.
+Two writers keep this file current:
+  - `tc002 statusline`: Claude Code pipes a JSON document to the status line after each
+    reply; on a subscription it carries `rate_limits.five_hour` / `seven_day` with
+    `used_percentage` and `resets_at`.
+  - claude_login.py: asks Anthropic's usage endpoint with Claude Code's own login, for
+    sessions that never run a status line (the desktop app).
 """
 
 import json
@@ -34,13 +36,30 @@ def _percent(value):
 
 def record(status_input, path=None, now=None):
     """Save the rate limits from one status line input; returns False when it has none."""
-    limits = (status_input or {}).get("rate_limits")
+    return _save((status_input or {}).get("rate_limits"), "used_percentage", path, now)
+
+
+def record_usage_reply(reply, path=None, now=None):
+    """Save the limits from Anthropic's /api/oauth/usage reply (`utilization` per window)."""
+    return _save(reply, "utilization", path, now)
+
+
+def age(path=None, now=None):
+    """Seconds since the limits were last saved; infinity when they never were."""
+    try:
+        at = float(json.loads((path or PATH).read_text())["at"])
+    except OSError, ValueError, KeyError, TypeError:
+        return float("inf")
+    return (time.time() if now is None else now) - at
+
+
+def _save(limits, field, path, now):
     if not isinstance(limits, dict):
         return False
     saved = {}
     for window in WINDOWS:
         part = limits.get(window) or {}
-        pct = _percent(part.get("used_percentage"))
+        pct = _percent(part.get(field))
         if pct is not None:
             saved[window] = {"used": pct, "resets_at": _epoch(part.get("resets_at"))}
     if not saved:
