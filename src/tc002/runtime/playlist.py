@@ -3,7 +3,8 @@
 The device's own carousel is switched off by `tc002 layout apply`; this driver takes
 its place, stepping through custom screens (`/api/switchDiyApp`) and the built-in apps
 you kept (`/switchApp`). When a screen raises an alert (Claude DONE/WAIT) it jumps
-there at once and holds until the alert clears.
+there at once and holds until the alert clears. While the web UI's live preview holds
+the screen (see hold.py) it switches nothing.
 """
 
 import threading
@@ -11,6 +12,7 @@ import time
 
 from .. import builtins
 from ..device import DeviceError
+from . import hold
 from .output import Quiet, log
 
 POLL = 0.5
@@ -33,9 +35,11 @@ class Attention:
 
 
 class Playlist:
-    def __init__(self, device, slots, attention, takeover=True, clock=time.monotonic):
+    def __init__(
+        self, device, slots, attention, takeover=True, clock=time.monotonic, held=hold.active
+    ):
         self.device, self.slots, self.attention = device, list(slots), attention
-        self.takeover, self.clock = takeover, clock
+        self.takeover, self.clock, self.held = takeover, clock, held
         self._quiet = Quiet()
         self.showing = None  # label of what was last switched to
 
@@ -58,6 +62,9 @@ class Playlist:
     def step(self, state):
         """One scheduling decision. `state` is (slot index, slot started at)."""
         index, started = state
+        if self.held():  # the UI is previewing something on the clock
+            self.showing = None  # re-show the current slot once the hold ends
+            return index, None
         urgent = self.attention.get() if self.takeover else None
         if urgent:
             if self.showing != urgent:

@@ -5,7 +5,7 @@ import re
 import time
 from dataclasses import dataclass
 
-from .. import builtins, config
+from .. import builtins, config, sync
 from ..device import Device, DeviceError
 from ..integrations import claude_hooks, executable, launchd
 from ..runtime import events, watcher
@@ -102,35 +102,14 @@ def show_layout(ctx):
 
 
 def apply_layout(ctx):
-    """Save the current layout, then keep only the configured built-in apps."""
-    dev, settings = ctx.device, ctx.settings
-    current = dev.config()
-    snap = {"categories": builtins.snapshot(dev), "global": _global_subset(current)}
-    path, saved = builtins.save_original(snap, config.STATE_DIR)
-    print(f"{'saved' if saved else 'keeping'} original layout at {path}")
-    changed = builtins.apply_enabled(dev, set(settings.keep_builtins))
-    print("built-in apps: " + (", ".join(changed) or "already as configured"))
-    if settings.playlist:  # our playlist replaces the device carousel
-        dev.set_config(carouselSpeed=0)
-        print("device carousel off: the tc002 playlist drives the screen")
-    if settings.brightness and isinstance(current.get("brightness"), dict):
-        # send the whole object: low/mid/high percentages must stay ascending
-        dev.set_config(brightness=current["brightness"] | {"level": settings.brightness})
+    """Make the clock match tc002.toml (saving its original layout first)."""
+    changes = sync.apply(ctx.device, ctx.settings, config.STATE_DIR)
+    print("\n".join(changes) or "the clock already matches tc002.toml")
 
 
 def restore_layout(ctx):
-    dev = ctx.device
-    path, snap = builtins.load_original(config.STATE_DIR)
-    builtins.restore(dev, snap["categories"])
-    dev.set_config(**snap["global"])
-    print(f"restored built-in apps and carousel from {path}")
-
-
-def _global_subset(cfg):
-    subset = {"carouselSpeed": cfg.get("carouselSpeed", 0)}
-    if isinstance(cfg.get("brightness"), dict):
-        subset["brightness"] = cfg["brightness"]
-    return subset
+    path = sync.restore(ctx.device, config.STATE_DIR)
+    print(f"restored built-in apps and settings from {path}")
 
 
 # -- host integration --------------------------------------------------------------
@@ -185,6 +164,20 @@ def uninstall(args, ctx):
         restore_layout(ctx)
     except (DeviceError, FileNotFoundError) as exc:
         print(f"built-in apps not restored: {exc}")
+    return 0
+
+
+def ui(args, ctx):
+    import webbrowser
+
+    from ..web import server
+
+    def ready(url):
+        print(f"tc002 UI at {url}  (Ctrl-C to stop)")
+        if not args.no_open:
+            webbrowser.open(url)
+
+    server.serve(config.host(), config.path(), port=args.port, ready=ready)
     return 0
 
 

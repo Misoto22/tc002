@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en" data-theme="system">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="tc002-token" content="{{TOKEN}}" />
+    <meta name="color-scheme" content="dark light" />
+    <title>tc002</title>
+    <link rel="stylesheet" href="/css/tokens.css" />
+    <link rel="stylesheet" href="/css/base.css" />
+    <link rel="stylesheet" href="/css/components.css" />
+    <link rel="stylesheet" href="/css/motion.css" />
+    <script type="module" src="/js/app.js"></script>
+  </head>
+  <body>
+    <div class="app">
+      <nav class="sidebar" aria-label="Sections">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </span>
+          <span class="brand-text">
+            <span class="brand-name">TC002</span>
+            <span class="brand-sub" id="brand-sub"></span>
+          </span>
+        </div>
+        <div id="nav"></div>
+        <div class="sidebar-foot" id="config-path"></div>
+      </nav>
+      <div class="workspace">
+        <header class="topbar">
+          <div class="crumb" id="crumb"></div>
+          <span class="spacer"></span>
+          <button class="status-pill" id="status" type="button" aria-live="polite"></button>
+          <button class="btn ghost kbd-btn" id="palette-btn" type="button">
+            <svg class="icon" aria-hidden="true"><use href="/icons.svg#search"></use></svg>
+            <kbd>⌘K</kbd>
+          </button>
+          <button class="btn ghost icon" id="theme" type="button"></button>
+          <button class="btn ghost icon lang-btn" id="lang" type="button"></button>
+        </header>
+        <div class="content">
+          <main id="main" tabindex="-1">
+            <div class="page"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton short"></div></div>
+          </main>
+          <aside class="preview" id="preview" aria-label="Preview"></aside>
+        </div>
+      </div>
+    </div>
+    <div class="savebar" id="savebar" hidden role="status">
+      <span class="savebar-dot"></span>
+      <span id="savebar-text"></span>
+      <kbd>⌘S</kbd>
+      <button class="btn ghost" id="discard" type="button"></button>
+      <button class="btn primary" id="save" type="button"></button>
+    </div>
+    <div class="toasts" id="toasts" aria-live="polite"></div>
+  </body>
+</html>

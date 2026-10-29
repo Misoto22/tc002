@@ -1,0 +1,101 @@
+// Approximate renderings of the clock's built-in apps, driven by the draft settings, so a
+// change to time format, week start or weather items can be seen before it is saved.
+// The firmware draws these itself; these are close stand-ins, labelled as such in the UI.
+
+import { Frame, W } from "./led.js";
+
+const WHITE = "#f2f4f7";
+const DIM = "#2a3038";
+const GREEN = "#3ee08a";
+const BLUE = "#5b8def";
+const AMBER = "#ffb020";
+const RED = "#ff5a52";
+
+const SUN = ["..#..", "#.#.#", ".###.", "#####", ".###.", "#.#.#", "..#.."];
+const DROP = ["..#..", "..#..", ".###.", ".###.", "#####", "#####", ".###."];
+const GAUGE = [".###.", "#...#", "#..##", "#.#.#", "#...#", ".###.", "....."];
+const LEAF = ["...##", "..###", ".####", "####.", "###..", "#....", "#...."];
+const TOMATO = ["..#..", ".###.", "#####", "#####", "#####", ".###.", "....."];
+const pad = (n) => String(n).padStart(2, "0");
+
+// Wall time in the clock's time zone ("UTC+8").
+function clockTime(settings, now) {
+  const offset = Number((settings.timezone ?? "UTC+0").slice(3)) || 0;
+  return new Date(now + offset * 3600_000);
+}
+
+function weekBar(f, settings, d) {
+  if (!settings.showWeek) return;
+  const start = Number(settings.weekStart ?? 1);
+  const today = (d.getUTCDay() - start + 7) % 7;
+  const x0 = Math.floor((W - (7 * 5 + 6 * 2)) / 2);
+  for (let i = 0; i < 7; i++) f.rect(x0 + i * 7, 15, 5, 1, i === today ? GREEN : DIM);
+}
+
+function clock(settings, apps, now) {
+  const d = clockTime(settings, now);
+  const f = new Frame();
+  const showDate = Math.floor(now / 1000) % 10 >= 7; // 7 s time, 3 s date
+  const y = settings.showWeek ? 3 : 4;
+  if (showDate) {
+    const [m, day] = [pad(d.getUTCMonth() + 1), pad(d.getUTCDate())];
+    f.centred(y, settings.dateFormat === "DD/MM" ? `${day}/${m}` : `${m}/${day}`, BLUE);
+  } else {
+    const fmt = apps.clock?.timeFormat ?? "HH:MM";
+    let hours = d.getUTCHours();
+    const blink = Math.floor(now / 500) % 2 ? ":" : " ";
+    if (fmt === "HH:MM AP") {
+      const ap = hours < 12 ? "AM" : "PM";
+      hours = hours % 12 || 12;
+      const x = f.text(4, y, `${pad(hours)}${blink}${pad(d.getUTCMinutes())}`, WHITE);
+      f.text(x + 3, y + 2, ap, AMBER, false);
+    } else if (fmt === "HH:MM:SS") {
+      f.centred(y, `${pad(hours)}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`, WHITE);
+    } else {
+      f.centred(y, `${pad(hours)}${blink}${pad(d.getUTCMinutes())}`, WHITE);
+    }
+  }
+  weekBar(f, settings, d);
+  return f;
+}
+
+function weather(settings, apps, now) {
+  const flags = apps.weather?.displayInfo ?? { displayTemperature: true };
+  const items = [
+    ["displayTemperature", SUN, AMBER, "23", true],
+    ["displayHumidity", DROP, BLUE, "48%", false],
+    ["displayPressure", GAUGE, WHITE, "1013", false],
+    ["displayAqi", LEAF, GREEN, "AQI 42", false],
+  ].filter(([key]) => flags[key]);
+  const f = new Frame();
+  if (!items.length) return f;
+  const [, icon, colour, value, degree] = items[Math.floor(now / 2500) % items.length];
+  f.sprite(3, 4, icon, colour);
+  const x = f.text(12, 4, value, WHITE, value.length <= 4);
+  if (degree) f.rect(x, 4, 2, 2, WHITE);
+  return f;
+}
+
+function timer(settings, apps, now, key) {
+  const minutes = Number(apps[key]?.focusTime ?? (key === "busy" ? 30 : 10));
+  const left = minutes * 60 - (Math.floor(now / 1000) % (minutes * 60));
+  const f = new Frame();
+  if (key === "tomato") f.sprite(3, 4, TOMATO, RED);
+  else f.text(2, 1, "BUSY", RED, false);
+  f.text(key === "tomato" ? 12 : 14, key === "tomato" ? 4 : 7, `${pad(Math.floor(left / 60))}:${pad(left % 60)}`, WHITE);
+  return f;
+}
+
+function nameTile(label) {
+  const f = new Frame();
+  f.centred(5, label.slice(0, 12), WHITE, false);
+  return f;
+}
+
+// One frame of built-in app `key` at time `now` (ms).
+export function simulate(key, settings, apps, now) {
+  if (key === "clock") return clock(settings, apps, now);
+  if (key === "weather") return weather(settings, apps, now);
+  if (key === "busy" || key === "tomato") return timer(settings, apps, now, key);
+  return nameTile(key.toUpperCase());
+}

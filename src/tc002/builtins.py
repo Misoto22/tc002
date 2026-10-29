@@ -81,7 +81,11 @@ def snapshot(device):
     for category, (_, _, infos_key, order_key) in CATEGORY_ENDPOINTS.items():
         cfg = device.category_config(category)
         snap[category] = {
-            "enable": {k: bool(v.get("enable")) for k, v in cfg.get(infos_key, {}).items()},
+            "enable": {
+                k: bool(v.get("enable"))
+                for k, v in cfg.get(infos_key, {}).items()
+                if k in CATALOGUE  # skips device bookkeeping such as social "tokens"
+            },
             "order": cfg.get(order_key, []),
         }
     return snap
@@ -100,13 +104,18 @@ def apply_enabled(device, keep):
     for category, (_, _, infos_key, order_key) in CATEGORY_ENDPOINTS.items():
         cfg = device.category_config(category)
         infos = cfg.get(infos_key, {})
+        dirty = False
         for key, info in infos.items():
+            if key not in CATALOGUE:  # e.g. the social "tokens" cache is not an app
+                continue
             want = key in keep
             if bool(info.get("enable")) != want:
                 info["enable"] = want
                 changed.append(f"{key}={'on' if want else 'off'}")
-        order = cfg.get(order_key) or _full_order(category)
-        device.set_category_config(category, {infos_key: infos, order_key: order})
+                dirty = True
+        if dirty:
+            order = cfg.get(order_key) or _full_order(category)
+            device.set_category_config(category, {infos_key: infos, order_key: order})
     return changed
 
 

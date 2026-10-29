@@ -27,6 +27,40 @@ firmware over the LAN — no flashing, no cloud, no runtime dependencies beyond 
 Every animation is rendered locally and sent as one looping GIF, so the clock animates by
 itself and the screen is re-sent only when its content changes.
 
+## Settings UI
+
+```bash
+tc002 ui            # opens http://127.0.0.1:8742
+```
+
+![Settings UI — playlist](docs/ui-playlist.png)
+
+A local web app for everything tc002 manages, in English or Chinese, dark or light:
+
+- **Playlist** — drag slots into order (or `Alt+↑/↓`), set durations, add screens and kept built-ins.
+- **Built-in apps, Display, App settings** — which apps stay on; brightness, volume, time
+  zone, date and week; clock format, weather (pick a city — it fills in coordinates),
+  focus timers.
+- **Preview** — a live LED preview beside every page: the playlist cycling with real
+  durations, or the built-in app you are editing, drawn with your draft settings
+  (brightness included). Built-in apps are close approximations of the clock's own.
+- **Live on the clock** — one switch plays the draft on the hardware before saving
+  (the playlist pauses); switching it off restores tc002.toml.
+- **Status** — the top bar always says where things stand: in sync, *n* unsaved, saving,
+  applied, saved-but-offline, failed, or live; click it for this session's activity.
+  Unsaved rows are marked in place.
+- **⌘K** — jump anywhere, save, discard, apply, show any screen on the clock, send a test
+  alert, switch theme or language. `⌘S` saves.
+
+![Settings UI — app settings](docs/ui-apps.png)
+
+Every change goes to `tc002.toml` first, is applied to the clock, and reloads the
+background service, so the file stays the single source of truth and a fresh clone
+reproduces your setup. The server listens on 127.0.0.1 only, rejects foreign `Host`
+headers and needs a per-session token for every change, so other web pages cannot
+reconfigure your clock. Icons are [Lucide](https://lucide.dev) (ISC), vendored by
+`scripts/vendor_icons.py`.
+
 ## Requirements
 
 - A TC002 on stock firmware **V1.1.0+** (`tc002 doctor` checks), on the same network.
@@ -61,6 +95,7 @@ Find the IP in Ulanzi Studio, your router's client list, or `tc002 --host <ip> i
 ## Usage
 
 ```text
+tc002 ui                             settings UI in the browser (local only)
 tc002 doctor                         check config, clock, firmware, service, hooks
 tc002 text "BUILD OK" --color green  short text shimmers; long text scrolls, then clears
 tc002 text "HELLO" --show            ...and switch the clock to it
@@ -85,8 +120,8 @@ tc002 alert "TESTS GREEN" --kind done || true
 
 ## Configure
 
-Edit [`tc002.toml`](tc002.toml) — every option is described in the file — then run
-`tc002 install`. In short:
+Use `tc002 ui`, or edit [`tc002.toml`](tc002.toml) — every option is described in the file —
+and run `tc002 layout apply`. In short:
 
 ```toml
 [screens]
@@ -94,6 +129,14 @@ enabled = ["claude", "sys"]
 
 [device]
 keep_builtins = ["clock"]          # every other built-in app is turned off
+
+[display]                          # optional: clock-wide settings
+volume = 2
+timezone = "UTC+10"
+brightness = { level = "mid" }
+
+[apps.weather]                     # optional: built-in app settings (never credentials)
+city = "Sydney"
 
 [playlist]
 slots = [
