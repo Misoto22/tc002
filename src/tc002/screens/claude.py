@@ -56,16 +56,24 @@ class State:
 
 
 def claude_cpu():
-    """Summed CPU% of processes whose executable is named exactly `claude`."""
+    """Summed CPU% of processes whose executable is named exactly `claude`.
+
+    pgrep first, then ps for just those PIDs: listing every process timed out
+    repeatedly on a heavily loaded machine.
+    """
+    found = subprocess.run(["pgrep", "-x", "claude"], capture_output=True, text=True, timeout=10)
+    pids = found.stdout.split()
+    if found.returncode == 1 or not pids:  # 1 = no match
+        return 0.0
+    found.check_returncode()
     out = subprocess.run(
-        ["ps", "-axo", "pcpu=,comm="], capture_output=True, text=True, timeout=5, check=True
-    ).stdout
-    total = 0.0
-    for line in out.splitlines():
-        cpu, _, comm = line.strip().partition(" ")
-        if os.path.basename(comm.strip()) == "claude":
-            total += float(cpu)
-    return total
+        ["ps", "-o", "pcpu=", "-p", ",".join(pids)],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=False,
+    ).stdout  # ps exits 1 if a PID vanished in between; the rest is still valid
+    return sum(float(v) for v in out.split())
 
 
 def count_sessions(projects, now):
