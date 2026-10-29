@@ -37,6 +37,7 @@ GETS = {
     "/api/discover": "discover",
     "/api/log": "log",
     "/api/wifi/status": "wifi_status",
+    "/api/game/frame": "game_frame",
 }
 
 
@@ -180,6 +181,8 @@ def make_handler(api, token, port):
                 "/api/appearance": api.appearance,
                 "/api/social-token": api.social_token,
                 "/api/focus": api.focus,
+                "/api/game": api.play,
+                "/api/game/key": api.game_key,
                 "/api/wifi/join-hotspot": api.wifi_join_hotspot,
                 "/api/wifi/send": api.wifi_send,
                 "/api/wifi/rejoin": api.wifi_rejoin,

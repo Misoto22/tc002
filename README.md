@@ -28,6 +28,8 @@ tc002 ui            # opens http://127.0.0.1:8742 and walks you through setup
   line, or any script or CI job on the same network.
 - **Screens** — tc002 adds its own animated screens to the rotation (see the gallery
   below), rendered on your Mac and sent as looping GIFs.
+- **Play** — Breakout, Snake and Pong on the clock, played with your Mac's keyboard while
+  the page mirrors the game; the rotation pauses until you stop.
 
 The interface is in English or Chinese, light or dark, in five colour themes, with ⌘K for
 anything and ⌘S to save.

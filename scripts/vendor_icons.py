@@ -49,6 +49,7 @@ UI_ICONS = [
     "moon-star",
     "grid-3x3",
     "flame",
+    "gamepad-2",
     "refresh-cw",
     "send",
     "search",

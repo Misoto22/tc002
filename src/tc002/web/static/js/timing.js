@@ -18,4 +18,5 @@ export const TIMING = {
   hotspotPollMs: 2000, // is this Mac on a new clock's hotspot yet
   discoverRetryMs: 4000, // looking for a clock that is joining Wi-Fi
   clockJoinMs: 90000, // give up waiting for it after this long
+  gameFrameMs: 100, // the browser mirrors a game at the clock's frame rate
 };

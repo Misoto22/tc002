@@ -17,6 +17,7 @@ import { overview } from "./pages/overview.js";
 import { rotation } from "./pages/rotation.js";
 import { sessions } from "./pages/sessions.js";
 import { setup } from "./pages/setup.js";
+import { play } from "./pages/play.js";
 import { pollAgents } from "./agents.js";
 import { followUiPalette } from "./appearance.js";
 
@@ -28,6 +29,7 @@ const PAGES = [
   ["display", display, "sun", "nav.clock"],
   ["apps", apps, "sliders-horizontal", "nav.clock"],
   ["messages", messages, "message-square-text", "nav.send"],
+  ["play", play, "gamepad-2", "nav.send"],
   ["integrations", integrations, "plug", "nav.system"],
   ["setup", setup, "plus", "nav.system"],
 ];
