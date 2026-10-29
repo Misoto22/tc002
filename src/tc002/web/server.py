@@ -179,6 +179,7 @@ def make_handler(api, token, port):
                 "/api/setup": api.first_run,
                 "/api/appearance": api.appearance,
                 "/api/social-token": api.social_token,
+                "/api/focus": api.focus,
                 "/api/wifi/join-hotspot": api.wifi_join_hotspot,
                 "/api/wifi/send": api.wifi_send,
                 "/api/wifi/rejoin": api.wifi_rejoin,

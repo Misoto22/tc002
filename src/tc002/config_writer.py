@@ -30,6 +30,9 @@ COMMENTS = {
     "apps": "Settings of built-in apps (no credentials: those stay on the device).",
     "rotation": "Replaces the device's own carousel. Each slot is a screen or a kept built-in.",
     "alerts": "A Claude Code session waiting for you takes over the clock until you answer.",
+    "screen": "Options of tc002's own screens, one table each (see `tc002 ui` for every\n"
+    "option): [screen.countdown] date and label, [screen.worldclock] zones, [screen.focus]\n"
+    "minutes and break_minutes, [screen.progress] week_start.",
     "appearance": "Colours of tc002's screens on the clock: led_theme is one of match, classic,\n"
     'paper, matcha, ai, sakura, kohaku ("match" follows ui_palette, the UI\'s colour theme).',
 }
@@ -68,6 +71,7 @@ def _table(name, body, lines):
 EXAMPLES = {
     "display": '[display]\nvolume = 2\ntimezone = "UTC+1"\nbrightness = { level = "mid" }',
     "apps": '[apps.clock]\ntimeFormat = "HH:MM"\n\n[apps.weather]\ncity = "Berlin"',
+    "screen": '[screen.countdown]\ndate = "2027-01-01"\nlabel = "NEW YEAR"',
 }
 
 

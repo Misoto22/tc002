@@ -14,6 +14,18 @@ PRESETS = {
     "agents": [("screen", "claude", 30), ("screen", "usage", 30)],
     "ambient": [("builtin", "clock", 30), ("builtin", "weather", 15)],
     "clock": [("builtin", "clock", 60)],
+    "desk": [
+        ("builtin", "clock", 30),
+        ("screen", "focus", 20),
+        ("screen", "progress", 10),
+        ("screen", "worldclock", 15),
+    ],
+    "calm": [
+        ("screen", "fire", 30),
+        ("builtin", "clock", 20),
+        ("screen", "moon", 10),
+        ("screen", "life", 30),
+    ],
 }
 
 

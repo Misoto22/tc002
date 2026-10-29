@@ -17,13 +17,14 @@ from ..render import font, mockup, themes
 from ..render.canvas import HEIGHT, WIDTH
 from ..render.palette import hex_palette
 from ..runtime import freshness, hold
-from ..screens import SCREENS, builtin_previews, message, stale
+from ..screens import SCREENS, build, builtin_previews, message, stale
+from ..screens import options as screen_options
 from ..screens import usage as usage_screen
 from ..screens.examples import examples
 from . import cities, host_actions, setup
 from .agents import Agents
 
-LIVE_SCREENS = {"claude", "usage"}  # cheap to sample: previewed with real data
+LIVE_SCREENS = set(SCREENS) - {"sys"}  # cheap to sample, so previewed with real data
 SECRET_KEYS = {"token", "password", "username", "url", "tokens"}
 
 
@@ -51,6 +52,12 @@ class Api:
     def _settings(self):
         return config.load(self.config_path)
 
+    def _settings_or_none(self):
+        try:
+            return self._settings()
+        except config.ConfigError:
+            return None
+
     def _led_theme(self):
         """The saved LED theme; classic until a readable tc002.toml says otherwise."""
         try:
@@ -71,12 +78,15 @@ class Api:
             "integrations": self._integrations(),
             "agents": self.agents.snapshot(),
             "freshness": freshness.read(),
+            "focus": _focus_now(),
             "staleAfter": {"age": stale.STALE_AFTER, "noData": stale.NO_DATA_AFTER},
             "catalogue": [
                 {"key": k, "category": b.category, "index": b.index}
                 for k, b in builtins.CATALOGUE.items()
             ],
-            "screens": sorted(SCREENS),
+            "screens": list(SCREENS),
+            "screenOptions": screen_options.describe(SCREENS),
+            "liveScreens": sorted(LIVE_SCREENS),
             "schema": device_settings.schema(),
             "colors": message.COLORS,
             "alertKinds": list(message.ICONS),
@@ -221,6 +231,20 @@ class Api:
             "serviceRestarted": settings.led_theme != before.led_theme and launchd.restart(),
         }
 
+    def focus(self, body):
+        """Start or stop the focus timer screen."""
+        from ..runtime import focus as timer
+
+        if body.get("action") == "stop":
+            timer.stop()
+            return {"running": False}
+        screen = build("focus", self._settings_or_none())
+        minutes = body.get("minutes") or screen.minutes
+        if not isinstance(minutes, int) or not 1 <= minutes <= 180:
+            raise ApiError(422, "Invalid settings", "Minutes must be a whole number from 1 to 180.")
+        timer.start(minutes, screen.break_minutes)
+        return {"running": True, "minutes": minutes, "break": screen.break_minutes}
+
     def social_token(self, body):
         """Hand a social app its OAuth token. Write-only: sent to the clock and forgotten;
         it is not logged, stored, or ever read back (the UI only learns that one is set)."""
@@ -291,7 +315,7 @@ class Api:
             )
             theme = themes.CLASSIC
         elif name.removeprefix("live-") in LIVE_SCREENS and name.startswith("live-"):
-            screen = SCREENS[name.removeprefix("live-")]()
+            screen = build(name.removeprefix("live-"), self._settings_or_none())
             anim = screen.render(screen.sample())
         elif name.startswith("builtin-"):
             try:
@@ -393,7 +417,7 @@ class Api:
             # The background service may not run this screen (yet): put one frame on the
             # clock first, so switching to it cannot fail with "app not found".
             if screen not in dev.apps():
-                live = SCREENS[screen]()
+                live = build(screen, self._settings_or_none())
                 frames = live.render(live.sample())
                 dev.push(screen, frames.payload(theme=self._led_theme()))
             dev.switch_custom(screen)
@@ -457,3 +481,10 @@ def _drift(settings, cfg, app_settings, enabled):
     if settings.rotation and cfg.get("carouselSpeed"):
         drift.append("display.carouselSpeed")
     return drift
+
+
+def _focus_now():
+    from ..runtime import focus as timer
+
+    now = timer.current()
+    return {"phase": now[0], "left": round(now[1])} if now else None

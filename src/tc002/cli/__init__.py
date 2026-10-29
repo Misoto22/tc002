@@ -12,7 +12,7 @@ from ..runtime.output import Output
 from . import commands, parser
 
 # Commands that never talk to the clock.
-LOCAL_ONLY = {"setup", "service", "hooks", "ui"}
+LOCAL_ONLY = {"setup", "service", "hooks", "ui", "focus"}
 
 
 def _from_claude(args):

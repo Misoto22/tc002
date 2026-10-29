@@ -31,6 +31,7 @@ SECTION_KEYS = {
     "rotation": {"slots"},
     "alerts": {"takeover"},
     "appearance": {"led_theme", "ui_palette"},
+    "screen": None,  # [screen.<name>] options, validated by screens/options.py
 }
 DEFAULT_APPEARANCE = {"led_theme": "match", "ui_palette": "paper"}
 
@@ -61,6 +62,7 @@ class Settings:
     display: dict = field(default_factory=dict)  # global settings, keys as in /setConfig
     apps: dict = field(default_factory=dict)  # built-in app settings, see device_settings
     appearance: dict = field(default_factory=lambda: dict(DEFAULT_APPEARANCE))
+    screen_options: dict = field(default_factory=dict)  # [screen.<name>] tables
     source: str = "<built-in defaults>"
 
     @property
@@ -129,11 +131,17 @@ def _parse(data, source):
     if problems := device_settings.validate_display(display) + device_settings.validate_apps(apps):
         raise ConfigError(f"{source}: " + "; ".join(problems))
 
+    screen_options = data.get("screen", {})
+    from .screens import options as screen_options_rules
+
+    if problems := screen_options_rules.validate(SCREENS, screen_options):
+        raise ConfigError(f"{source}: " + "; ".join(problems))
     appearance = {**DEFAULT_APPEARANCE, **data.get("appearance", {})}
     if problems := _appearance_problems(appearance):
         raise ConfigError(f"{source}: " + "; ".join(problems))
 
     return Settings(
+        screen_options=screen_options,
         appearance=appearance,
         screens=screens,
         rotation=tuple(slots),
@@ -178,6 +186,7 @@ def to_data(settings):
         },
         "alerts": {"takeover": settings.alert_takeover},
         "appearance": dict(settings.appearance),
+        "screen": {k: dict(v) for k, v in settings.screen_options.items()},
     }
 
 

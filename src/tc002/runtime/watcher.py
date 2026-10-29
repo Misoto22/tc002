@@ -4,7 +4,7 @@ import signal
 import subprocess
 import threading
 
-from ..screens import SCREENS, stale
+from ..screens import build, stale
 from .freshness import Freshness
 from .output import Output, log
 from .rotation import Attention, Rotation
@@ -49,7 +49,7 @@ def screen_loop(out, screen, stop, attention, once=False, freshness=None):
 def watch(device, settings, preview_dir=None, once=False):
     """Run the configured screens (and, on a real clock, the rotation driver)."""
     out = Output(device, preview_dir, theme=settings.led_theme)
-    screens = [SCREENS[name]() for name in settings.screens]
+    screens = [build(name, settings) for name in settings.screens]
     stop = threading.Event()
     attention = Attention()
     freshness = Freshness()  # shared: one status file for every screen
