@@ -33,6 +33,8 @@ COMMENTS = {
     "screen": "Options of tc002's own screens, one table each (see `tc002 ui` for every\n"
     "option): [screen.countdown] date and label, [screen.worldclock] zones, [screen.focus]\n"
     "minutes and break_minutes, [screen.progress] week_start.",
+    "connections": "Plain settings of services API screens use (secrets stay in the Keychain):\n"
+    "[connections.homeassistant] url.",
     "appearance": "Colours of tc002's screens on the clock: led_theme is one of match, classic,\n"
     'paper, matcha, ai, sakura, kohaku ("match" follows ui_palette, the UI\'s colour theme).',
 }
@@ -72,6 +74,7 @@ EXAMPLES = {
     "display": '[display]\nvolume = 2\ntimezone = "UTC+1"\nbrightness = { level = "mid" }',
     "apps": '[apps.clock]\ntimeFormat = "HH:MM"\n\n[apps.weather]\ncity = "Berlin"',
     "screen": '[screen.countdown]\ndate = "2027-01-01"\nlabel = "NEW YEAR"',
+    "connections": '[connections.homeassistant]\nurl = "http://homeassistant.local:8123"',
 }
 
 

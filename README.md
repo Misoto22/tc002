@@ -87,6 +87,14 @@ Screens tc002 draws itself, each exactly 52×16 pixels. Turn them on in **Rotati
 |---|---|---|---|
 | ![](docs/screens/sun.gif) | ![](docs/screens/moon.gif) | ![](docs/screens/life.gif) | ![](docs/screens/fire.gif) |
 
+| Calendar | GitHub | Now playing | Air quality |
+|---|---|---|---|
+| ![](docs/screens/agenda.gif) | ![](docs/screens/github.gif) | ![](docs/screens/nowplaying.gif) | ![](docs/screens/air.gif) |
+
+| Crypto | Stocks | Hacker News | Home Assistant |
+|---|---|---|---|
+| ![](docs/screens/crypto.gif) | ![](docs/screens/stocks.gif) | ![](docs/screens/hackernews.gif) | ![](docs/screens/home.gif) |
+
 - **Sessions** (for Claude Code users) — how many sessions are running, asking for you,
   and finished but unread. A session that starts waiting takes over the clock with its
   project name until you answer.
@@ -102,8 +110,16 @@ Screens tc002 draws itself, each exactly 52×16 pixels. Turn them on in **Rotati
   moon's phase.
 - **Game of Life, Fireplace** — calm animations for between the busy screens.
 
+- **Calendar, GitHub, Now playing** — your next event (from a private ICS link), reviews
+  and notifications waiting on GitHub (through the `gh` CLI), and what Music or Spotify is
+  playing.
+- **Air quality, Crypto, Stocks, Hacker News** — from public services that need no key.
+- **Home Assistant** — any two sensors or devices.
+
 Screens with options (the countdown's date, the world clock's places, the focus timer's
-lengths) are set in **App settings**.
+lengths, the coins and stock to follow) are set in **App settings**. Services that need a
+token or a private link are set up in **Connections**; those secrets are kept in the
+macOS Keychain, never in a file.
 
 Nothing a screen reads leaves your Mac.
 

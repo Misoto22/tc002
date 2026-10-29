@@ -43,6 +43,38 @@
   "symbol": "flame",
   "kind": "glyph"
  },
+ "agenda": {
+  "symbol": "calendar-days",
+  "kind": "glyph"
+ },
+ "github": {
+  "symbol": "brand-github",
+  "kind": "brand"
+ },
+ "nowplaying": {
+  "symbol": "music",
+  "kind": "glyph"
+ },
+ "air": {
+  "symbol": "wind",
+  "kind": "glyph"
+ },
+ "crypto": {
+  "symbol": "bitcoin",
+  "kind": "glyph"
+ },
+ "stocks": {
+  "symbol": "chart-line",
+  "kind": "glyph"
+ },
+ "hackernews": {
+  "symbol": "brand-ycombinator",
+  "kind": "brand"
+ },
+ "home": {
+  "symbol": "brand-homeassistant",
+  "kind": "brand"
+ },
  "codex": {
   "symbol": "brand-codex",
   "kind": "brand"

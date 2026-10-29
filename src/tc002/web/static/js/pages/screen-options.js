@@ -13,7 +13,7 @@ function control(name, key, spec, value, set) {
     return h("input", { class: "field", type: "date", value: value ?? "", "aria-label": label,
       onChange: (e) => set(e.target.value) });
   }
-  if (spec.kind === "zones") {
+  if (spec.kind === "zones" || spec.kind === "list") {
     const zones = [...(value ?? spec.default)];
     return h("div", { class: "zones" }, ...Array.from({ length: spec.spec }, (_, i) => h("input", {
       class: "field mono", value: zones[i] ?? "", placeholder: spec.default[i] ?? "", "aria-label": `${label} ${i + 1}`,

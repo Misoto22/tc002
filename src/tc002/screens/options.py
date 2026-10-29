@@ -5,7 +5,8 @@ tc002.toml, fills in defaults, and describes the UI's controls, so an option is 
 once, next to the screen that uses it.
 
 Kinds: "text" (spec: max length), "date" (YYYY-MM-DD), "zones" (IANA time zones; spec:
-how many), "int" (spec: (min, max)), "choice" (spec: allowed values).
+how many), "list" (short texts; spec: how many), "int" (spec: (min, max)), "choice"
+(spec: allowed values).
 """
 
 import datetime as dt
@@ -31,6 +32,12 @@ def _check(where, rule, value):
             dt.date.fromisoformat(value)
         except TypeError, ValueError:
             return f"{where} must be a date like 2027-01-01"
+    if kind == "list" and not (
+        isinstance(value, list)
+        and 1 <= len(value) <= spec
+        and all(isinstance(v, str) and 0 < len(v) <= 64 for v in value)
+    ):
+        return f"{where} must list 1 to {spec} names"
     if kind == "zones":
         if not isinstance(value, list) or not 1 <= len(value) <= spec:
             return f"{where} must list 1 to {spec} time zones"
