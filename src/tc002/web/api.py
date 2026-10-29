@@ -16,8 +16,8 @@ from ..integrations import claude_hooks, executable, launchd, statusline
 from ..render import font, mockup, themes
 from ..render.canvas import HEIGHT, WIDTH
 from ..render.palette import hex_palette
-from ..runtime import hold
-from ..screens import SCREENS, builtin_previews, message
+from ..runtime import freshness, hold
+from ..screens import SCREENS, builtin_previews, message, stale
 from ..screens import usage as usage_screen
 from ..screens.examples import examples
 from . import cities, host_actions, setup
@@ -63,6 +63,8 @@ class Api:
             "clock": self._clock_state(settings),
             "integrations": self._integrations(),
             "agents": self.agents.snapshot(),
+            "freshness": freshness.read(),
+            "staleAfter": {"age": stale.STALE_AFTER, "noData": stale.NO_DATA_AFTER},
             "catalogue": [
                 {"key": k, "category": b.category, "index": b.index}
                 for k, b in builtins.CATALOGUE.items()

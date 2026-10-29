@@ -4,20 +4,36 @@ import signal
 import subprocess
 import threading
 
-from ..screens import SCREENS
+from ..screens import SCREENS, stale
+from .freshness import Freshness
 from .output import Output, log
 from .rotation import Attention, Rotation
 
 
-def screen_loop(out, screen, stop, attention, once=False):
+def _show_stale(out, screen, freshness):
+    """After a failed sample: the last picture with its age, then NO DATA (screens/stale.py)."""
+    state, age = freshness.last(screen.APP)
+    if age is not None and age < stale.STALE_AFTER:
+        return  # a blip: leave the last good picture up
+    if state is not None and age < stale.NO_DATA_AFTER:
+        out.show(screen.APP, stale.mark(screen.render(state), age))
+    else:
+        out.show(screen.APP, stale.no_data(screen.APP, age))
+
+
+def screen_loop(out, screen, stop, attention, once=False, freshness=None):
     """Sample + render `screen` every screen.TICK seconds until `stop` is set."""
+    freshness = freshness or Freshness()
     while not stop.is_set():
         try:
             state = screen.sample()
         except (OSError, ValueError, subprocess.SubprocessError) as exc:
             # a failed probe must not kill a long-running watcher
             log(f"[{screen.APP}] sample failed: {exc}")
+            freshness.failed(screen.APP, exc)
+            _show_stale(out, screen, freshness)
         else:
+            freshness.ok(screen.APP, state)
             out.show(screen.APP, screen.render(state))
             if hasattr(state, "alert"):
                 current = attention.get()
@@ -36,10 +52,13 @@ def watch(device, settings, preview_dir=None, once=False):
     screens = [SCREENS[name]() for name in settings.screens]
     stop = threading.Event()
     attention = Attention()
+    freshness = Freshness()  # shared: one status file for every screen
     if not once:
         signal.signal(signal.SIGTERM, lambda *_: stop.set())  # launchd stop
     threads = [
-        threading.Thread(target=screen_loop, args=(out, s, stop, attention, once), daemon=True)
+        threading.Thread(
+            target=screen_loop, args=(out, s, stop, attention, once, freshness), daemon=True
+        )
         for s in screens
     ]
     if device is not None and not once:
