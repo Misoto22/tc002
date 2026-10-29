@@ -181,3 +181,12 @@ def test_networked_screens_are_never_sampled_for_previews():
 
     assert NETWORKED.isdisjoint(api.LIVE_SCREENS)
     assert {build(n).APP for n in NETWORKED} == NETWORKED
+
+
+def test_without_a_keychain_nothing_is_saved_and_saving_says_so():
+    def missing(*args, **kwargs):
+        raise FileNotFoundError("security")
+
+    assert keychain.get("x", run=missing) is None and not keychain.has("x", run=missing)
+    with pytest.raises(OSError):
+        keychain.save("x", "value", run=missing)

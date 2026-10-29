@@ -12,6 +12,14 @@ SERVICE = "tc002"
 TIMEOUT = 10
 
 
+def _run(run, args, **kwargs):
+    """`run` with the Keychain's tool; None where there is no Keychain (not macOS)."""
+    try:
+        return run(args, capture_output=True, text=True, timeout=TIMEOUT, **kwargs)
+    except FileNotFoundError:
+        return None
+
+
 def _quote(value):
     return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
@@ -20,44 +28,31 @@ def save(name, value, run=subprocess.run):
     if not value or "\n" in value:
         raise ValueError("a secret is one non-empty line")
     command = f"add-generic-password -U -s {SERVICE} -a {_quote(name)} -w {_quote(value)}\n"
-    done = run(["security", "-i"], input=command, capture_output=True, text=True, timeout=TIMEOUT)
+    done = _run(run, ["security", "-i"], input=command)
+    if done is None:
+        raise OSError("this computer has no macOS Keychain")
     if done.returncode != 0 or "error" in (done.stdout + done.stderr).lower():
         raise OSError("the Keychain did not accept the value")
 
 
 def get(name, run=subprocess.run):
     """The secret, resolved if it is an op:// reference; None when none is saved."""
-    done = run(
-        ["security", "find-generic-password", "-s", SERVICE, "-a", name, "-w"],
-        capture_output=True,
-        text=True,
-        timeout=TIMEOUT,
-    )
-    if done.returncode != 0:
+    done = _run(run, ["security", "find-generic-password", "-s", SERVICE, "-a", name, "-w"])
+    if done is None or done.returncode != 0:
         return None
     value = done.stdout.rstrip("\n")
     if value.startswith("op://"):
-        resolved = run(["op", "read", value], capture_output=True, text=True, timeout=TIMEOUT)
-        if resolved.returncode != 0:
+        resolved = _run(run, ["op", "read", value])
+        if resolved is None or resolved.returncode != 0:
             raise OSError("1Password could not read the reference")
         return resolved.stdout.rstrip("\n")
     return value
 
 
 def has(name, run=subprocess.run):
-    done = run(
-        ["security", "find-generic-password", "-s", SERVICE, "-a", name],
-        capture_output=True,
-        text=True,
-        timeout=TIMEOUT,
-    )
-    return done.returncode == 0
+    done = _run(run, ["security", "find-generic-password", "-s", SERVICE, "-a", name])
+    return done is not None and done.returncode == 0
 
 
 def delete(name, run=subprocess.run):
-    run(
-        ["security", "delete-generic-password", "-s", SERVICE, "-a", name],
-        capture_output=True,
-        text=True,
-        timeout=TIMEOUT,
-    )
+    _run(run, ["security", "delete-generic-password", "-s", SERVICE, "-a", name])
