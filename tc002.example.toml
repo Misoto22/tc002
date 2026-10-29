@@ -1,0 +1,41 @@
+# Example tc002 configuration. `tc002 ui` creates your own in ~/.config/tc002/tc002.toml;
+# copy this file there to start by hand. Every setting tc002 manages lives in that one file.
+# Edit by hand or with `tc002 ui`; apply with `tc002 layout apply` (the UI applies for you).
+# Machine-local facts (the clock's IP) are kept by `tc002 setup`, never here.
+
+# Live screens run by the background service: claude (Claude Code sessions), usage (plan
+# limits), sys (CPU and memory).
+[screens]
+enabled = ["claude", "sys"]
+
+# Built-in apps that stay on; `tc002 layout apply` turns every other one off.
+# tools: clock weather busy scoreboard tomato stopwatch battery soundlight ipshow
+# social: xhs douyin bilibili weibo youtube instagram facebook tiktok x
+# calendar: feishu dingding wecom google icloud outlook
+[device]
+keep_builtins = ["clock"]
+
+# Clock-wide settings, applied with /setConfig. Omit a key to leave it as is.
+# [display]
+# volume = 2
+# timezone = "UTC+1"
+# brightness = { level = "mid" }
+
+# Settings of built-in apps (no credentials: those stay on the device).
+# [apps.clock]
+# timeFormat = "HH:MM"
+#
+# [apps.weather]
+# city = "Berlin"
+
+# Replaces the device's own carousel. Each slot is a screen or a kept built-in.
+[rotation]
+slots = [
+  { screen = "claude", seconds = 30 },
+  { screen = "sys", seconds = 15 },
+  { builtin = "clock", seconds = 15 },
+]
+
+# A Claude Code session waiting for you takes over the clock until you answer.
+[alerts]
+takeover = true

@@ -64,8 +64,8 @@ def _table(name, body, lines):
 
 
 EXAMPLES = {
-    "display": '[display]\nvolume = 2\ntimezone = "UTC+10"\nbrightness = { level = "mid" }',
-    "apps": '[apps.clock]\ntimeFormat = "HH:MM"\n\n[apps.weather]\ncity = "Sydney"',
+    "display": '[display]\nvolume = 2\ntimezone = "UTC+1"\nbrightness = { level = "mid" }',
+    "apps": '[apps.clock]\ntimeFormat = "HH:MM"\n\n[apps.weather]\ncity = "Berlin"',
 }
 
 
