@@ -86,9 +86,10 @@ kbd {
 }
 
 .nav-item:hover { background: var(--hover); color: var(--text); }
-.nav-item[aria-current="page"] { background: var(--hover); color: var(--text); box-shadow: inset 2px 0 0 var(--accent); }
+/* current page: a quiet filled pill, as in Linear and Notion — no edge bar */
+.nav-item[aria-current="page"] { background: var(--hover); color: var(--text); font-weight: 500; }
 .nav-item .icon { color: var(--muted); }
-.nav-item[aria-current="page"] .icon { color: var(--accent-text); }
+.nav-item[aria-current="page"] .icon { color: var(--text-2); }
 .nav-item .count { margin-left: auto; color: var(--faint); font-size: 12px; font-variant-numeric: tabular-nums; }
 
 .sidebar-foot { margin-top: auto; padding: 10px; color: var(--faint); font-size: 11px; word-break: break-all; }
@@ -157,17 +158,18 @@ main { overflow-y: auto; outline: none; }
 .row-control { display: flex; align-items: center; gap: 8px; flex: none; }
 .row-end { justify-content: flex-end; }
 
-/* a row whose value is not saved yet: accent bar on the left edge */
-.row.dirty::before, .panel.slots.dirty::before {
+/* a value not saved yet: a small dot after the row title; a changed playlist tints its border */
+.row.dirty .row-title::after {
   content: "";
-  position: absolute;
-  left: 0;
-  top: 10px;
-  bottom: 10px;
-  width: 2px;
-  border-radius: 2px;
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
   background: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
+
+.panel.slots.dirty { border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); }
 
 .facts { display: grid; grid-template-columns: repeat(3, 1fr); margin: 0; }
 .fact { padding: 14px 16px; border-right: 1px solid var(--border); }
