@@ -2,17 +2,18 @@
 
 Every change goes through tc002.toml first (validated by `config.parse`), then
 `sync.apply` pushes it to the clock and the background service is restarted so it
-reloads the playlist. Credentials stored on the clock are never read out: only their
+reloads the rotation. Credentials stored on the clock are never read out: only their
 presence is reported.
 """
 
 import threading
 import time
 
-from .. import builtins, config, config_writer, device_settings, sync
+from .. import builtins, config, config_writer, device_settings, presets, sync
 from ..device import CATEGORY_ENDPOINTS, Device, DeviceError
 from ..integrations import claude_hooks, executable, launchd
 from ..render import font, mockup
+from ..render.palette import hex_palette
 from ..runtime import events, hold
 from ..screens import SCREENS, message
 from ..screens.examples import examples
@@ -63,6 +64,7 @@ class Api:
             "schema": device_settings.schema(),
             "colors": message.COLORS,
             "alertKinds": list(message.ICONS),
+            "presets": presets.describe(),
         }
 
     def _clock_state(self, settings):
@@ -111,9 +113,9 @@ class Api:
             "lastEvent": {"kind": kind, "secondsAgo": round(time.time() - at)} if kind else None,
         }
 
-    def font(self):
-        """The pixel fonts, so the browser's LED simulator draws exactly what the clock would."""
-        return {"big": font.BIG, "small": font.SMALL}
+    def led(self):
+        """Pixel fonts and LED palette, so browser previews draw exactly what the clock would."""
+        return {"font": {"big": font.BIG, "small": font.SMALL}, "palette": hex_palette()}
 
     def cities(self, query):
         return cities.search(query.get("q", ""), query.get("lang", "en"))
@@ -137,7 +139,7 @@ class Api:
 
     # -- writes -------------------------------------------------------------------
 
-    def save_config(self, data):
+    def save_config(self, data, restart=True):
         """Validate, write tc002.toml, push it to the clock, reload the service."""
         if not self.config_path:
             raise ApiError(409, "No tc002.toml", "Run `tc002 setup --config <path>` first.")
@@ -159,11 +161,43 @@ class Api:
                 result["applied"] = True
             except DeviceError as exc:
                 result["error"] = f"saved, but the clock is unreachable: {exc}"
-        result["serviceRestarted"] = launchd.restart()
+        result["serviceRestarted"] = launchd.restart() if restart else False
         return result
 
+    def quick(self, body):
+        """Quick settings (brightness, volume, …): merged into the saved tc002.toml and applied
+        at once, leaving any unsaved draft in the UI alone. The rotation is untouched, so the
+        service is not restarted."""
+        patch = body.get("display")
+        if not isinstance(patch, dict) or not patch:
+            raise ApiError(422, "Nothing to change", 'Send {"display": {...}}.')
+        data = config.to_data(self._settings())
+        display = dict(data["display"])
+        for key, value in patch.items():
+            if key == "brightness" and isinstance(value, dict):
+                current = (self._clock_state_settings() or {}).get("brightness", {})
+                value = {**current, **display.get("brightness", {}), **value}
+            display[key] = value
+        data["display"] = display
+        return self.save_config(data, restart=False)
+
+    def _clock_state_settings(self):
+        if not self.host:
+            return None
+        try:
+            return self._device().config()
+        except DeviceError:
+            return None
+
+    def apply_preset(self, body):
+        """The draft with a preset's rotation applied; the UI decides when to save it."""
+        try:
+            return {"data": presets.apply(body.get("data") or {}, body.get("preset"))}
+        except ValueError as exc:
+            raise ApiError(422, "Unknown preset", str(exc)) from None
+
     def live(self, body):
-        """Put a draft on the clock without saving it, and keep the playlist off the screen."""
+        """Put a draft on the clock without saving it, and keep the rotation off the screen."""
         data, focus = body.get("data"), body.get("focus") or {}
         try:
             settings = config.parse(data or {}, "draft")
@@ -177,7 +211,7 @@ class Api:
         return {"changes": changes, "heldFor": 120}
 
     def live_stop(self, body):
-        """Put the saved tc002.toml back on the clock and hand the screen back to the playlist."""
+        """Put the saved tc002.toml back on the clock and hand the screen back to the rotation."""
         hold.release()
         if not self.host:
             return {"changes": []}
@@ -244,6 +278,6 @@ def _drift(settings, cfg, app_settings, enabled):
     for key, state in enabled.items():
         if state["enabled"] != (key in settings.keep_builtins):
             drift.append(f"builtin.{key}")
-    if settings.playlist and cfg.get("carouselSpeed"):
+    if settings.rotation and cfg.get("carouselSpeed"):
         drift.append("display.carouselSpeed")
     return drift

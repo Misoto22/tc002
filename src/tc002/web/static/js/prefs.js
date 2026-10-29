@@ -24,6 +24,7 @@ function write(prefs) {
 
 export const prefs = {
   theme: "system", // system | light | dark
+  sidebar: "open", // open | collapsed
   lang: navigator.language?.toLowerCase().startsWith("zh") ? "zh" : "en",
   ...read(),
 };

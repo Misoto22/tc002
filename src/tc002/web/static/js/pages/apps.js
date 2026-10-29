@@ -1,7 +1,7 @@
 import { cityPicker } from "../citypicker.js";
 import { appName, t } from "../i18n.js";
 import { edit, setFocus, store } from "../store.js";
-import { h, pageHead, row, section, segmented, toggle } from "../ui.js";
+import { appIcon, h, pageHead, row, section, segmented, toggle } from "../ui.js";
 import { offlineNotice, page } from "./common.js";
 
 const APP_ICON = { clock: "clock", weather: "cloud-sun", busy: "timer", tomato: "timer" };
@@ -38,7 +38,7 @@ export function apps() {
     }
     const kept = store.draft.device.keep_builtins.includes(app);
     return [
-      section(h("span", { class: "section-with-icon" }, appName(app), kept ? null : h("span", { class: "muted" }, ` · ${t("apps.off")}`))),
+      section([appIcon(app, "sm"), appName(app), kept ? null : h("span", { class: "muted" }, `· ${t("apps.off")}`)]),
       h("div", { class: `panel${focused === app ? " focused" : ""}`, onPointerdown: focus, onFocusin: focus }, ...rows),
     ];
   });

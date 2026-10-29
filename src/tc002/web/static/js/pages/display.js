@@ -37,7 +37,7 @@ export function display() {
     return row(label, managed(key, clock[key]), control, { path: `display.${key}`, icon: ICONS[key] });
   });
 
-  const hasPlaylist = store.draft.playlist.slots.length > 0;
+  const hasRotation = store.draft.rotation.slots.length > 0;
   return page(
     pageHead(t("page.display"), t("desc.display")),
     store.state.clock.online ? null : offlineNotice(store.state.clock),
@@ -51,7 +51,7 @@ export function display() {
     ),
     section(t("section.general")),
     panel(...rows,
-      row(t("display.carousel"), hasPlaylist ? t("display.carouselOff") : t("display.carouselDevice"),
-        badge(hasPlaylist ? t("display.playlistBadge") : `${clock.carouselSpeed ?? "?"}s`), { icon: "list-video" })),
+      row(t("display.carousel"), hasRotation ? t("display.carouselOff") : t("display.carouselDevice"),
+        badge(hasRotation ? t("display.rotationBadge") : `${clock.carouselSpeed ?? "?"}s`), { icon: "repeat" })),
   );
 }

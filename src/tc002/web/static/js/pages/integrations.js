@@ -4,7 +4,7 @@ import { badge, h, pageHead, panel, row, section } from "../ui.js";
 import { page } from "./common.js";
 
 export function integrations() {
-  setFocus({ type: "playlist" });
+  setFocus({ type: "rotation" });
   const { integrations: it, config } = store.state;
   const running = it.service.startsWith("state: running");
   const hookRows = Object.entries(it.hooks).map(([event, on]) =>

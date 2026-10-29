@@ -1,9 +1,11 @@
 // tc002 UI shell: chrome (sidebar, top bar, save bar), routing, shortcuts.
 
+import { loadAssets } from "./assets.js";
 import { t } from "./i18n.js";
 import { commands, openPalette } from "./palette.js";
 import { applyPrefs, prefs, setPref } from "./prefs.js";
 import { startPreview } from "./preview.js";
+import { openQuick } from "./quick.js";
 import * as store from "./store.js";
 import { h, icon, menu, transition } from "./ui.js";
 import { apps } from "./pages/apps.js";
@@ -12,11 +14,11 @@ import { display } from "./pages/display.js";
 import { integrations } from "./pages/integrations.js";
 import { messages } from "./pages/messages.js";
 import { overview } from "./pages/overview.js";
-import { playlist } from "./pages/playlist.js";
+import { rotation } from "./pages/rotation.js";
 
 const PAGES = [
   ["overview", overview, "layout-dashboard", "nav.clock"],
-  ["playlist", playlist, "list-video", "nav.clock"],
+  ["rotation", rotation, "repeat", "nav.clock"],
   ["builtins", builtins, "blocks", "nav.clock"],
   ["display", display, "sun", "nav.clock"],
   ["apps", apps, "sliders-horizontal", "nav.clock"],
@@ -30,15 +32,14 @@ const current = () => (PAGES.some(([id]) => id === location.hash.slice(1)) ? loc
 
 function renderNav() {
   const s = store.store;
-  let group = null;
-  $("nav").replaceChildren(...PAGES.flatMap(([id, , ico, grp]) => {
-    const els = [];
-    if (grp !== group) { group = grp; els.push(h("div", { class: "nav-label" }, t(grp))); }
-    els.push(h("a", { class: "nav-item", href: `#${id}`, "aria-current": current() === id ? "page" : undefined },
-      icon(ico), h("span", {}, t(`page.${id}`)),
-      id === "playlist" && s.draft ? h("span", { class: "count" }, s.draft.playlist.slots.length) : null));
-    return els;
-  }));
+  const groups = Map.groupBy(PAGES, ([, , , grp]) => grp);
+  $("nav").replaceChildren(...[...groups].map(([grp, pages]) => h("div", { class: "nav-group" },
+    h("div", { class: "nav-label" }, t(grp)),
+    ...pages.map(([id, , ico]) => h("a", {
+      class: "nav-item", href: `#${id}`, title: t(`page.${id}`),
+      "aria-current": current() === id ? "page" : undefined,
+    }, icon(ico), h("span", {}, t(`page.${id}`)),
+    id === "rotation" && s.draft ? h("span", { class: "count" }, s.draft.rotation.slots.length) : null)))));
   const clock = s.state?.clock;
   $("brand-sub").replaceChildren(h("span", { class: `dot ${clock?.online ? "ok" : "bad"}` }),
     clock ? (clock.online ? `${clock.host} · ${clock.base.appVer}` : t("badge.offline")) : "…");
@@ -57,6 +58,9 @@ function renderTopbar() {
   $("lang").textContent = prefs.lang === "zh" ? "中" : "EN";
   $("lang").title = t("ui.language");
   $("palette-btn").title = t("ui.search");
+  $("quick").title = t("quick.title");
+  $("collapse").title = prefs.sidebar === "collapsed" ? t("nav.expand") : t("nav.collapse");
+  document.querySelector(".app").classList.toggle("collapsed", prefs.sidebar === "collapsed");
 }
 
 function renderSavebar() {
@@ -72,7 +76,7 @@ function renderSavebar() {
 // Mark rows whose tc002.toml value differs from what is saved.
 function markDirty() {
   const dirty = store.dirtyPaths();
-  for (const el of document.querySelectorAll("#main [data-path]")) {
+  for (const el of document.querySelectorAll("#page [data-path]")) {
     const p = el.dataset.path;
     el.classList.toggle("dirty", dirty.some((d) => d === p || d.startsWith(`${p}.`) || p.startsWith(`${d}.`)));
   }
@@ -80,7 +84,7 @@ function markDirty() {
 
 function render() {
   if (!store.store.state) return;
-  $("main").replaceChildren(PAGES.find(([id]) => id === current())[1]());
+  $("page").replaceChildren(PAGES.find(([id]) => id === current())[1]());
   renderNav();
   renderTopbar();
   renderSavebar();
@@ -118,6 +122,7 @@ store.subscribe((what) => {
   else { renderTopbar(); renderSavebar(); renderNav(); markDirty(); }
 });
 window.addEventListener("hashchange", () => transition(() => { render(); $("main").scrollTop = 0; }));
+window.addEventListener("hashchange", () => document.querySelectorAll(".popover, .menu").forEach((p) => p.remove()));
 $("save").addEventListener("click", () => store.save());
 $("discard").addEventListener("click", store.discard);
 $("status").addEventListener("click", openActivity);
@@ -126,14 +131,20 @@ $("theme").addEventListener("click", (e) => menu(e.currentTarget, [[t("ui.theme"
   ["system", t("pal.themeSystem"), "monitor"], ["light", t("pal.themeLight"), "sun"], ["dark", t("pal.themeDark"), "moon"],
 ]]], (v) => setPref("theme", v, render)));
 $("lang").addEventListener("click", () => setPref("lang", prefs.lang === "zh" ? "en" : "zh", render));
+$("quick").addEventListener("click", (e) => openQuick(e.currentTarget));
+const toggleSidebar = () => setPref("sidebar", prefs.sidebar === "collapsed" ? "open" : "collapsed", renderTopbar);
+$("collapse").addEventListener("click", toggleSidebar);
 document.addEventListener("keydown", (e) => {
   const mod = e.metaKey || e.ctrlKey;
   if (mod && e.key.toLowerCase() === "k") { e.preventDefault(); palette(); }
   if (mod && e.key.toLowerCase() === "s") { e.preventDefault(); if (store.dirtyPaths().length) store.save(); }
+  const typing = e.target instanceof Element && e.target.closest("input, select, textarea, [contenteditable]");
+  if (e.key === "[" && !mod && !typing) { e.preventDefault(); toggleSidebar(); } // as in Linear
 });
 window.addEventListener("beforeunload", (e) => { if (store.dirtyPaths().length) e.preventDefault(); });
 
 renderTopbar();
-store.load()
-  .then(() => startPreview($("preview")))
-  .catch((err) => $("main").replaceChildren(h("div", { class: "page" }, h("div", { class: "empty" }, t("err.load", { msg: err.message })))));
+loadAssets() // icons and LED data first: pages draw with them
+  .then(store.load)
+  .then(() => startPreview($("device")))
+  .catch((err) => $("page").replaceChildren(h("div", { class: "page" }, h("div", { class: "empty" }, t("err.load", { msg: err.message })))));

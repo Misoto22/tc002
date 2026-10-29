@@ -1,5 +1,7 @@
 // Searchable city combobox for the weather app. Online it asks Open-Meteo (via the local
 // server); offline it falls back to a built-in list. A pick sets city, lat and lon together.
+// The result list is a popover on <body>, positioned under the input, so the settings
+// panel it sits in can neither clip it nor be covered by it.
 
 import { get } from "./api.js";
 import { lang, t } from "./i18n.js";
@@ -15,15 +17,38 @@ export function cityPicker(current, onPick) {
     role: "combobox", "aria-autocomplete": "list", "aria-expanded": "false", "aria-controls": "city-list",
     "aria-label": t("field.city"), autocomplete: "off",
   });
-  const list = h("div", { class: "city-list", id: "city-list", role: "listbox", hidden: true });
+  const list = h("div", { class: "popover city-list", id: "city-list", role: "listbox" });
   const coords = h("div", { class: "row-hint mono" },
     current.lat && current.lon ? `${Number(current.lat).toFixed(2)}, ${Number(current.lon).toFixed(2)}` : "");
+
+  function place() {
+    const box = input.getBoundingClientRect();
+    const width = Math.max(box.width, 300);
+    list.style.cssText = `top:${box.bottom + 6}px;left:${Math.max(8, box.right - width)}px;width:${width}px`;
+  }
+
+  const outside = (e) => { if (!list.contains(e.target) && e.target !== input) close(); };
+
+  function open() {
+    if (!list.isConnected) {
+      document.body.append(list);
+      document.addEventListener("pointerdown", outside);
+    }
+    place();
+    input.setAttribute("aria-expanded", "true");
+  }
+
+  function close() {
+    list.remove();
+    document.removeEventListener("pointerdown", outside);
+    input.setAttribute("aria-expanded", "false");
+  }
 
   async function search() {
     const mine = ++seq;
     const q = input.value.trim();
     const data = await get(`/api/cities?${new URLSearchParams({ q, lang: lang() })}`).catch(() => null);
-    if (mine !== seq || !data) return; // a newer keystroke won
+    if (mine !== seq || !data || document.activeElement !== input) return; // stale or left
     results = data.results;
     active = results.length ? 0 : -1;
     list.replaceChildren(
@@ -33,8 +58,7 @@ export function cityPicker(current, onPick) {
       }, icon("map-pin"), h("span", {}, r.name), h("span", { class: "muted" }, r.region))),
       results.length ? h("div", { class: "city-source" }, t(`city.source.${data.source}`))
         : h("div", { class: "palette-empty" }, t("city.none")));
-    list.hidden = false;
-    input.setAttribute("aria-expanded", "true");
+    open();
   }
 
   function pick(i) {
@@ -46,18 +70,13 @@ export function cityPicker(current, onPick) {
     onPick({ city: r.name, lat: String(r.lat), lon: String(r.lon) });
   }
 
-  function close() {
-    list.hidden = true;
-    input.setAttribute("aria-expanded", "false");
-  }
-
   function paint() {
     [...list.querySelectorAll(".city-option")].forEach((el, i) => el.setAttribute("aria-selected", String(i === active)));
     input.setAttribute("aria-activedescendant", active >= 0 ? `city-${active}` : "");
   }
 
   input.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(search, 220); });
-  input.addEventListener("focus", () => { if (!results.length) search(); });
+  input.addEventListener("focus", search);
   input.addEventListener("blur", () => setTimeout(close, 120));
   input.addEventListener("keydown", (e) => {
     if (e.key === "ArrowDown") { e.preventDefault(); active = Math.min(results.length - 1, active + 1); paint(); }
@@ -65,7 +84,9 @@ export function cityPicker(current, onPick) {
     else if (e.key === "Enter") { e.preventDefault(); pick(active); }
     else if (e.key === "Escape") close();
   });
+  // the page scrolls under a fixed popover: follow the input, or close if it left the view
+  document.getElementById("main")?.addEventListener("scroll", () => { if (list.isConnected) place(); }, { passive: true });
 
   return h("div", { class: "city-picker" },
-    h("div", { class: "city-field" }, icon("search", "icon city-search"), input), list, coords);
+    h("div", { class: "city-field" }, icon("search", "icon city-search"), input), coords);
 }

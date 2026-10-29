@@ -1,0 +1,114 @@
+{
+ "claude": {
+  "symbol": "brand-claude",
+  "kind": "brand"
+ },
+ "sys": {
+  "symbol": "cpu",
+  "kind": "glyph"
+ },
+ "usage": {
+  "symbol": "gauge",
+  "kind": "glyph"
+ },
+ "codex": {
+  "symbol": "brand-bi-openai",
+  "kind": "brand"
+ },
+ "clock": {
+  "symbol": "clock",
+  "kind": "glyph"
+ },
+ "weather": {
+  "symbol": "cloud-sun",
+  "kind": "glyph"
+ },
+ "busy": {
+  "symbol": "lightbulb",
+  "kind": "glyph"
+ },
+ "scoreboard": {
+  "symbol": "trophy",
+  "kind": "glyph"
+ },
+ "tomato": {
+  "symbol": "timer",
+  "kind": "glyph"
+ },
+ "stopwatch": {
+  "symbol": "alarm-clock",
+  "kind": "glyph"
+ },
+ "battery": {
+  "symbol": "battery-medium",
+  "kind": "glyph"
+ },
+ "soundlight": {
+  "symbol": "audio-lines",
+  "kind": "glyph"
+ },
+ "ipshow": {
+  "symbol": "network",
+  "kind": "glyph"
+ },
+ "xhs": {
+  "symbol": "brand-xiaohongshu",
+  "kind": "brand"
+ },
+ "douyin": {
+  "symbol": "brand-tiktok",
+  "kind": "brand"
+ },
+ "bilibili": {
+  "symbol": "brand-bilibili",
+  "kind": "brand"
+ },
+ "weibo": {
+  "symbol": "brand-sinaweibo",
+  "kind": "brand"
+ },
+ "youtube": {
+  "symbol": "brand-youtube",
+  "kind": "brand"
+ },
+ "instagram": {
+  "symbol": "brand-instagram",
+  "kind": "brand"
+ },
+ "facebook": {
+  "symbol": "brand-facebook",
+  "kind": "brand"
+ },
+ "tiktok": {
+  "symbol": "brand-tiktok",
+  "kind": "brand"
+ },
+ "x": {
+  "symbol": "brand-x",
+  "kind": "brand"
+ },
+ "feishu": {
+  "symbol": "brand-icon-park-lark",
+  "kind": "brand"
+ },
+ "dingding": {
+  "symbol": "brand-ant-design-dingtalk",
+  "kind": "brand"
+ },
+ "wecom": {
+  "symbol": "brand-ant-design-wechat-work-filled",
+  "kind": "brand"
+ },
+ "google": {
+  "symbol": "brand-googlecalendar",
+  "kind": "brand"
+ },
+ "icloud": {
+  "symbol": "brand-icloud",
+  "kind": "brand"
+ },
+ "outlook": {
+  "symbol": "brand-mdi-microsoft-outlook",
+  "kind": "brand"
+ }
+}

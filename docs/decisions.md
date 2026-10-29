@@ -90,3 +90,34 @@ release-please for versions and changelog, Dependabot for `uv` and GitHub Action
 Lucide (ISC) is the icon set closest to Linear's; `scripts/vendor_icons.py` pulls the
 icons the UI uses from a pinned `lucide-static` release into `web/static/icons.svg`, so
 the UI works offline and the sprite changes only through the script.
+
+## 2026-10-29 — "Rotation", not "playlist"
+
+A playlist plays through and stops; the clock cycles forever. The UI, the code and
+tc002.toml now say **rotation** (`[rotation]`); `[playlist]` is still read, and a file
+with both is rejected so the two cannot disagree.
+
+## 2026-10-29 — Agent token usage from local files only
+
+- **Claude Code:** `message.usage` in `~/.claude/projects/**/*.jsonl`, de-duplicated by
+  (message id, request id) as ccusage does; read incrementally (first scan ~3.4 s, then
+  ~0.7 s on this machine). Totals include cache reads and writes.
+- **Codex:** rollout `token_count` events (tokens and 5-hour / weekly allowance) when
+  present; otherwise `threads.tokens_used` from the newest `state_*.sqlite`, opened
+  read-only. This machine has no rollout files, so the allowance path is covered by tests
+  only.
+- No account APIs: nothing leaves the machine, and nothing needs credentials.
+
+## 2026-10-29 — Monochrome icons, official marks, tokens everywhere
+
+Interface icons are Lucide; built-in apps use their official marks (Simple Icons, and
+Iconify for Lark, DingTalk, WeCom, Outlook and OpenAI), all drawn in the text colour on a
+neutral tile — brand-coloured tiles were tried and dropped as out of keeping with the
+quiet UI. Every colour, radius, size and duration lives in `tokens.css`; the LED palette
+lives in `render/palette.py` and reaches the browser through `/api/led`.
+
+## 2026-10-29 — Device bar instead of a third column
+
+The preview moved from a right-hand column into a sticky bar above the page, and the
+sidebar collapses to an icon rail (`[`): two columns read better than three, and the
+preview stays in view without squeezing the settings.

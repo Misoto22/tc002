@@ -11,7 +11,7 @@ import { toast } from "./ui.js";
 
 export const store = {
   state: null, saved: null, draft: null,
-  focus: { type: "playlist" }, // what the preview panel shows
+  focus: { type: "rotation" }, // what the preview panel shows
   op: null, // { kind: "saving" | "applied" | "offline" | "error", at, detail }
   live: { on: false, pending: false },
   log: [],
@@ -157,7 +157,7 @@ export async function setLive(on) {
   notify("status");
   if (on) {
     await pushLive();
-    heartbeat = setInterval(pushLive, 60_000); // keeps the playlist hold alive
+    heartbeat = setInterval(pushLive, 60_000); // keeps the rotation hold alive
   } else {
     await stopLive(true);
   }
@@ -203,4 +203,40 @@ export async function send(message) {
     toast(err.title, err.message, "error");
   }
   notify("status");
+}
+
+// ---- quick settings and presets -------------------------------------------------
+
+let quickTimer;
+let quickPatch = {};
+
+// Brightness, volume…: written to tc002.toml and applied at once, without touching an
+// unsaved draft. Calls within 200 ms are merged so a dragged slider sends one request.
+export function quick(display) {
+  quickPatch = { ...quickPatch, ...display };
+  for (const target of [store.saved, store.draft]) target.display = { ...target.display, ...display };
+  notify("status");
+  clearTimeout(quickTimer);
+  quickTimer = setTimeout(async () => {
+    const patch = quickPatch;
+    quickPatch = {};
+    try {
+      const r = await post("/api/quick", { display: patch });
+      store.op = { kind: r.error ? "offline" : "applied", at: Date.now(), detail: r.error };
+      record("quick.title", !r.error, r.error ?? changesText(r.changes));
+    } catch (err) {
+      store.op = { kind: "error", at: Date.now(), detail: err.message };
+      toast(err.title, err.message, "error");
+    }
+    notify("status");
+    setTimeout(() => notify("status"), 6100);
+  }, 200);
+}
+
+export async function applyPreset(id) {
+  const { data } = await post("/api/preset", { data: store.draft, preset: id });
+  store.draft = { ...data, display: data.display ?? {}, apps: data.apps ?? {} };
+  toast(t("preset.loaded"), t("preset.loadedHint"));
+  notify("render");
+  if (store.live.on) scheduleLive();
 }

@@ -4,7 +4,9 @@
 // the dragged row is translated by (where the pointer wants it) - (where layout put it).
 
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
-const EASE = "cubic-bezier(0.3, 0.7, 0.4, 1)";
+import { ms, token } from "./ui.js";
+
+const ease = () => token("--ease");
 
 function flip(list, mutate, skip) {
   const before = new Map([...list.children].map((el) => [el, el.offsetTop]));
@@ -13,7 +15,7 @@ function flip(list, mutate, skip) {
   for (const el of list.children) {
     const dy = before.get(el) - el.offsetTop;
     if (el === skip || !dy) continue;
-    el.animate([{ transform: `translateY(${dy}px)` }, { transform: "none" }], { duration: 180, easing: EASE });
+    el.animate([{ transform: `translateY(${dy}px)` }, { transform: "none" }], { duration: ms("--normal"), easing: ease() });
   }
 }
 
@@ -57,8 +59,8 @@ export function sortable(list, onReorder) {
       // background tab, so it must not gate the reorder.
       const settled = () => item.classList.remove("dragging");
       if (from && !reduceMotion.matches) {
-        item.animate([{ transform: from }, { transform: "none" }], { duration: 160, easing: EASE });
-        setTimeout(settled, 170);
+        item.animate([{ transform: from }, { transform: "none" }], { duration: ms("--normal"), easing: ease() });
+        setTimeout(settled, ms("--normal") + 10);
       } else settled();
       onReorder(order());
     };
