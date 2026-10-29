@@ -53,6 +53,15 @@ class Previews:
         return mockup.led_gif(anim, theme)
 
 
+def warm(theme):
+    """Draw every fixed preview in `theme` once (run in the background at start-up)."""
+    from ..builtins import CATALOGUE
+
+    names = [*_examples(), *(f"builtin-{k}" for k in CATALOGUE), *(f"game-{g}" for g in GAMES)]
+    for name in names:
+        _fixed(name, theme)
+
+
 @lru_cache(maxsize=1)
 def _examples():
     return examples()

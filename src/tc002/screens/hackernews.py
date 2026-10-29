@@ -8,6 +8,7 @@ without it. Layout: an orange Y and the story's place ("2/5"), its points and co
 count on the top row; the title on the bottom row, scrolling when it does not fit.
 """
 
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import ClassVar
 
@@ -22,6 +23,7 @@ LIST = "https://hacker-news.firebaseio.com/v0/{kind}stories.json"
 ITEM = "https://hacker-news.firebaseio.com/v0/item/{id}.json"
 KINDS = ("top", "best", "new", "ask", "show")
 SCAN = 30  # ids read from the list before filtering
+BATCH = 12  # items read side by side; more batches only while too few stories pass
 
 
 @dataclass(frozen=True)
@@ -36,6 +38,10 @@ class State:
     story: Story
     index: int = 0
     count: int = 1
+
+
+def _story(item):
+    return Story(str(item["title"]), int(item.get("score", 0)), int(item.get("descendants", 0)))
 
 
 def short(n):
@@ -64,22 +70,27 @@ class HackerNewsScreen:
         self.pager = Pager(self._fetch, o["refresh"] * 60, o["seconds"], **kwargs)
 
     def _fetch(self):
+        ids = self.get(LIST.format(kind=self.kind))[:SCAN]
         stories = []
-        for story_id in self.get(LIST.format(kind=self.kind))[:SCAN]:
-            item = self.get(ITEM.format(id=story_id)) or {}
-            title = str(item.get("title", ""))
-            if item.get("dead") or item.get("deleted") or not title:
-                continue
-            if int(item.get("score", 0)) < self.min_points:
-                continue
-            if self.keyword and self.keyword not in title.casefold():
-                continue
-            stories.append(Story(title, int(item.get("score", 0)), int(item.get("descendants", 0))))
-            if len(stories) == self.count:
-                break
+        with ThreadPoolExecutor(BATCH) as pool:
+            for start in range(0, len(ids), BATCH):
+                batch = ids[start : start + BATCH]
+                for item in pool.map(lambda i: self.get(ITEM.format(id=i)) or {}, batch):
+                    if self._keep(item):
+                        stories.append(_story(item))
+                if len(stories) >= self.count:
+                    break
         if not stories:
             raise ValueError("no story matches the filters")
-        return stories
+        return stories[: self.count]
+
+    def _keep(self, item):
+        title = str(item.get("title", ""))
+        if item.get("dead") or item.get("deleted") or not title:
+            return False
+        if int(item.get("score", 0)) < self.min_points:
+            return False
+        return not self.keyword or self.keyword in title.casefold()
 
     def sample(self):
         index, count, story = self.pager.current()

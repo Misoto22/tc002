@@ -28,7 +28,7 @@ class Quote:
     symbol: str
     price: float
     change: float  # %
-    points: tuple[float, ...]  # closes, oldest first
+    closes: tuple[float, ...]  # today's, oldest first
     previous: float
 
 
@@ -107,7 +107,7 @@ class StocksScreen:
 
 
 def _chart(c, q, bottom):
-    pts = q.points or (q.previous,)
+    pts = q.closes or (q.previous,)
     lo, hi = min(*pts, q.previous), max(*pts, q.previous)
     span = (hi - lo) or 1
     rows = bottom - CHART_TOP

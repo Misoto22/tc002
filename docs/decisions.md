@@ -212,3 +212,37 @@ returns a GeoNames feature code and population for each place: the city of Shang
    only when nothing else matches.
 9. README: a light/dark hero drawn from the UI tokens and the clock's own pixel font, and
    the gallery as an HTML table with one image width.
+
+## 2026-10-29 — Each item gets its own page
+
+**Problem.** Every setting sat on one long page: a stock was one text box for a ticker,
+Moon and Game of Life had no settings, switching a screen on did not say where it would
+show, a connection test answered only "works", social apps were drawn as initials, and
+switching pages took a moment.
+
+**Evidence.** Hacker News's Firebase API lists ranked ids and reads each item separately
+(no rate limit; about 2 s a request from this network), so reading stories in batches
+and stopping once enough pass keeps a test near 6 s instead of 12 s. Desk displays for
+Home Assistant (Tidbyt `hassentitylist`, AWTRIX blueprints) show one entity per page with
+units and words for binary states, from one `GET /api/states`. Yahoo Finance's search
+endpoint finds tickers by company name without a key (`tencent` → `0700.HK`). The page
+delay was a 240 ms cross-fade plus staggered entrances, and each preview GIF was drawn
+again on every request (about 0.4 s each).
+
+**Choices.**
+1. `#rotation/<screen>` and `#builtins/<app>` pages with a breadcrumb (also in the top
+   bar): the picture read with real data and the options not yet saved, what was read and
+   how long it took, where it shows, and every option.
+2. "Where it shows" has four answers everywhere — off, kept without a turn, in the
+   rotation (for how long), shown alone — as a menu on each list row and a control on the
+   item's page; switching to one moves the item in the rotation list itself.
+3. Several items per screen through one pager (`screens/pager.py`): fetched together every
+   `refresh` minutes, shown one at a time, so each GIF stays within the frame limit.
+   Stocks: up to four, found by search. Hacker News: list, how many, minimum points,
+   keyword. Home Assistant: up to six entities, picked from the user's own server.
+4. Moon: hemisphere, and % lit or days to full. Game of Life: speed, density, colour,
+   how often to start again.
+5. Testing a connection or the clock shows the result in place, not a toast.
+6. Social apps' previews draw each service's mark as pixel art.
+7. Pages draw at once with a 120 ms fade; fixed previews are drawn once per LED theme
+   and warmed at start-up.

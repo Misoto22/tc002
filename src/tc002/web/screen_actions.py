@@ -1,5 +1,6 @@
-"""API actions behind a screen's own page: try it with real data, find stock symbols,
-list Home Assistant entities. Nothing here touches the clock.
+"""API actions that check things for real: try a screen with real data, find stock
+symbols, list Home Assistant entities, and ask the clock how it is. Nothing here changes
+the clock.
 
 Mixed into web.api.Api.
 """
@@ -11,6 +12,7 @@ import time
 import urllib.parse
 
 from .. import net
+from ..device import DeviceError
 from ..render import mockup
 from ..screens import SCREENS, build
 from ..screens import home as home_screen
@@ -21,20 +23,27 @@ MAX_FACTS = 8
 FAILURES = (OSError, ValueError, KeyError, TypeError, IndexError, subprocess.SubprocessError)
 
 
-def facts(state, prefix=""):
+HIDDEN = {"index", "count", "connected", "key", "closes", "phase"}  # paging and drawing data
+
+
+def facts(state):
     """What a screen read, as short label/value pairs for the UI (never secrets: screen
-    states hold only what the clock would show)."""
+    states hold only what the clock would show). Nested values are flattened, so a stock
+    reads "symbol, price, change", not "quote.symbol"."""
     out = []
     if not dataclasses.is_dataclass(state):
         return out
     for field in dataclasses.fields(state):
         value = getattr(state, field.name)
+        label = field.name.replace("_", " ")
+        if field.name in HIDDEN:
+            continue
         if dataclasses.is_dataclass(value):
-            out += facts(value, f"{prefix}{field.name}.")
+            out += facts(value)
         elif isinstance(value, str | int | float | bool) or value is None:
-            out.append([f"{prefix}{field.name}", "—" if value is None else str(value)[:60]])
+            out.append([label, "—" if value is None else str(value)[:60]])
         elif isinstance(value, tuple | list) and value and len(value) <= 6:
-            out.append([f"{prefix}{field.name}", ", ".join(str(v)[:24] for v in value)])
+            out.append([label, ", ".join(str(v)[:24] for v in value)])
     return out[:MAX_FACTS]
 
 
@@ -100,3 +109,22 @@ class ScreenActions:
         if states is None:
             raise ApiError(409, "Not connected", "Add the address and token in Connections first.")
         return {"results": home_screen.entity_list(states)}
+
+    def clock_check(self, query):
+        """Ask the clock for its firmware and network now, and time the answer."""
+        started = time.monotonic()
+        try:
+            base = self._device().base_info()
+        except DeviceError as exc:
+            ms = round((time.monotonic() - started) * 1000)
+            return {"ok": False, "error": str(exc)[:200], "ms": ms}
+        return {
+            "ok": True,
+            "ms": round((time.monotonic() - started) * 1000),
+            "facts": [
+                ["firmware", str(base.get("appVer", "?"))],
+                ["mcu", str(base.get("mcuVer", "?"))],
+                ["ip", str(base.get("ip", self.host))],
+                ["wifi", str(base.get("ssid", "?"))],
+            ],
+        }

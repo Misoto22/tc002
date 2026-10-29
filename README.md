@@ -149,12 +149,16 @@ on in **On the clock**.
   and notifications waiting on GitHub (through the `gh` CLI), and what Music or Spotify is
   playing.
 - **Air quality, Crypto, Stocks, Hacker News** — from public services that need no key.
-- **Home Assistant** — any two sensors or devices.
+  Stocks and Hacker News show several items in turn: the stocks you search for and pick,
+  or the stories of a list you choose (top, best, new, Ask, Show) above a minimum score.
+- **Home Assistant** — the devices and sensors you pick from your Home Assistant, in turn:
+  values rounded with their unit, doors OPEN or SHUT, people HOME or AWAY.
 
-Screens with options (the countdown's date, the world clock's places, the focus timer's
-lengths, the coins and stock to follow) are set right under the screen in **On the
-clock**. Services that need a token or a private link are set up in **Connections**;
-those secrets are kept in the macOS Keychain, never in a file.
+Every screen and built-in app has its own page (**On the clock › Stocks**) with its
+picture drawn from real data, where it shows (off, kept, in the rotation or shown alone)
+and its options. Services that need a token or a private link are set up in
+**Connections**, where **Test** reads each one for real and shows what came back; those
+secrets are kept in the macOS Keychain, never in a file.
 
 Nothing a screen reads leaves your Mac.
 

@@ -8,6 +8,7 @@ rebinding) and every write must carry the per-process token embedded in index.ht
 
 import json
 import secrets
+import threading
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from importlib import resources
@@ -15,6 +16,7 @@ from urllib.parse import parse_qsl, urlsplit
 
 from .. import config
 from ..device import DeviceError
+from . import previews
 from .api import Api, ApiError
 
 MAX_BODY = 256 * 1024
@@ -42,6 +44,7 @@ GETS = {
     "/api/game/frame": "game_frame",
     "/api/symbols": "symbols",
     "/api/home/entities": "home_entities",
+    "/api/clock/check": "clock_check",
 }
 
 
@@ -218,6 +221,8 @@ def serve(host, config_path, port=config.UI_PORT, ready=None):
     # port 0 picks a free port; the Host check must use the real one
     httpd.RequestHandlerClass = make_handler(api, token, httpd.server_port)
     url = f"http://{LOOPBACK}:{httpd.server_port}/"
+    # draw the fixed previews while the browser opens, so the first page's pictures are ready
+    threading.Thread(target=previews.warm, args=(api._led_theme(),), daemon=True).start()
     if ready:
         ready(url)
     try:

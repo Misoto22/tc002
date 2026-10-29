@@ -50,9 +50,9 @@ export const en = {
   "screen.nowplaying": "What Music or Spotify is playing",
   "screen.air": "Air quality where your weather city is",
   "screen.crypto": "Two coins and their 24-hour change",
-  "screen.stocks": "A stock's price and its day",
-  "screen.hackernews": "The top Hacker News story",
-  "screen.home": "Two Home Assistant sensors",
+  "screen.stocks": "Stocks and indices in turn, each with today's chart",
+  "screen.hackernews": "Hacker News stories in turn, with points and comments",
+  "screen.home": "Home Assistant devices and sensors in turn",
 };
 
 export const zh = {
@@ -104,7 +104,7 @@ export const zh = {
   "screen.nowplaying": "音乐或 Spotify 正在播放的歌",
   "screen.air": "天气城市的空气质量",
   "screen.crypto": "两种币的价格和 24 小时涨跌",
-  "screen.stocks": "一只股票的价格和当日走势",
-  "screen.hackernews": "Hacker News 头条",
-  "screen.home": "Home Assistant 的两个传感器",
+  "screen.stocks": "多只股票和指数轮流显示，带当日走势",
+  "screen.hackernews": "Hacker News 文章轮流显示，带分数和评论数",
+  "screen.home": "Home Assistant 的设备和传感器轮流显示",
 };

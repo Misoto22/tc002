@@ -66,7 +66,7 @@ def test_stocks_chart_against_yesterdays_close():
         clock=lambda: clock[0],
     )
     state = screen.sample()
-    assert (state.quote.symbol, state.quote.change, state.quote.points) == (
+    assert (state.quote.symbol, state.quote.change, state.quote.closes) == (
         "MSFT",
         10.0,
         (100, 105, 110),
@@ -145,10 +145,14 @@ def test_now_playing_and_nothing_playing():
 
 def test_github_counts_from_gh():
     answers = {"reviews": 2, "mine": 5, "unread": 150}
-    screen = github.GitHubScreen(
-        run=lambda args: next(v for k, v in answers.items() if args == github.QUERIES[k])
-    )
-    assert screen.sample() == github.State(2, 5, 150)
+
+    def run(args):
+        if args == github.ACCOUNT:
+            return "octocat"
+        return next(v for k, v in answers.items() if args == github.QUERIES[k])
+
+    screen = github.GitHubScreen(run=run)
+    assert screen.sample() == github.State(2, 5, 150, "octocat")
     fits(screen)
 
 

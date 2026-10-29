@@ -3,6 +3,7 @@
 
 import * as agents from "./i18n-agents.js";
 import * as display from "./i18n-display.js";
+import * as pages from "./i18n-pages.js";
 import * as errors from "./i18n-errors.js";
 
 const en = {
@@ -292,8 +293,8 @@ const names = {
 };
 
 const DICTS = {
-  en: { ...en, ...agents.en, ...errors.en, ...display.en },
-  zh: { ...zh, ...agents.zh, ...errors.zh, ...display.zh },
+  en: { ...en, ...agents.en, ...errors.en, ...display.en, ...pages.en },
+  zh: { ...zh, ...agents.zh, ...errors.zh, ...display.zh, ...pages.zh },
 };
 let current = "en";
 

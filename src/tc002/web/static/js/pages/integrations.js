@@ -1,11 +1,22 @@
 import { hooksConnected, integration } from "../agents.js";
 import { get, post } from "../api.js";
 import { t } from "../i18n.js";
+import { factList, status } from "../livecheck.js";
 import { setFocus, store } from "../store.js";
 import { badge, button, h, pageHead, panel, row, section, toast } from "../ui.js";
 import { page } from "./common.js";
 
 let logText = null; // shown under the service row once asked for
+let clockResult; // undefined: not asked; null: asking; else the clock's answer
+
+// Ask the clock now and show the answer under its row: reachable or not, how fast, and
+// its firmware and Wi-Fi.
+async function checkClock(rerender) {
+  clockResult = null;
+  rerender();
+  clockResult = await get("/api/clock/check").catch((err) => ({ ok: false, error: err.message, ms: 0 }));
+  rerender();
+}
 
 async function toggleLog(rerender) {
   if (logText !== null) { logText = null; rerender(); return; }
@@ -39,7 +50,10 @@ export function integrations() {
     panel(row(clock.host ? t("int.clockAt", { host: clock.host }) : t("int.notSet"),
       clock.online ? `${t("fact.firmware")} ${clock.base.appVer}` : { text: clock.error ?? "", warn: true },
       [badge(clock.online ? t("badge.online") : t("badge.offline"), clock.online ? "ok" : "bad"),
-        h("a", { class: "btn", href: "#setup" }, t("int.change"))], { icon: "tv" })),
+        button(t("conn.try"), () => checkClock(rerender), { kind: "ghost", ico: "play" }),
+        h("a", { class: "btn", href: "#setup" }, t("int.change"))], { icon: "tv" }),
+      clockResult === undefined ? null
+        : h("div", { class: "check-result" }, status(clockResult), factList(clockResult) ?? "")),
     section(t("int.agents")),
     panel(
       row(t("int.hooks"), h("div", {}, t("int.hooksHint"), hookChips(it.hooks)),

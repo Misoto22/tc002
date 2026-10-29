@@ -1,13 +1,13 @@
 // tc002 UI shell: chrome (sidebar, top bar, save bar), routing, shortcuts.
 
 import { loadAssets } from "./assets.js";
-import { t } from "./i18n.js";
+import { appName, t } from "./i18n.js";
 import { commands, openPalette } from "./palette.js";
 import { PALETTES, applyPrefs, prefs, setPref } from "./prefs.js";
 import { startPreview } from "./preview.js";
 import { openQuick } from "./quick.js";
 import * as store from "./store.js";
-import { h, icon, menu, transition } from "./ui.js";
+import { h, icon, menu } from "./ui.js";
 import { builtins } from "./pages/builtins.js";
 import { display } from "./pages/display.js";
 import { integrations } from "./pages/integrations.js";
@@ -17,6 +17,7 @@ import { rotation } from "./pages/rotation.js";
 import { setup } from "./pages/setup.js";
 import { play } from "./pages/play.js";
 import { connections } from "./pages/connections.js";
+import { appPage, screenPage } from "./pages/detail.js";
 import { pollAgents } from "./agents.js";
 import { followUiPalette } from "./appearance.js";
 
@@ -35,10 +36,20 @@ const PAGES = [
 ];
 const ALIASES = { apps: "builtins", sessions: "overview" }; // pages merged away, for old links
 const $ = (id) => document.getElementById(id);
-function current() {
-  const id = location.hash.slice(1);
+// "#rotation/stocks": the page, and the item whose own page is open (or null)
+function route() {
+  const [id, sub = null] = location.hash.slice(1).split("/");
   const known = ALIASES[id] ?? id;
-  return PAGES.some(([p]) => p === known) ? known : "overview";
+  return PAGES.some(([p]) => p === known) ? [known, sub] : ["overview", null];
+}
+const current = () => route()[0];
+
+// A list page, or one of its items' own pages.
+function pageFor([id, sub]) {
+  const s = store.store.state;
+  if (sub && id === "rotation" && s.screens.includes(sub)) return screenPage(sub);
+  if (sub && id === "builtins" && s.catalogue.some((a) => a.key === sub)) return appPage(sub);
+  return PAGES.find(([p]) => p === id)[1]();
 }
 
 // ---- chrome -----------------------------------------------------------------------
@@ -96,7 +107,10 @@ function renderQuickButton() {
 
 function renderTopbar() {
   const status = store.statusOf();
-  $("crumb").replaceChildren(t(`page.${current()}`));
+  const [id, sub] = route();
+  $("crumb").replaceChildren(...(sub
+    ? [h("a", { href: `#${id}` }, t(`page.${id}`)), icon("chevron-right"), h("span", {}, appName(sub))]
+    : [t(`page.${id}`)]));
   const pill = $("status");
   pill.className = `status-pill ${status.kind}`;
   pill.replaceChildren(icon(status.icon, `icon${status.icon === "loader-circle" ? " spin" : ""}`), h("span", {}, status.text));
@@ -137,7 +151,7 @@ function render(entering = false) {
   if (entering || firstPaint) delete document.documentElement.dataset.refresh;
   else document.documentElement.dataset.refresh = "";
   firstPaint = false;
-  $("page").replaceChildren(PAGES.find(([id]) => id === current())[1]());
+  $("page").replaceChildren(pageFor(route()));
   renderNav();
   renderTopbar();
   renderSavebar();
@@ -174,7 +188,8 @@ store.subscribe((what) => {
   if (what === "render") render();
   else { renderTopbar(); renderSavebar(); renderNav(); markDirty(); }
 });
-window.addEventListener("hashchange", () => transition(() => { render(true); $("main").scrollTop = 0; }));
+// A page switch draws at once: no cross-fade to wait for, only a short fade-in (motion.css).
+window.addEventListener("hashchange", () => { render(true); $("main").scrollTop = 0; });
 window.addEventListener("hashchange", () => document.querySelectorAll(".popover, .menu").forEach((p) => p.remove()));
 $("save").addEventListener("click", () => store.save());
 $("discard").addEventListener("click", store.discard);

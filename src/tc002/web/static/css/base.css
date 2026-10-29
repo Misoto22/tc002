@@ -242,6 +242,7 @@ main { position: relative; overflow-y: auto; outline: none; }
   cursor: pointer;
   transition: background var(--fast), border-color var(--fast), transform var(--press);
 }
+a.btn { text-decoration: none; }
 
 .btn:hover { background: var(--hover); border-color: var(--faint); }
 .btn:active { transform: scale(0.97); }

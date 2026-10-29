@@ -7,50 +7,27 @@
 @keyframes toast-in { from { opacity: 0; transform: translateY(10px) scale(0.98); } }
 @keyframes toast-out { to { opacity: 0; transform: translateX(16px); } }
 @keyframes page-in { from { opacity: 0; transform: translateY(6px); } }
-@keyframes row-in { from { opacity: 0; transform: translateY(4px); } }
 @keyframes shimmer { to { background-position: -200% 0; } }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes pulse { 50% { opacity: 0.35; } }
 @keyframes live-ring { 70% { box-shadow: 0 0 0 6px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
-@keyframes waiting-ring { 0% { box-shadow: 0 0 0 0 var(--accent-glow); } 70%, 100% { box-shadow: 0 0 0 8px transparent; } }
-@keyframes grow { from { transform: scaleX(0); } }
 @keyframes reveal {
   from { clip-path: circle(0 at var(--reveal-x) var(--reveal-y)); }
   to { clip-path: circle(150vmax at var(--reveal-x) var(--reveal-y)); }
 }
 
-/* a page's sections arrive one after another */
-.page > * { animation: page-in var(--slow) var(--ease) both; }
-.page > :nth-child(2) { animation-delay: calc(var(--stagger) * 2); }
-.page > :nth-child(3) { animation-delay: calc(var(--stagger) * 4); }
-.page > :nth-child(4) { animation-delay: calc(var(--stagger) * 6); }
-.page > :nth-child(5) { animation-delay: calc(var(--stagger) * 8); }
-.page > :nth-child(n + 6) { animation-delay: calc(var(--stagger) * 10); }
+/* a page arrives in one short fade: everything is there at once, nothing waits its turn */
+.page { animation: page-in var(--fast) var(--ease) both; }
 
 /* a live refresh (agent poll) redraws in place: nothing enters again */
-:root[data-refresh] .page > *, :root[data-refresh] .session, :root[data-refresh] .meter-fill,
-:root[data-refresh] .panel > .row { animation: none; }
-
-/* what needs you breathes; nothing else moves on its own */
-.state-waiting .state-dot, .nav-item .count.alert { animation: waiting-ring var(--loop-breath) var(--ease) infinite; }
-
-/* bars fill from empty when they first appear */
-.meter-fill { transform-origin: left; animation: grow var(--count) var(--ease) both; }
+:root[data-refresh] .page { animation: none; }
 
 /* cards answer the pointer with a small lift */
-.limit-card, .choice, .preset {
+.choice, .preset {
   transition: transform var(--fast) var(--ease), box-shadow var(--fast) var(--ease), background var(--fast);
 }
-.limit-card:hover, .choice:hover, .preset:hover { transform: translateY(-1px); }
+.choice:hover, .preset:hover { transform: translateY(-1px); }
 .choice:active, .preset:active { transform: translateY(0) scale(0.99); }
-
-/* rows arrive one after another, capped so long lists do not drag */
-.panel > .row { animation: row-in var(--slow) var(--ease) both; }
-.panel > .row:nth-child(2) { animation-delay: var(--stagger); }
-.panel > .row:nth-child(3) { animation-delay: calc(var(--stagger) * 2); }
-.panel > .row:nth-child(4) { animation-delay: calc(var(--stagger) * 3); }
-.panel > .row:nth-child(5) { animation-delay: calc(var(--stagger) * 4); }
-.panel > .row:nth-child(n + 6) { animation-delay: calc(var(--stagger) * 5); }
 
 .icon.spin { animation: spin var(--loop-spin) linear infinite; }
 

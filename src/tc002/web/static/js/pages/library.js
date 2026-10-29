@@ -1,40 +1,27 @@
-// tc002's own screens, each with its picture, a line on what it shows, a switch and its
-// options; and how alerts behave, shown with the alert itself. Part of the On the clock page.
+// tc002's own screens, each with its picture, a line on what it shows and where it shows;
+// and how alerts behave, shown with the alert itself. Part of the On the clock page.
 
 import { appName, t } from "../i18n.js";
 import { edit, setFocus, store } from "../store.js";
-import { appIcon, badge, h, panel, row, section, toggle } from "../ui.js";
-import { screenOptions } from "./screen-options.js";
+import { placementButton, placementOf } from "../placement.js";
+import { appIcon, h, icon, panel, row, section, toggle } from "../ui.js";
 import { thumb } from "./common.js";
 
-function setEnabled(name, on) {
-  edit((dr) => {
-    dr.screens.enabled = on ? [...dr.screens.enabled, name] : dr.screens.enabled.filter((x) => x !== name);
-    if (on) return;
-    dr.rotation.slots = dr.rotation.slots.filter((x) => x.screen !== name);
-    if (dr.rotation.show?.screen === name) { // the held screen went away: rotate again
-      delete dr.rotation.show;
-      delete dr.rotation.mode;
-    }
-  }, { rerender: true });
-}
-
+// One screen: its picture and a line on what it shows; the row opens its own page, the
+// button on the right says (and changes) where it shows.
 function screenRow(name) {
-  const d = store.draft;
-  const on = d.screens.enabled.includes(name);
-  const used = d.rotation.slots.some((s) => s.screen === name) || d.rotation.show?.screen === name;
-  const focus = () => setFocus({ type: "screen", key: name });
-  const options = on ? screenOptions(name) : null;
-  return h("div", { class: `library-item${on ? " on" : ""}`, "data-path": "screens.enabled", onPointerdown: focus, onFocusin: focus },
-    h("div", { class: "row library-row" },
-      thumb(name, true),
-      h("div", { class: "row-text" },
-        h("div", { class: "row-title" }, appIcon(name, "sm"), appName(name),
-          used ? badge(t("library.inRotation"), "ok") : null,
-          store.state.networked.includes(name) ? h("span", { class: "tag" }, t("library.networked")) : null),
-        h("div", { class: "row-hint" }, t(`screen.${name}`))),
-      h("div", { class: "row-control" }, toggle(on, (v) => setEnabled(name, v), { label: appName(name) }))),
-    options ? h("div", { class: "library-options" }, ...options) : null);
+  const p = placementOf("screen", name);
+  const href = `#rotation/${name}`;
+  return h("a", {
+    class: `row library-row link-row${p === "off" ? "" : " on"}`, href, "data-path": "screens.enabled",
+    onFocus: () => setFocus({ type: "screen", key: name }),
+  },
+  thumb(name, true),
+  h("div", { class: "row-text" },
+    h("div", { class: "row-title" }, appIcon(name, "sm"), appName(name),
+      store.state.networked.includes(name) ? h("span", { class: "tag" }, t("library.networked")) : null),
+    h("div", { class: "row-hint" }, t(`screen.${name}`))),
+  h("div", { class: "row-control" }, placementButton("screen", name, href), icon("chevron-right", "icon faint")));
 }
 
 export function library() {
