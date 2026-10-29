@@ -8,8 +8,8 @@ beyond the local subnet.
 import socket
 from concurrent.futures import ThreadPoolExecutor
 
-from .. import config, config_writer, presets
-from ..device import Device, DeviceError
+from .. import config, config_writer, presets, provision
+from ..device import MIN_FIRMWARE, Device, DeviceError, firmware
 
 PROBE_TIMEOUT = 0.8
 WORKERS = 64
@@ -37,21 +37,35 @@ def probe(host, timeout=PROBE_TIMEOUT):
         return None
     if not isinstance(base, dict) or not ({"appVer", "devSn"} & set(base)):
         return None
-    return {"host": host, "appVer": base.get("appVer"), "name": base.get("devName") or "TC002"}
+    return {
+        "host": host,
+        "appVer": base.get("appVer"),
+        "name": base.get("devName") or "TC002",
+        "supported": firmware(base.get("appVer")) >= MIN_FIRMWARE,
+    }
 
 
-def discover(subnet=None, timeout=PROBE_TIMEOUT):
+def discover(subnet=None, timeout=PROBE_TIMEOUT, listen=provision.listen):
+    """Clocks on this network: those heard announcing themselves (quick, exact), else a
+    sweep of this Mac's /24 (for networks that drop broadcasts)."""
+    heard = [c for c in (probe(a["host"], timeout) for a in listen()) if c]
     subnet = subnet or local_subnet()
+    if heard:
+        return {"subnet": f"{subnet}.0/24" if subnet else None, "clocks": heard, "how": "broadcast"}
     if subnet is None:
-        return {"subnet": None, "clocks": []}
+        return {"subnet": None, "clocks": [], "how": "none"}
     hosts = [f"{subnet}.{i}" for i in range(1, 255)]
     with ThreadPoolExecutor(WORKERS) as pool:
         found = [c for c in pool.map(lambda h: probe(h, timeout), hosts) if c]
-    return {"subnet": f"{subnet}.0/24", "clocks": found}
+    return {"subnet": f"{subnet}.0/24", "clocks": found, "how": "sweep"}
 
 
-def setup(host, preset=None):
-    """Remember `host`; create ~/.config/tc002/tc002.toml when no tc002.toml is set yet."""
+def setup(host, preset=None, timezone=None, weather=None):
+    """Remember `host` and write its first settings: a new ~/.config/tc002/tc002.toml from
+    `preset` when none is set yet, plus the time zone and weather city if given.
+
+    Returns the saved Settings with where they live; the caller pushes them to the clock.
+    """
     if probe(host, timeout=3) is None:
         raise ValueError(f"no TC002 answered at {host}")
     path = config.path()
@@ -60,7 +74,15 @@ def setup(host, preset=None):
         data = config.to_data(config.Settings())
         if preset:
             data = presets.apply(data, preset)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        config_writer.save(config.parse(data, str(path)), path)
+    else:
+        data = config.to_data(config.load(path))
+    if timezone:
+        data["display"] = {**data["display"], "timezone": timezone}
+    if weather:
+        city = {k: str(weather[k]) for k in ("city", "lat", "lon") if weather.get(k)}
+        data["apps"] = {**data["apps"], "weather": {**data["apps"].get("weather", {}), **city}}
+    settings = config.parse(data, str(path))  # raises ConfigError on a bad time zone
+    path.parent.mkdir(parents=True, exist_ok=True)
+    config_writer.save(settings, path)
     config.save_local(host=host, config=str(path))
-    return {"host": host, "config": str(path)}
+    return {"host": host, "config": str(path), "settings": settings}

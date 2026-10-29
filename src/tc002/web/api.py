@@ -10,8 +10,8 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-from .. import builtins, config, config_writer, device_settings, presets, sync
-from ..device import CATEGORY_ENDPOINTS, Device, DeviceError
+from .. import builtins, config, config_writer, device_settings, presets, provision, sync
+from ..device import CATEGORY_ENDPOINTS, MIN_FIRMWARE, Device, DeviceError
 from ..integrations import claude_hooks, executable, launchd, statusline
 from ..render import font, mockup, themes
 from ..render.canvas import HEIGHT, WIDTH
@@ -51,6 +51,13 @@ class Api:
     def _settings(self):
         return config.load(self.config_path)
 
+    def _led_theme(self):
+        """The saved LED theme; classic until a readable tc002.toml says otherwise."""
+        try:
+            return self._settings().led_theme
+        except config.ConfigError:
+            return themes.CLASSIC
+
     # -- reads --------------------------------------------------------------------
 
     def state(self):
@@ -78,6 +85,8 @@ class Api:
             "slotSeconds": {"min": config.MIN_SLOT_SECONDS, "max": config.MAX_SLOT_SECONDS},
             "presets": presets.describe(),
             "ledThemes": themes.names(),
+            "minFirmware": ".".join(map(str, MIN_FIRMWARE)),
+            "timezones": device_settings.TIMEZONES,
         }
 
     def _clock_state(self, settings):
@@ -143,11 +152,49 @@ class Api:
         if not host or len(host) > 253 or any(c.isspace() for c in host):
             raise ApiError(422, "Invalid address", "Give the clock's IP address or host name.")
         try:
-            done = setup.setup(host, body.get("preset"))
+            done = setup.setup(host, body.get("preset"), body.get("timezone"), body.get("weather"))
+        except config.ConfigError as exc:
+            raise ApiError(422, "Invalid settings", str(exc)) from None
         except ValueError as exc:
             raise ApiError(422, "No clock there", str(exc)) from None
         self.host, self.config_path = done["host"], config.path()
-        return done
+        try:  # the clock should look like its new settings straight away
+            changes = sync.apply(self._device(), done["settings"], self.state_dir)
+        except DeviceError as exc:
+            changes = [f"not applied yet: {exc}"]
+        return {"host": done["host"], "config": done["config"], "changes": changes}
+
+    # -- a new clock's Wi-Fi (see provision.py) ------------------------------------
+
+    def wifi_status(self, query=None):
+        """Whether this Mac can see a clock on its setup hotspot right now."""
+        return {
+            "onHotspot": setup.probe(provision.HOTSPOT_HOST, timeout=1) is not None,
+            "hotspot": provision.HOTSPOT_SSID,
+            "hotspotPassword": provision.HOTSPOT_PASSWORD,
+        }
+
+    def wifi_join_hotspot(self, body):
+        problem = provision.join(provision.HOTSPOT_SSID, provision.HOTSPOT_PASSWORD)
+        if problem:
+            raise ApiError(409, "Request failed", problem)
+        return {"joined": provision.HOTSPOT_SSID}
+
+    def wifi_send(self, body):
+        """Pass the home Wi-Fi to the clock. The password goes to the clock only."""
+        try:
+            provision.send_wifi(str(body.get("ssid") or ""), str(body.get("password") or ""))
+        except provision.ProvisionError as exc:
+            raise ApiError(422, "Invalid settings", str(exc)) from None
+        return {"sent": True}
+
+    def wifi_rejoin(self, body):
+        """Put this Mac back on its own network (macOS uses the password it saved)."""
+        ssid = str(body.get("ssid") or "")
+        if not ssid:
+            raise ApiError(422, "Invalid settings", "Name the network to go back to.")
+        problem = provision.join(ssid)
+        return {"rejoined": problem is None, "detail": problem}
 
     def appearance(self, body):
         """Change only the [appearance] table: LED theme and the UI palette it may follow.
@@ -228,7 +275,7 @@ class Api:
         messages keep the colour they were given.
         """
         theme = query.get("theme") if query.get("theme") in themes.THEMES else None
-        theme = theme or self._settings().led_theme
+        theme = theme or self._led_theme()
         if name == "text":
             anim, theme = (
                 message.text_animation(
@@ -348,7 +395,7 @@ class Api:
             if screen not in dev.apps():
                 live = SCREENS[screen]()
                 frames = live.render(live.sample())
-                dev.push(screen, frames.payload(theme=self._settings().led_theme))
+                dev.push(screen, frames.payload(theme=self._led_theme()))
             dev.switch_custom(screen)
         elif body.get("builtin"):
             app = builtins.lookup(body["builtin"])

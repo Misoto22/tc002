@@ -5,6 +5,7 @@ Endpoints follow Ulanzi's protocol reference
 """
 
 import json
+import re
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -19,6 +20,15 @@ CATEGORY_ENDPOINTS = {
     "social": ("/getSocial", "/setSocial", "socialInfos", "socialOrder"),
     "calendar": ("/getCalendar", "/setCalendar", "calendarInfos", "calendarOrder"),
 }
+
+
+# Oldest firmware tc002 fully works with: /api/switchDiyApp arrived in V1.1.0.
+MIN_FIRMWARE = (1, 1, 0)
+
+
+def firmware(app_ver):
+    """ "V1.1.3" -> (1, 1, 3); (0,) when unreadable."""
+    return tuple(int(n) for n in re.findall(r"\d+", app_ver or "")[:3]) or (0,)
 
 
 class DeviceError(RuntimeError):
