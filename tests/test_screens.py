@@ -81,13 +81,15 @@ def test_claude_not_busy_without_sessions(tmp_path):
 def test_claude_busy_animation_spins_and_shows_satellites():
     anim = claude.ClaudeScreen().render(claude.State(3, 2, True))
     assert anim.key == claude.State(3, 2, True)
-    assert len({tuple(f.px) for f in anim.frames}) == len(anim.frames)  # every frame moves
-    assert all(rgb(claude.YELLOW) in f.px for f in anim.frames)
+    loop = anim.frames[:16]  # one turn of the spin; it plays twice, then the stats card
+    assert len({tuple(f.px) for f in loop}) == len(loop)  # every frame moves
+    assert len(anim.frames) <= MAX_FRAMES
+    assert all(rgb(claude.YELLOW) in f.px for f in loop)
 
 
 def test_claude_off_has_no_activity_colours():
     anim = claude.ClaudeScreen().render(claude.State(0, 0, False))
-    assert all(rgb(claude.GREEN) not in f.px for f in anim.frames)
+    assert all(rgb(claude.GREEN) not in f.px for f in anim.frames[:24])
 
 
 def test_mem_percent_from_vm_stat():

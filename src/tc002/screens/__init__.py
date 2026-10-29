@@ -2,5 +2,6 @@
 
 from .claude import ClaudeScreen
 from .sysmon import SysScreen
+from .usage import UsageScreen
 
-SCREENS = {"claude": ClaudeScreen, "sys": SysScreen}
+SCREENS = {"claude": ClaudeScreen, "sys": SysScreen, "usage": UsageScreen}
