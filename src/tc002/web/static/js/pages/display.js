@@ -38,7 +38,8 @@ export function display() {
     return row(label, managed(key, clock[key]), control, { path: `display.${key}`, icon: ICONS[key] });
   });
 
-  const hasRotation = store.draft.rotation.slots.length > 0;
+  const r = store.draft.rotation;
+  const hasRotation = r.mode === "single" ? Boolean(r.show) : r.slots.length > 0;
   return page(
     pageHead(t("page.display"), t("desc.display")),
     store.state.clock.online ? null : offlineNotice(store.state.clock),

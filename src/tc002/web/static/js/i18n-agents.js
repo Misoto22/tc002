@@ -3,7 +3,7 @@
 
 export const en = {
   "nav.watch": "Watch", "nav.setup": "Setup",
-  "page.sessions": "Sessions", "page.setup": "Add a clock",
+  "page.sessions": "Sessions", "page.setup": "Setup wizard",
   "desc.sessions": "Every Claude Code session on this Mac: what it is doing, and which ones need you.",
   "state.working": "Working", "state.waiting": "Waiting for you", "state.done": "Done, unread", "state.idle": "Idle",
   "state.workingHint": "running a turn", "state.waitingHint": "the clock flashes amber",
@@ -83,7 +83,7 @@ export const en = {
 
 export const zh = {
   "nav.watch": "查看", "nav.setup": "设置",
-  "page.sessions": "会话", "page.setup": "添加时钟",
+  "page.sessions": "会话", "page.setup": "设置向导",
   "desc.sessions": "这台 Mac 上的每个 Claude Code 会话：在做什么，哪些在等你。",
   "state.working": "运行中", "state.waiting": "等你处理", "state.done": "已完成未读", "state.idle": "空闲",
   "state.workingHint": "正在执行", "state.waitingHint": "时钟会闪琥珀色",

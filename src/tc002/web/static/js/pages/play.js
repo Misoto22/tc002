@@ -6,12 +6,11 @@ import { t } from "../i18n.js";
 import { H, SCALE, W, draw } from "../led.js";
 import { setFocus, store } from "../store.js";
 import { TIMING } from "../timing.js";
-import { button, h, icon, pageHead, toast } from "../ui.js";
+import { button, h, pageHead, toast } from "../ui.js";
 import { page } from "./common.js";
 
 const KEYS = { ArrowLeft: "left", ArrowRight: "right", ArrowUp: "up", ArrowDown: "down", " ": "space",
   a: "left", d: "right", w: "up", s: "down" };
-const ICONS = { breakout: "blocks", snake: "zap", pong: "trophy" };
 
 let playing = null; // name of the game running, from this page
 let poll = null;
@@ -69,19 +68,23 @@ const rerender = () => {
   if (location.hash.slice(1) === "play") document.getElementById("page").replaceChildren(play());
 };
 
+// A game: a few seconds of it playing itself, its keys, and Play.
 function card(name) {
-  return h("button", { type: "button", class: "choice game-choice", onClick: () => start(name),
-    disabled: !store.state.clock.online },
-  icon(ICONS[name] ?? "play"),
-  h("span", { class: "choice-title" }, t(`play.${name}`)),
-  h("span", { class: "muted" }, t(`play.${name}Hint`)));
+  const online = store.state.clock.online;
+  return h("div", { class: "game-card" },
+    h("img", { class: "led-thumb game-thumb", alt: t("play.preview"), loading: "lazy", width: W * SCALE, height: H * SCALE,
+      src: `/api/preview/game-${name}.gif` }),
+    h("div", { class: "game-text" },
+      h("div", { class: "choice-title" }, t(`play.${name}`)),
+      h("div", { class: "muted" }, t(`play.${name}Hint`))),
+    button(t("play.start"), () => start(name), { kind: "primary", ico: "play", disabled: !online }));
 }
 
 export function play() {
   setFocus({ type: "rotation" });
   if (!playing) {
     return page(pageHead(t("page.play"), t("desc.play")),
-      h("div", { class: "choices" }, ...Object.keys(store.state.games).map(card)),
+      h("div", { class: "games" }, ...Object.keys(store.state.games).map(card)),
       store.state.clock.online ? null : h("p", { class: "muted" }, t("play.offline")));
   }
   canvas = h("canvas", { class: "led-canvas game-canvas", width: W * SCALE, height: H * SCALE, "aria-label": t(`play.${playing}`) });

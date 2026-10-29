@@ -322,6 +322,31 @@ def test_favicon_is_served_in_the_token_colours(ui):
         assert value.encode() in body, f"favicon lost {name} {value}"
 
 
+def test_png_and_ico_icons_match_the_svg_mark(ui):
+    # Safari and /favicon.ico ignore SVG: the rasterised icons must exist and be current
+    import importlib.util
+    from pathlib import Path
+
+    script = Path(__file__).resolve().parent.parent / "scripts" / "render_favicon.py"
+    spec = importlib.util.spec_from_file_location("render_favicon", script)
+    render = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(render)
+    url, _, _ = ui
+    for name, data in render.outputs().items():
+        status, headers, body = call(url, f"/{name}")
+        assert status == 200, name
+        assert headers["Content-Type"] == ("image/x-icon" if name.endswith(".ico") else "image/png")
+        assert body == data, f"{name} is stale: run scripts/render_favicon.py"
+
+
+def test_game_previews_play_themselves(ui):
+    url, _, _ = ui
+    for name in ("breakout", "snake", "pong"):
+        status, _, body = call(url, f"/api/preview/game-{name}.gif")
+        assert status == 200 and body[:6] == b"GIF89a"
+    assert call(url, "/api/preview/game-tetris.gif")[0] == 404
+
+
 def test_every_server_error_title_is_translated():
     import re
     from pathlib import Path

@@ -19,7 +19,9 @@ FULL = {
         "weather": {"city": 'Syd "ney"', "displayInfo": {"displayAqi": True}},
     },
     "rotation": {
-        "slots": [{"screen": "sys", "seconds": 12.5}, {"builtin": "weather", "seconds": 20}]
+        "slots": [{"screen": "sys", "seconds": 12.5}, {"builtin": "weather", "seconds": 20}],
+        "mode": "single",
+        "show": {"builtin": "weather"},
     },
     "alerts": {"takeover": False},
     "appearance": {"led_theme": "kohaku", "ui_palette": "ai"},

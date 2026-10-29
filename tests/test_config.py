@@ -46,12 +46,36 @@ def test_no_config_means_builtin_defaults(monkeypatch, tmp_path):
         ("[apps.weather.displayInfo]\ndisplayAqi = false", "at least one"),
         ('[apps.feishu]\nurl = "1"', "settings exist only"),
         ("[surprise]\nx = 1", "unknown section"),
+        ('[rotation]\nmode = "shuffle"', "rotation.mode"),
+        ('[rotation]\nmode = "single"', "needs rotation.show"),
+        ('[rotation]\nmode = "single"\nshow = { screen = "moon" }', "not in screens.enabled"),
+        ('[rotation]\nshow = { builtin = "weather" }', "keep_builtins"),
+        ('[rotation]\nshow = "clock"', "must be a table"),
         ("[screens\n", "Expected"),
     ],
 )
 def test_invalid_configs_are_rejected_with_a_pointer(tmp_path, body, message):
     with pytest.raises(config.ConfigError, match=message):
         config.load(write(tmp_path, body))
+
+
+def test_single_mode_holds_one_screen_and_keeps_the_rotation(tmp_path):
+    body = (
+        '[screens]\nenabled = ["claude", "sys"]\n'
+        '[rotation]\nslots = [{ screen = "claude", seconds = 10 }, { builtin = "clock" }]\n'
+        'mode = "single"\nshow = { screen = "sys" }'
+    )
+    settings = config.load(write(tmp_path, body))
+    assert [s.label for s in settings.rotation] == ["claude", "builtin:clock"]  # kept for later
+    assert [(s.label, s.seconds) for s in settings.schedule] == [("sys", config.MAX_SLOT_SECONDS)]
+    rotation = config.to_data(settings)["rotation"]
+    assert rotation["mode"] == "single" and rotation["show"] == {"screen": "sys"}
+
+
+def test_cycle_mode_is_the_default_and_not_written(tmp_path):
+    settings = config.load(write(tmp_path, '[rotation]\nslots = [{ screen = "claude" }]'))
+    assert settings.schedule == settings.rotation
+    assert set(config.to_data(settings)["rotation"]) == {"slots"}
 
 
 def test_missing_file_is_a_config_error(tmp_path):

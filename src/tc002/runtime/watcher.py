@@ -62,7 +62,7 @@ def watch(device, settings, preview_dir=None, once=False):
         for s in screens
     ]
     if device is not None and not once:
-        rotation = Rotation(device, settings.rotation, attention, settings.alert_takeover)
+        rotation = Rotation(device, settings.schedule, attention, settings.alert_takeover)
         threads.append(threading.Thread(target=rotation.run, args=(stop,), daemon=True))
     for t in threads:
         t.start()

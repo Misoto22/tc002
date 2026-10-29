@@ -35,6 +35,8 @@ slots = [
   { screen = "sys", seconds = 15 },
   { builtin = "clock", seconds = 15 },
 ]
+# mode = "single"              # hold one screen instead of stepping through the slots:
+# show = { screen = "sys" }    # a screen from [screens] or a kept built-in
 
 # A Claude Code session waiting for you takes over the clock until you answer.
 [alerts]

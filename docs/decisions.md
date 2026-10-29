@@ -171,3 +171,44 @@ News and the `gh` CLI need no key; Home Assistant, YouTube and private calendar 
 5. API screens with a Connections page; keys and private URLs live in the macOS Keychain
    (an `op://` reference is also accepted), never in `tc002.toml`.
 6. Public repository and a PyPI release, so `uvx tc002 ui` works for anyone.
+
+## 2026-10-29 — See everything before turning it on
+
+**Problem.** The UI was split into pieces a new owner could not connect: presets, the
+slot list and what the clock was showing were three separate ideas; screens, alert
+takeover and the focus timer were switches with no picture; built-in apps were turned on
+in one page and set up in another, so social apps looked like bare switches; the games
+were icons; the quick settings' sun read as the light/dark switch; Safari showed a globe
+for the tab icon; the README gallery's rows did not line up; a city search for 上海
+listed five villages of that name.
+
+**Evidence.** The firmware can only show one app at a time, so "rotate" and "show one"
+are the two things the clock can do with tc002's screens. Safari ignores SVG favicons and
+every browser asks for `/favicon.ico`. GitHub sizes a Markdown table's columns by their
+header text, so images of one aspect ratio still render at different heights. Open-Meteo
+returns a GeoNames feature code and population for each place: the city of Shanghai is
+`PPLA` with 24.9 M people; the villages are `PPL` with no population.
+
+**Choices.**
+1. One page, *On the clock*: choose **Rotate** or **Show one** (`[rotation] mode`,
+   `show`), then the list or a grid of pictures to pick from; templates below; then every
+   tc002 screen with its picture, a line on what it shows, its switch and its options;
+   then alert takeover beside an example of the alert. Rejected: keeping presets on their
+   own (they only ever replace the list).
+2. *Built-in apps* absorbs *App settings*: each app has its picture, its switch and its
+   settings under it, social account IDs and tokens included.
+3. Session counts and plan limits are shown on the clock only; the Sessions page and the
+   overview's limit cards are gone. The overview shows what the clock is showing, as
+   pictures, and the focus timer with its screen.
+4. Games preview themselves: an autopilot plays each for 6 s (`games/demo.py`).
+5. Setup leaves the sidebar; it opens on first run and from the overview's clock row.
+   Brightness & volume moves to the foot of the sidebar with its name beside the icon.
+6. Icons drop their tiles; Claude Code and Codex marks keep their own colours. Groups are
+   cards; a rule only separates rows inside a card (the page-head rule and the cycle bar
+   are gone).
+7. Favicons: PNG and ICO rasterised from `favicon.svg` by a script, checked by a test.
+8. City search lists capitals and provincial capitals always, other towns from 15,000
+   people, largest first; never neighbourhoods or islands; the largest few small towns
+   only when nothing else matches.
+9. README: a light/dark hero drawn from the UI tokens and the clock's own pixel font, and
+   the gallery as an HTML table with one image width.

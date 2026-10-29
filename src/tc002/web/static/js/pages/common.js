@@ -6,6 +6,8 @@ import { H, SCALE, W } from "../led.js";
 import { load } from "../store.js";
 import { button, h, panel, row } from "../ui.js";
 
+export const slotKey = (s) => s.screen ?? s.builtin;
+
 // A rotation item's LED thumbnail: a screen's own render, or a close imitation of a
 // built-in app (the firmware draws those; the server approximates them).
 export function thumb(key, isScreen) {

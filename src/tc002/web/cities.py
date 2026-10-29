@@ -2,6 +2,12 @@
 
 The clock's weather app takes a city name or coordinates (coordinates win), so a pick
 from here sets `city`, `lat` and `lon` together.
+
+The geocoder answers "上海" with the city and with every village of that name. Like a map
+app, only places someone would mean are listed: capitals and provincial capitals always,
+other towns from TOWN_MIN_PEOPLE up, largest first. Neighbourhoods, islands and
+abandoned places never. When nothing passes (a small hometown), the largest few towns
+are listed after all.
 """
 
 import json
@@ -9,6 +15,12 @@ import urllib.parse
 import urllib.request
 
 GEOCODER = "https://geocoding-api.open-meteo.com/v1/search"
+LIMIT = 8  # results shown
+ASK = 30  # results asked of the geocoder, before filtering
+TOWN_MIN_PEOPLE = 15_000
+# GeoNames feature codes: capital and provincial seat, then any town or county seat
+SEATS = ("PPLC", "PPLA")
+TOWNS = ("PPL", "PPLA2", "PPLA3", "PPLA4", "PPLA5", "PPLG", "PPLS", *SEATS)
 
 # name_en, name_zh, region, lat, lon — major cities, used when the geocoder is unreachable.
 OFFLINE = [
@@ -85,7 +97,7 @@ def _offline(query, lang):
         }
         for en, zh, region, lat, lon in OFFLINE
         if not q or q in en.casefold() or q in zh
-    ][:8]
+    ][:LIMIT]
 
 
 def search(query, lang="en", fetch=None):
@@ -99,7 +111,7 @@ def search(query, lang="en", fetch=None):
         + urllib.parse.urlencode(
             {
                 "name": query,
-                "count": 8,
+                "count": ASK,
                 "language": "zh" if lang == "zh" else "en",
                 "format": "json",
             }
@@ -108,22 +120,45 @@ def search(query, lang="en", fetch=None):
     try:
         # Internet, not the LAN: the default opener honours HTTP(S)_PROXY on purpose.
         body = (fetch or _fetch)(url)
-        results = [
-            {
-                "name": r["name"],
-                "region": ", ".join(x for x in (r.get("admin1"), r.get("country")) if x),
-                "lat": round(float(r["latitude"]), 4),
-                "lon": round(float(r["longitude"]), 4),
-            }
-            for r in json.loads(body).get("results") or []
-        ]
+        results = [_place(r) for r in _ranked(json.loads(body).get("results") or [])]
     except OSError, ValueError, KeyError, TypeError:
         return {"source": "offline", "results": _offline(query, lang)}
     # The geocoder needs whole words ("墨尔本", not "墨尔"); the built-in list matches
     # prefixes, so its hits go first and duplicates from the geocoder are dropped.
     local = _offline(query, lang)
     online = [r for r in results if not any(_near(r, x) for x in local)]
-    return {"source": "open-meteo", "results": (local + online)[:8]}
+    return {"source": "open-meteo", "results": (local + online)[:LIMIT]}
+
+
+def _ranked(raw):
+    """Places someone would mean, most important first (see the module docstring)."""
+    towns = [r for r in raw if r.get("feature_code") in TOWNS]
+
+    def rank(r):
+        code = r.get("feature_code")
+        return (SEATS.index(code) if code in SEATS else len(SEATS), -(r.get("population") or 0))
+
+    towns.sort(key=rank)
+    known = [
+        r
+        for r in towns
+        if r.get("feature_code") in SEATS or (r.get("population") or 0) >= TOWN_MIN_PEOPLE
+    ]
+    return known or towns[:3]
+
+
+def _place(r):
+    """One result for the list: the name, then its province or state and country, without
+    repeating the name ("上海 · 中国", not "上海 · 上海市, 中国")."""
+    name = r["name"]
+    admin = r.get("admin1")
+    region = [x for x in (admin, r.get("country")) if x and not x.startswith(name)]
+    return {
+        "name": name,
+        "region": ", ".join(region),
+        "lat": round(float(r["latitude"]), 4),
+        "lon": round(float(r["longitude"]), 4),
+    }
 
 
 def _near(a, b):

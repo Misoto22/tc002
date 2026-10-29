@@ -2,18 +2,16 @@
 // falls back to English, then to the key itself, so a missing string is visible, not blank.
 
 import * as agents from "./i18n-agents.js";
+import * as display from "./i18n-display.js";
 import * as errors from "./i18n-errors.js";
 
 const en = {
   "nav.clock": "Clock", "nav.send": "Send", "nav.system": "System",
-  "page.overview": "Overview", "page.rotation": "Rotation", "page.builtins": "Built-in apps",
-  "page.display": "Display & sound", "page.apps": "App settings", "page.messages": "Messages",
+  "page.overview": "Overview",
+  "page.display": "Display & sound", "page.messages": "Messages",
   "page.integrations": "Integrations",
   "desc.overview": "What your clock is doing and whether it matches tc002.toml.",
-  "desc.rotation": "The screens the clock cycles through, in order. Drag to reorder, or start from a preset.",
-  "desc.builtins": "Apps that stay on the clock. Everything switched off is hidden from the device.",
   "desc.display": "Brightness, volume, time and date on the clock. Saved to tc002.toml and applied to the clock.",
-  "desc.apps": "Options of tc002's screens and of the clock's built-in apps. Accounts and API keys stay in Ulanzi Studio.",
   "desc.messages": "Send a one-off message. It plays, then clears itself.",
   "desc.integrations": "How tc002 is wired into this Mac.",
 
@@ -58,7 +56,7 @@ const en = {
 
   "rotation.screen": "tc002 screen", "rotation.builtin": "Built-in app",
   "rotation.empty": "No slots: the clock's own carousel decides what to show.",
-  "rotation.cycle": "One cycle: {s}s", "rotation.screens": "Screens",
+"rotation.screens": "Screens",
   "rotation.builtins": "Built-in apps", "rotation.nothing": "Nothing to add",
   "rotation.takeover": "Alerts take over",
   "rotation.takeoverHint": "A session waiting for you takes over the clock until you answer; a finished one shows DONE briefly",
@@ -140,14 +138,11 @@ const en = {
 
 const zh = {
   "nav.clock": "时钟", "nav.send": "发送", "nav.system": "系统",
-  "page.overview": "总览", "page.rotation": "轮播", "page.builtins": "预设应用",
-  "page.display": "显示与声音", "page.apps": "应用设置", "page.messages": "消息",
+  "page.overview": "总览",
+  "page.display": "显示与声音", "page.messages": "消息",
   "page.integrations": "集成",
   "desc.overview": "时钟正在做什么，以及它是否与 tc002.toml 一致。",
-  "desc.rotation": "时钟依次循环显示的画面。拖动调整顺序，或从预设开始。",
-  "desc.builtins": "保留在时钟上的预设应用。关闭的应用不会在设备上出现。",
   "desc.display": "时钟的亮度、音量、时间和日期。保存到 tc002.toml 并同步到时钟。",
-  "desc.apps": "tc002 画面和时钟预设应用的选项。账号和 API 密钥保留在 Ulanzi Studio 中。",
   "desc.messages": "发送一条临时消息，播放完自动清除。",
   "desc.integrations": "tc002 与这台 Mac 的连接方式。",
 
@@ -192,7 +187,7 @@ const zh = {
 
   "rotation.screen": "tc002 画面", "rotation.builtin": "预设应用",
   "rotation.empty": "没有项目：由时钟自带的轮播决定显示内容。",
-  "rotation.cycle": "一轮 {s} 秒", "rotation.screens": "画面",
+"rotation.screens": "画面",
   "rotation.builtins": "预设应用", "rotation.nothing": "没有可添加的项目",
   "rotation.takeover": "提醒优先显示",
   "rotation.takeoverHint": "有会话在等你时立即占用时钟，直到你回复；完成的会话会短暂显示 DONE",
@@ -297,8 +292,8 @@ const names = {
 };
 
 const DICTS = {
-  en: { ...en, ...agents.en, ...errors.en },
-  zh: { ...zh, ...agents.zh, ...errors.zh },
+  en: { ...en, ...agents.en, ...errors.en, ...display.en },
+  zh: { ...zh, ...agents.zh, ...errors.zh, ...display.zh },
 };
 let current = "en";
 

@@ -17,6 +17,7 @@ from pathlib import Path
 from . import builtins, device_settings, paths
 
 MIN_SLOT_SECONDS, MAX_SLOT_SECONDS = 3, 600  # how long one rotation slot may show
+CYCLE, SINGLE = "cycle", "single"  # [rotation] mode: step through the slots, or hold one
 UI_PORT = 8742  # `tc002 ui` default
 STATE_DIR = paths.STATE_DIR
 LOCAL_FILE = STATE_DIR / "local.json"
@@ -28,7 +29,7 @@ SECTION_KEYS = {
     "device": {"keep_builtins"},
     "display": None,
     "apps": None,
-    "rotation": {"slots"},
+    "rotation": {"slots", "mode", "show"},
     "alerts": {"takeover"},
     "appearance": {"led_theme", "ui_palette"},
     "screen": None,  # [screen.<name>] options, validated by screens/options.py
@@ -58,6 +59,8 @@ class Slot:
 class Settings:
     screens: tuple[str, ...] = ("claude", "sys")
     rotation: tuple[Slot, ...] = ()
+    rotation_mode: str = CYCLE
+    pinned: Slot | None = None  # what SINGLE mode holds on screen
     keep_builtins: tuple[str, ...] = ("clock",)
     alert_takeover: bool = True
     display: dict = field(default_factory=dict)  # global settings, keys as in /setConfig
@@ -73,6 +76,13 @@ class Settings:
         from .render import themes
 
         return themes.resolve(self.appearance["led_theme"], self.appearance["ui_palette"])
+
+    @property
+    def schedule(self):
+        """The slots the clock steps through: the rotation, or just the pinned one."""
+        if self.rotation_mode == SINGLE:
+            return (self.pinned,)
+        return self.rotation
 
 
 def _parse(data, source):
@@ -94,27 +104,23 @@ def _parse(data, source):
     if bad := set(screens) - known_screens:
         raise ConfigError(f"{source}: unknown screens {sorted(bad)}; known {sorted(known_screens)}")
 
-    slots = []
-    for i, raw in enumerate(data.get("rotation", {}).get("slots", [])):
-        where = f"{source}: rotation.slots[{i}]"
-        if ("screen" in raw) == ("builtin" in raw):
-            raise ConfigError(f"{where}: set exactly one of `screen` or `builtin`")
-        if "screen" in raw and raw["screen"] not in screens:
-            raise ConfigError(f"{where}: screen {raw['screen']!r} is not in screens.enabled")
-        if "builtin" in raw:
-            try:
-                builtins.lookup(raw["builtin"])
-            except ValueError as exc:
-                raise ConfigError(f"{where}: {exc}") from None
-        seconds = raw.get("seconds", 15)
-        if (
-            not isinstance(seconds, int | float)
-            or not MIN_SLOT_SECONDS <= seconds <= MAX_SLOT_SECONDS
-        ):
-            raise ConfigError(
-                f"{where}: seconds must be a number from {MIN_SLOT_SECONDS} to {MAX_SLOT_SECONDS}"
-            )
-        slots.append(Slot(float(seconds), raw.get("screen"), raw.get("builtin")))
+    rotation = data.get("rotation", {})
+    slots = [
+        _slot(raw, f"{source}: rotation.slots[{i}]", screens)
+        for i, raw in enumerate(rotation.get("slots", []))
+    ]
+    mode = rotation.get("mode", CYCLE)
+    if mode not in (CYCLE, SINGLE):
+        raise ConfigError(f"{source}: rotation.mode must be {CYCLE!r} or {SINGLE!r}")
+    pinned = None
+    if "show" in rotation:
+        if not isinstance(rotation["show"], dict):
+            raise ConfigError(f'{source}: rotation.show must be a table, e.g. {{ screen = "sys" }}')
+        pinned = _slot(
+            {**rotation["show"], "seconds": MAX_SLOT_SECONDS}, f"{source}: rotation.show", screens
+        )
+    if mode == SINGLE and pinned is None:
+        raise ConfigError(f"{source}: rotation.mode = {SINGLE!r} needs rotation.show")
 
     device = data.get("device", {})
     keep = tuple(device.get("keep_builtins", ["clock"]))
@@ -123,8 +129,8 @@ def _parse(data, source):
             builtins.lookup(name)
         except ValueError as exc:
             raise ConfigError(f"{source}: device.keep_builtins: {exc}") from None
-    for slot in slots:
-        if slot.builtin and slot.builtin not in keep:
+    for slot in [*slots, pinned]:
+        if slot and slot.builtin and slot.builtin not in keep:
             raise ConfigError(
                 f"{source}: rotation uses built-in {slot.builtin!r}, "
                 "which must also be listed in device.keep_builtins"
@@ -153,12 +159,37 @@ def _parse(data, source):
         appearance=appearance,
         screens=screens,
         rotation=tuple(slots),
+        rotation_mode=mode,
+        pinned=pinned,
         keep_builtins=keep,
         alert_takeover=bool(data.get("alerts", {}).get("takeover", True)),
         display=display,
         apps=apps,
         source=source,
     )
+
+
+def _slot(raw, where, screens):
+    if not isinstance(raw, dict) or ("screen" in raw) == ("builtin" in raw):
+        raise ConfigError(f"{where}: set exactly one of `screen` or `builtin`")
+    if "screen" in raw and raw["screen"] not in screens:
+        raise ConfigError(f"{where}: screen {raw['screen']!r} is not in screens.enabled")
+    if "builtin" in raw:
+        try:
+            builtins.lookup(raw["builtin"])
+        except ValueError as exc:
+            raise ConfigError(f"{where}: {exc}") from None
+    seconds = raw.get("seconds", 15)
+    if not isinstance(seconds, int | float) or not MIN_SLOT_SECONDS <= seconds <= MAX_SLOT_SECONDS:
+        raise ConfigError(
+            f"{where}: seconds must be a number from {MIN_SLOT_SECONDS} to {MAX_SLOT_SECONDS}"
+        )
+    return Slot(float(seconds), raw.get("screen"), raw.get("builtin"))
+
+
+def _slot_data(slot, seconds=True):
+    data = {"screen": slot.screen} if slot.screen else {"builtin": slot.builtin}
+    return {**data, "seconds": slot.seconds} if seconds else data
 
 
 def _appearance_problems(appearance):
@@ -185,12 +216,9 @@ def to_data(settings):
         "display": settings.display,
         "apps": settings.apps,
         "rotation": {
-            "slots": [
-                {"screen": s.screen, "seconds": s.seconds}
-                if s.screen
-                else {"builtin": s.builtin, "seconds": s.seconds}
-                for s in settings.rotation
-            ]
+            "slots": [_slot_data(s) for s in settings.rotation],
+            **({"mode": settings.rotation_mode} if settings.rotation_mode != CYCLE else {}),
+            **({"show": _slot_data(settings.pinned, False)} if settings.pinned else {}),
         },
         "alerts": {"takeover": settings.alert_takeover},
         "appearance": dict(settings.appearance),

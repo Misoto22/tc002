@@ -9,6 +9,7 @@ presence is reported.
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 from .. import (
     builtins,
@@ -21,27 +22,25 @@ from .. import (
 from ..device import CATEGORY_ENDPOINTS, MIN_FIRMWARE, Device, DeviceError
 from ..games import GAMES
 from ..integrations import claude_hooks, executable, launchd, statusline
-from ..render import font, mockup, themes
+from ..render import font, themes
 from ..render.canvas import HEIGHT, WIDTH
 from ..render.palette import hex_palette
 from ..runtime import freshness, hold
-from ..screens import NETWORKED, SCREENS, build, builtin_previews, message, stale
+from ..screens import NETWORKED, SCREENS, build, message, stale
 from ..screens import options as screen_options
 from ..screens import usage as usage_screen
-from ..screens.examples import examples
 from . import cities
 from .agents import Agents
 from .errors import ApiError
 from .host_actions_api import HostActions
 from .play_actions import PlayActions, _focus_now
+from .previews import LIVE_SCREENS, Previews
 from .setup_actions import SetupActions
 
-# cheap, local and quiet to sample, so previewed with real data
-LIVE_SCREENS = set(SCREENS) - {"sys"} - NETWORKED
 SECRET_KEYS = {"token", "password", "username", "url", "tokens"}
 
 
-class Api(SetupActions, PlayActions, HostActions):
+class Api(SetupActions, PlayActions, HostActions, Previews):
     """Every API action; groups of them live in the *_actions modules."""
 
     def __init__(self, host, config_path, state_dir=None):
@@ -80,6 +79,7 @@ class Api(SetupActions, PlayActions, HostActions):
         return {
             "config": {
                 "path": str(self.config_path) if self.config_path else None,
+                "shown": _home_relative(self.config_path),
                 "data": config.to_data(settings),
             },
             "clock": self._clock_state(settings),
@@ -96,6 +96,7 @@ class Api(SetupActions, PlayActions, HostActions):
             "screens": list(SCREENS),
             "screenOptions": screen_options.describe(SCREENS),
             "liveScreens": sorted(LIVE_SCREENS),
+            "networked": sorted(NETWORKED),
             "games": {name: list(g.KEYS) for name, g in GAMES.items()},
             "schema": device_settings.schema(),
             "colors": message.COLORS,
@@ -199,43 +200,6 @@ class Api(SetupActions, PlayActions, HostActions):
 
     def cities(self, query):
         return cities.search(query.get("q", ""), query.get("lang", "en"))
-
-    def preview(self, name, query):
-        """LED mock-up GIF bytes for an example screen or a message draft.
-
-        Screens are drawn in the saved LED theme, or in `?theme=` (a draft not yet saved);
-        messages keep the colour they were given.
-        """
-        theme = query.get("theme") if query.get("theme") in themes.THEMES else None
-        theme = theme or self._led_theme()
-        if name == "text":
-            anim, theme = (
-                message.text_animation(
-                    query.get("text", "TEXT")[: message.MAX_CHARS], query.get("color", "white")
-                )[0],
-                themes.CLASSIC,
-            )
-        elif name == "alert":
-            anim = message.alert_animation(
-                query.get("text", "DONE")[: message.ALERT_MAX_CHARS],
-                query.get("kind", "done"),
-                query.get("color"),
-            )
-            theme = themes.CLASSIC
-        elif name.removeprefix("live-") in LIVE_SCREENS and name.startswith("live-"):
-            screen = build(name.removeprefix("live-"), self._settings_or_none())
-            anim = screen.render(screen.sample())
-        elif name.startswith("builtin-"):
-            try:
-                anim = builtin_previews.render(name.removeprefix("builtin-"))
-            except ValueError:
-                raise ApiError(404, "Unknown preview", f"No built-in app {name!r}.") from None
-        else:
-            anims = examples()
-            if name not in anims:
-                raise ApiError(404, "Unknown preview", f"No preview named {name!r}.")
-            anim = anims[name]
-        return mockup.led_gif(anim, theme)
 
     # -- writes -------------------------------------------------------------------
 
@@ -351,6 +315,15 @@ class Api(SetupActions, PlayActions, HostActions):
         return {"ok": True, "app": app, "seconds": round(sum(s.duration_s() for s in segments))}
 
 
+def _home_relative(path):
+    """The config path as the sidebar shows it: ~/… rather than the user's home directory."""
+    if not path:
+        return None
+    home = str(Path.home())
+    text = str(path)
+    return "~" + text[len(home) :] if text.startswith(home + "/") else text
+
+
 def _play(dev, app, segments, hold=10):
     try:
         for seg in segments:
@@ -386,6 +359,6 @@ def _drift(settings, cfg, app_settings, enabled):
     for key, state in enabled.items():
         if state["enabled"] != (key in settings.keep_builtins):
             drift.append(f"builtin.{key}")
-    if settings.rotation and cfg.get("carouselSpeed"):
+    if settings.schedule and cfg.get("carouselSpeed"):
         drift.append("display.carouselSpeed")
     return drift

@@ -33,13 +33,19 @@ function brightness(settings) {
   return PREVIEW_MIN_LIGHT + (1 - PREVIEW_MIN_LIGHT) * (pct / 100);
 }
 
+// What the clock steps through: the rotation, or the one screen it holds.
+function schedule() {
+  const r = store.draft.rotation;
+  return r.mode === "single" && r.show ? [{ ...r.show, seconds: Infinity }] : r.slots;
+}
+
 // What to draw now: { kind: "sim" | "gif", key, src, label }.
 function source() {
   const f = store.focus;
   if (f.type === "message") return { kind: "gif", src: f.src, key: null, label: t("preview.message") };
   if (f.type === "screen") return { kind: "gif", src: screenPreview(f.key), key: f.key, label: appName(f.key) };
   if (f.type === "builtin") return { kind: "sim", key: f.key, label: appName(f.key) };
-  const slots = store.draft.rotation.slots;
+  const slots = schedule();
   if (!slots.length) return { kind: "sim", key: "clock", label: appName("clock") };
   const slot = slots[cycle.index % slots.length];
   return slot.screen
@@ -49,7 +55,7 @@ function source() {
 
 function tick() {
   if (!store.draft || !els?.root.isConnected) return;
-  const slots = store.draft.rotation.slots;
+  const slots = schedule();
   const now = performance.now();
   if (store.focus.type === "rotation" && slots.length) {
     const slot = slots[cycle.index % slots.length];
@@ -83,9 +89,9 @@ function tick() {
 }
 
 function renderChips() {
-  const slots = store.focus.type === "rotation" ? store.draft.rotation.slots : [];
+  const slots = store.focus.type === "rotation" ? schedule() : [];
   els.chips.replaceChildren(...slots.map((s, i) => h("button", {
-    class: "chip", type: "button", title: `${s.seconds}s`,
+    class: "chip", type: "button", title: Number.isFinite(s.seconds) ? `${s.seconds}s` : "",
     onClick: () => { cycle = { index: i, started: performance.now(), elapsed: 0 }; },
   }, appIcon(s.screen ?? s.builtin), appName(s.screen ?? s.builtin))));
 }
@@ -100,7 +106,7 @@ function paintChips(progress) {
 
 function renderControls() {
   const online = store.state?.clock.online;
-  const rotation = store.focus.type === "rotation" && store.draft.rotation.slots.length > 1;
+  const rotation = store.focus.type === "rotation" && schedule().length > 1;
   els.controls.replaceChildren(...[
     rotation ? h("button", { class: "btn ghost icon", type: "button", title: playing ? t("preview.pause") : t("preview.play"),
       onClick: () => { playing = !playing; renderControls(); } }, icon(playing ? "pause" : "play")) : null,

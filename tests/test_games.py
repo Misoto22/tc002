@@ -97,3 +97,24 @@ def test_session_pushes_bitmaps_holds_the_rotation_and_cleans_up(monkeypatch):
     assert hold.active() == 0 and not s.running
     with pytest.raises(ValueError):
         game_session.Session(clock, "tetris")
+
+
+@pytest.mark.parametrize("name", list(GAMES))
+def test_demo_is_a_fixed_loop_that_keeps_playing(name):
+    from tc002.games.demo import FRAMES, demo
+
+    first, again = demo(name), demo(name)
+    assert len(first.frames) == FRAMES
+    assert [f.px for f in first.frames] == [f.px for f in again.frames]  # same picture each time
+    assert len({tuple(f.px) for f in first.frames}) > FRAMES // 3  # it moves
+
+
+def test_breakout_pilot_keeps_the_ball_in_play():
+    import random
+
+    from tc002.games.demo import PILOTS
+
+    game = Breakout(random.Random(7))
+    for _ in range(300):
+        game.step(PILOTS["breakout"](game))
+    assert game.lives == 3 and game.score > 0

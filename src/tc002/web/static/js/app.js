@@ -8,45 +8,46 @@ import { startPreview } from "./preview.js";
 import { openQuick } from "./quick.js";
 import * as store from "./store.js";
 import { h, icon, menu, transition } from "./ui.js";
-import { apps } from "./pages/apps.js";
 import { builtins } from "./pages/builtins.js";
 import { display } from "./pages/display.js";
 import { integrations } from "./pages/integrations.js";
 import { messages } from "./pages/messages.js";
 import { overview } from "./pages/overview.js";
 import { rotation } from "./pages/rotation.js";
-import { sessions } from "./pages/sessions.js";
 import { setup } from "./pages/setup.js";
 import { play } from "./pages/play.js";
 import { connections } from "./pages/connections.js";
 import { pollAgents } from "./agents.js";
 import { followUiPalette } from "./appearance.js";
 
+// [id, page, icon, nav group]; a page without a group (setup) is reached from the first
+// run and from the overview, not from the sidebar.
 const PAGES = [
-  ["overview", overview, "layout-dashboard", "nav.watch"],
-  ["sessions", sessions, "terminal", "nav.watch"],
+  ["overview", overview, "layout-dashboard", "nav.clock"],
   ["rotation", rotation, "repeat", "nav.clock"],
   ["builtins", builtins, "blocks", "nav.clock"],
   ["display", display, "sun", "nav.clock"],
-  ["apps", apps, "sliders-horizontal", "nav.clock"],
   ["messages", messages, "message-square-text", "nav.send"],
   ["play", play, "gamepad-2", "nav.send"],
   ["integrations", integrations, "plug", "nav.system"],
   ["connections", connections, "link", "nav.system"],
-  ["setup", setup, "plus", "nav.system"],
+  ["setup", setup, "wand-sparkles", null],
 ];
-const LIVE_PAGES = new Set(["overview", "sessions"]); // re-drawn when agent state changes
+const ALIASES = { apps: "builtins", sessions: "overview" }; // pages merged away, for old links
 const $ = (id) => document.getElementById(id);
-const current = () => (PAGES.some(([id]) => id === location.hash.slice(1)) ? location.hash.slice(1) : "overview");
+function current() {
+  const id = location.hash.slice(1);
+  const known = ALIASES[id] ?? id;
+  return PAGES.some(([p]) => p === known) ? known : "overview";
+}
 
 // ---- chrome -----------------------------------------------------------------------
 
 function navCount(id) {
-  const s = store.store;
-  const waiting = s.state?.agents?.counts.waiting ?? 0;
-  if (id === "sessions" && waiting) return h("span", { class: "count alert" }, waiting);
-  if (id === "rotation" && s.draft) return h("span", { class: "count" }, s.draft.rotation.slots.length);
-  return null;
+  const d = store.store.draft;
+  if (id !== "rotation" || !d) return null;
+  if (d.rotation.mode === "single") return h("span", { class: "count" }, icon("pin"));
+  return h("span", { class: "count" }, d.rotation.slots.length);
 }
 
 // One pill behind the nav that slides to the current page instead of jumping.
@@ -66,7 +67,7 @@ function moveIndicator() {
 
 function renderNav() {
   const s = store.store;
-  const groups = Map.groupBy(PAGES, ([, , , grp]) => grp);
+  const groups = Map.groupBy(PAGES.filter(([, , , grp]) => grp), ([, , , grp]) => grp);
   $("nav").replaceChildren(...[...groups].map(([grp, pages]) => h("div", { class: "nav-group" },
     h("div", { class: "nav-label" }, t(grp)),
     ...pages.map(([id, , ico]) => h("a", {
@@ -78,7 +79,19 @@ function renderNav() {
   const clock = s.state?.clock;
   $("brand-sub").replaceChildren(h("span", { class: `dot ${clock?.online ? "ok" : "bad"}` }),
     clock ? (clock.online ? `${clock.host} · ${clock.base.appVer}` : t("badge.offline")) : "…");
-  $("config-path").textContent = s.state?.config.path ?? "";
+  $("config-path").textContent = s.state?.config.shown ?? "";
+  $("config-path").title = s.state?.config.path ?? "";
+  renderQuickButton();
+}
+
+// Brightness and volume, at the foot of the sidebar: the label says what it is, so it is
+// not mistaken for the light/dark switch in the top bar.
+function renderQuickButton() {
+  const btn = $("quick");
+  const online = store.store.state?.clock.online;
+  btn.disabled = !online;
+  btn.title = online ? t("quick.open") : t("badge.offline");
+  btn.replaceChildren(icon("sliders-horizontal"), h("span", {}, t("quick.open")));
 }
 
 function renderTopbar() {
@@ -93,7 +106,6 @@ function renderTopbar() {
   $("lang").textContent = prefs.lang === "zh" ? "中" : "EN";
   $("lang").title = t("ui.language");
   $("palette-btn").title = t("ui.search");
-  $("quick").title = t("quick.title");
   $("collapse").title = prefs.sidebar === "collapsed" ? t("nav.expand") : t("nav.collapse");
   document.querySelector(".app").classList.toggle("collapsed", prefs.sidebar === "collapsed");
 }
@@ -199,12 +211,7 @@ window.addEventListener("beforeunload", (e) => { if (store.dirtyPaths().length) 
 
 renderTopbar();
 // A refresh redraws in place: no entrance animations, only changed numbers count.
-pollAgents(() => {
-  renderNav();
-  if (!LIVE_PAGES.has(current())) return;
-  document.documentElement.dataset.refresh = "";
-  $("page").replaceChildren(PAGES.find(([id]) => id === current())[1]());
-});
+pollAgents(() => renderNav()); // live screen previews follow agent state
 loadAssets() // icons and LED data first: pages draw with them
   .then(store.load)
   .then(() => { if (!store.store.state.clock.host && current() === "overview") go("setup"); })
