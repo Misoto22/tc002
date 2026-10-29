@@ -108,14 +108,38 @@ SMALL = {
 BIG_HEIGHT, SMALL_HEIGHT = 7, 5
 
 
+def for_text(text):
+    """The table to draw `text` with: the 5x7 font, or the 12 px CJK one when any
+    character is beyond what the 5x7 font has (it then draws the whole line)."""
+    from . import cjk  # loaded only when text needs it
+
+    if all(ch.upper() in BIG for ch in text):
+        return BIG
+    return cjk.FONT
+
+
+def height(font):
+    from . import cjk
+
+    return cjk.HEIGHT if font is cjk.FONT else BIG_HEIGHT if font is BIG else SMALL_HEIGHT
+
+
 def glyph(font, ch):
     """Rows of one character as lists of booleans."""
-    spec = font.get(ch.upper()) or font["?"]
+    spec = font.get(ch) or font.get(ch.upper()) or font["?"]
     return [[c == "#" for c in row] for row in spec.split("|")]
 
 
-def text_width(font, text, spacing=1):
+def letter_spacing(font):
+    """Gap between letters: the CJK glyphs carry their own, the 5x7 and 3x5 ones do not."""
+    from . import cjk
+
+    return 0 if font is cjk.FONT else 1
+
+
+def text_width(font, text, spacing=None):
     """Pixel width of text when drawn with the given font and letter spacing."""
     if not text:
         return 0
+    spacing = letter_spacing(font) if spacing is None else spacing
     return sum(len(glyph(font, ch)[0]) for ch in text) + spacing * (len(text) - 1)

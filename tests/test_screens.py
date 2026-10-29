@@ -117,3 +117,17 @@ def test_every_builtin_has_a_preview_that_fits(key):
     anim = builtin_previews.render(key)
     assert lit(anim.frames[0]) > 0
     anim.payload()
+
+
+def test_chinese_messages_use_the_cjk_font_and_fit():
+    from tc002.render import cjk
+
+    assert font.for_text("构建完成") is cjk.FONT and font.for_text("BUILD OK") is font.BIG
+    (anim,) = message.text_animation("构建完成", "green")  # four characters fit without scrolling
+    assert lit(anim.frames[-1]) > 40
+    assert lit(message.alert_animation("完成", "done").frames[0]) > 0
+
+
+def test_unknown_characters_fall_back_instead_of_failing():
+    anims = message.text_animation("emoji 🙂 here", "white")
+    assert all(len(a.frames) <= MAX_FRAMES for a in anims)

@@ -1,4 +1,8 @@
-"""Text animations: a shimmering or scrolling line, and alerts with chasing border lights."""
+"""Text animations: a shimmering or scrolling line, and alerts with chasing border lights.
+
+Latin text uses the 5x7 font; any line with Chinese (or other characters it lacks) is
+drawn whole in the 12 px CJK font, vertically centred.
+"""
 
 from ..render import font
 from ..render.anim import MAX_FRAMES, Animation
@@ -7,6 +11,7 @@ from ..render.palette import LED, MESSAGE_COLORS
 
 COLORS = {name: f"#{LED[name]:06X}" for name in MESSAGE_COLORS}
 MAX_CHARS = 60
+ALERT_MAX_CHARS = 12  # an alert's text sits beside its icon
 SCROLL_MS, SCROLL_STEP = 60, 2  # marquee speed: 2 px every 60 ms
 SHIMMER_MS, ALERT_MS = 60, 90
 
@@ -32,7 +37,11 @@ def color_of(name):
 
 
 def fits(text, room=WIDTH - 2):
-    return font.text_width(font.BIG, text) <= room
+    return font.text_width(font.for_text(text), text) <= room
+
+
+def _baseline(table):
+    return (HEIGHT - font.height(table)) // 2
 
 
 def _shine(c, x0, x1, amount):
@@ -53,22 +62,24 @@ def text_animation(text, color):
     """
     text = text[:MAX_CHARS]
     color = color_of(color)
-    width = font.text_width(font.BIG, text)
+    table = font.for_text(text)
+    y = _baseline(table)
+    width = font.text_width(table, text)
     if fits(text):
         x0 = (WIDTH - width) // 2
         frames = []
         for step in range(-6, width + 6, 2):
             c = Canvas()
-            c.text(x0, 4, text, color)
+            c.text(x0, y, text, color, table=table)
             _shine(c, x0 + step, x0 + step + 4, 0.7)
             frames.append(c)
         rest = Canvas()
-        rest.text(x0, 4, text, color)
+        rest.text(x0, y, text, color, table=table)
         return [Animation([*frames, rest], [SHIMMER_MS] * len(frames) + [2500])]
     frames = []
     for x in range(WIDTH, -width - SCROLL_STEP, -SCROLL_STEP):  # ends fully off-screen
         c = Canvas()
-        c.text(x, 4, text, color)
+        c.text(x, y, text, color, table=table)
         frames.append(c)
     return [
         Animation(frames[i : i + MAX_FRAMES], SCROLL_MS) for i in range(0, len(frames), MAX_FRAMES)
@@ -88,9 +99,11 @@ def alert_animation(text, kind="done", color=None):
     """Theatre-marquee lights chase round the border; the icon and text pulse."""
     base, icon = ICONS.get(kind, ICONS["done"])
     base = color_of(color) if color else base
-    text = text[:12]
-    big = fits(text, WIDTH - 14)
-    width = font.text_width(font.BIG if big else font.SMALL, text)
+    text = text[:ALERT_MAX_CHARS]
+    table = font.for_text(text)
+    if table is font.BIG and not fits(text, WIDTH - 14):
+        table = font.SMALL
+    width = font.text_width(table, text)
     x = (WIDTH - (7 + 3 + width)) // 2
     ring = _perimeter()
     frames = []
@@ -101,6 +114,6 @@ def alert_animation(text, kind="done", color=None):
             c.set(px, py, base if phase < 2 else dim(base, 0.25) if phase < 4 else 0)
         pulse = 0.7 + 0.3 * (1 - abs(f - 3) / 3)
         c.sprite(x, 4, icon, dim(base, pulse))
-        c.text(x + 10, 4 if big else 5, text, dim(base, pulse), big=big)
+        c.text(x + 10, _baseline(table), text, dim(base, pulse), table=table)
         frames.append(c)
     return Animation(frames, ALERT_MS)
