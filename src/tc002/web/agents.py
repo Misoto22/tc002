@@ -4,8 +4,7 @@ import time
 from dataclasses import asdict
 
 from ..runtime import sessions
-from ..usage.claude import ClaudeUsage
-from ..usage.codex import CodexUsage
+from ..usage import claude, codex
 
 
 class Agents:
@@ -13,7 +12,10 @@ class Agents:
 
     def __init__(self, clock=time.time):
         self.clock = clock
-        self.readers = {"claude": ClaudeUsage(clock=clock), "codex": CodexUsage(clock=clock)}
+        self.readers = {
+            "claude": claude.ClaudeUsage(claude.PROJECTS, clock),
+            "codex": codex.CodexUsage(clock=clock),
+        }
 
     def snapshot(self):
         now = self.clock()

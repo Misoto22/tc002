@@ -233,3 +233,52 @@ def test_device_http_errors_keep_their_status():
     from tc002.device import DeviceError
 
     assert DeviceError("x", 404).status == 404 and DeviceError("y").status is None
+
+
+def test_agents_endpoint_lists_sessions_and_limits(ui):
+    from tc002.runtime import sessions
+
+    sessions.record_hook(
+        {"hook_event_name": "Notification", "session_id": "s1", "cwd": "/x/kura", "message": "ok?"}
+    )
+    url, _, _ = ui
+    status, _, body = call(url, "/api/agents")
+    data = json.loads(body)
+    assert status == 200 and data["counts"]["waiting"] == 1
+    assert data["sessions"][0]["project"] == "kura"
+    assert set(data["usage"]) == {"claude", "codex"}
+
+
+def test_first_run_saves_the_clock_and_creates_a_config(ui, tmp_path, monkeypatch):
+    from tc002 import config
+    from tc002.web import setup
+
+    monkeypatch.setattr(config, "STATE_DIR", tmp_path / "state")
+    monkeypatch.setattr(config, "LOCAL_FILE", tmp_path / "state" / "local.json")
+    monkeypatch.delenv("TC002_CONFIG", raising=False)
+    monkeypatch.setattr(
+        setup, "probe", lambda host, timeout=0: {"host": host} if host == "10.0.0.9" else None
+    )
+    url, token, _ = ui
+    headers = {"X-TC002-Token": token, "Content-Type": "application/json"}
+    status = call(url, "/api/setup", {"host": "10.0.0.8"}, headers)[0]
+    assert status == 422
+    status, _, body = call(url, "/api/setup", {"host": "10.0.0.9", "preset": "agents"}, headers)
+    assert status == 200, body
+    assert status == 200
+    assert config.local()["host"] == "10.0.0.9"
+    assert "[rotation]" in (tmp_path / "state" / "tc002.toml").read_text()
+
+
+def test_unknown_integration_action_is_404(ui):
+    url, token, _ = ui
+    headers = {"X-TC002-Token": token, "Content-Type": "application/json"}
+    assert call(url, "/api/integrations/rm-rf", {}, headers)[0] == 404
+
+
+def test_discovery_keeps_only_clocks(monkeypatch):
+    from tc002.web import setup
+
+    monkeypatch.setattr(setup, "probe", lambda h, t: {"host": h} if h.endswith(".7") else None)
+    found = setup.discover("10.1.2")
+    assert found == {"subnet": "10.1.2.0/24", "clocks": [{"host": "10.1.2.7"}]}

@@ -17,7 +17,7 @@ from ..render.palette import hex_palette
 from ..runtime import hold
 from ..screens import SCREENS, message
 from ..screens.examples import examples
-from . import cities
+from . import cities, host_actions, setup
 from .agents import Agents
 
 SECRET_KEYS = {"token", "password", "username", "url", "tokens"}
@@ -106,14 +106,45 @@ class Api:
 
     def _integrations(self):
         try:
-            hooks = claude_hooks.status(executable())
+            exe = executable()
+            hooks, wrapped = claude_hooks.status(exe), statusline.status(exe)
         except RuntimeError as exc:
-            hooks = {"error": str(exc)}
-        return {
-            "service": launchd.status(),
-            "hooks": hooks,
-            "statusline": statusline.status(executable()),
-        }
+            hooks, wrapped = {"error": str(exc)}, False
+        return {"service": launchd.status(), "hooks": hooks, "statusline": wrapped}
+
+    def agents_now(self, query=None):
+        return self.agents.snapshot()
+
+    def discover(self, query):
+        return setup.discover()
+
+    def first_run(self, body):
+        host = str(body.get("host") or "").strip()
+        if not host or len(host) > 253 or any(c.isspace() for c in host):
+            raise ApiError(422, "Invalid address", "Give the clock's IP address or host name.")
+        try:
+            done = setup.setup(host, body.get("preset"))
+        except ValueError as exc:
+            raise ApiError(422, "No clock there", str(exc)) from None
+        self.host, self.config_path = done["host"], config.path()
+        return done
+
+    def integration(self, action):
+        try:
+            return host_actions.run(action)
+        except KeyError:
+            raise ApiError(404, "Not found", f"No integration action {action!r}.") from None
+
+    def log(self, query):
+        return {"path": str(launchd.LOG), "text": host_actions.log_tail()}
+
+    def reveal(self, body):
+        targets = {"config": self.config_path, "log": launchd.LOG}
+        target = targets.get(body.get("what"))
+        if target is None:
+            raise ApiError(422, "Nothing to show", "Choose the config file or the log.")
+        host_actions.reveal(target)
+        return {"revealed": str(target)}
 
     def led(self):
         """Pixel fonts and LED palette, so browser previews draw exactly what the clock would."""
