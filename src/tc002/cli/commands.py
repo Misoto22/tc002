@@ -1,18 +1,15 @@
 """Command handlers. Each takes the parsed args plus a context and returns an exit code."""
 
 import json
-import re
 import time
 from dataclasses import dataclass
 
 from .. import builtins, config, sync
-from ..device import Device, DeviceError
+from ..device import MIN_FIRMWARE, Device, DeviceError, firmware
 from ..integrations import claude_hooks, executable, launchd, statusline
 from ..runtime import sessions, watcher
 from ..runtime.output import Output
 from ..screens import message
-
-MIN_SWITCH_FIRMWARE = (1, 1, 0)  # /api/switchDiyApp
 
 
 @dataclass
@@ -199,14 +196,12 @@ def doctor(args, ctx):
     else:
         try:
             base = ctx.device.info()["base"]
-            fw = tuple(int(n) for n in re.findall(r"\d+", base.get("appVer", "0"))[:3])
+            fw = firmware(base.get("appVer"))
             _say(True, "clock", f"{ctx.device.base} firmware {base.get('appVer')}")
             healthy &= _say(
-                fw >= MIN_SWITCH_FIRMWARE or None,
+                fw >= MIN_FIRMWARE or None,
                 "firmware",
-                "screen switching supported"
-                if fw >= MIN_SWITCH_FIRMWARE
-                else "update for switching",
+                "screen switching supported" if fw >= MIN_FIRMWARE else "update for switching",
             )
             _say(True, "custom apps", ", ".join(ctx.device.apps()) or "(none)")
         except DeviceError as exc:

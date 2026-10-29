@@ -281,12 +281,24 @@ def test_unknown_integration_action_is_404(ui):
     assert call(url, "/api/integrations/rm-rf", {}, headers)[0] == 404
 
 
-def test_discovery_keeps_only_clocks(monkeypatch):
+def test_discovery_sweeps_when_nothing_announces(monkeypatch):
     from tc002.web import setup
 
     monkeypatch.setattr(setup, "probe", lambda h, t: {"host": h} if h.endswith(".7") else None)
-    found = setup.discover("10.1.2")
-    assert found == {"subnet": "10.1.2.0/24", "clocks": [{"host": "10.1.2.7"}]}
+    found = setup.discover("10.1.2", listen=lambda: [])
+    assert found == {"subnet": "10.1.2.0/24", "clocks": [{"host": "10.1.2.7"}], "how": "sweep"}
+
+
+def test_discovery_prefers_clocks_that_announce_themselves(monkeypatch):
+    from tc002.web import setup
+
+    swept = []
+    monkeypatch.setattr(setup, "probe", lambda h, t: swept.append(h) or {"host": h})
+    found = setup.discover(
+        "10.1.2", listen=lambda: [{"host": "10.1.2.9", "mac": "x", "serial": "y"}]
+    )
+    assert found["how"] == "broadcast" and found["clocks"] == [{"host": "10.1.2.9"}]
+    assert swept == ["10.1.2.9"]  # no sweep of the subnet
 
 
 def test_live_previews_render_current_state(ui):

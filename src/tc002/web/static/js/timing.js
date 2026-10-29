@@ -15,4 +15,7 @@ export const TIMING = {
   previewTickMs: 100, // LED preview frame
   clockBlinkMs: 500, // the colon of the simulated clock
   simCycleMs: 2500, // each item of a simulated built-in
+  hotspotPollMs: 2000, // is this Mac on a new clock's hotspot yet
+  discoverRetryMs: 4000, // looking for a clock that is joining Wi-Fi
+  clockJoinMs: 90000, // give up waiting for it after this long
 };

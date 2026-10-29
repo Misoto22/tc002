@@ -32,7 +32,12 @@ STATIC = resources.files("tc002.web").joinpath("static")
 
 
 # GET endpoints that take only the query string: path -> Api method
-GETS = {"/api/agents": "agents_now", "/api/discover": "discover", "/api/log": "log"}
+GETS = {
+    "/api/agents": "agents_now",
+    "/api/discover": "discover",
+    "/api/log": "log",
+    "/api/wifi/status": "wifi_status",
+}
 
 
 def _static_files(root, prefix=""):
@@ -174,6 +179,9 @@ def make_handler(api, token, port):
                 "/api/setup": api.first_run,
                 "/api/appearance": api.appearance,
                 "/api/social-token": api.social_token,
+                "/api/wifi/join-hotspot": api.wifi_join_hotspot,
+                "/api/wifi/send": api.wifi_send,
+                "/api/wifi/rejoin": api.wifi_rejoin,
                 "/api/reveal": api.reveal,
             }
             if path.startswith("/api/integrations/"):
