@@ -238,6 +238,7 @@
 
 .menu button:hover, .menu button:focus-visible { background: var(--hover); outline: none; }
 .menu-label { padding: 6px 10px 2px; color: var(--faint); font-size: var(--text-sm); }
+.menu .menu-check { margin-left: auto; color: var(--text-2); }
 
 .city-picker { display: grid; gap: 4px; justify-items: end; }
 .city-field { position: relative; }

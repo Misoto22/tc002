@@ -1,11 +1,13 @@
 <!doctype html>
-<html lang="en" data-theme="system">
+<html lang="en" data-theme="system" data-palette="paper">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="tc002-token" content="{{TOKEN}}" />
     <meta name="color-scheme" content="light dark" />
     <title>tc002</title>
+    <!-- palettes first: tokens.css's dark blocks must win over a palette's light paper -->
+    <link rel="stylesheet" href="/css/palettes.css" />
     <link rel="stylesheet" href="/css/tokens.css" />
     <link rel="stylesheet" href="/css/base.css" />
     <link rel="stylesheet" href="/css/components.css" />

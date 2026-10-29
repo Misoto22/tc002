@@ -8,6 +8,7 @@ presence is reported.
 
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 from .. import builtins, config, config_writer, device_settings, presets, sync
 from ..device import CATEGORY_ENDPOINTS, Device, DeviceError
@@ -75,10 +76,15 @@ class Api:
         if not self.host:
             return {"online": False, "error": "no clock configured"}
         dev = self._device()
+        # six independent reads: asked at once, the page waits for the slowest, not the sum
+        calls = {"base": dev.base_info, "config": dev.config, "apps": dev.apps}
+        calls |= {c: (lambda c=c: dev.category_config(c)) for c in CATEGORY_ENDPOINTS}
         try:
-            base, cfg = dev.info()["base"], dev.config()
-            categories = {c: dev.category_config(c) for c in CATEGORY_ENDPOINTS}
-            apps = dev.apps()
+            with ThreadPoolExecutor(len(calls)) as pool:
+                futures = {name: pool.submit(call) for name, call in calls.items()}
+                got = {name: f.result() for name, f in futures.items()}
+            base, cfg, apps = got["base"], got["config"], got["apps"]
+            categories = {c: got[c] for c in CATEGORY_ENDPOINTS}
         except DeviceError as exc:
             return {"online": False, "host": self.host, "error": str(exc)}
         enabled = {}

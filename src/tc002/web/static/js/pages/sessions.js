@@ -1,7 +1,7 @@
 import { hooksConnected, integration, orderedSessions } from "../agents.js";
 import { ago, t } from "../i18n.js";
 import { setFocus, show, store } from "../store.js";
-import { button, h, icon, pageHead, toast } from "../ui.js";
+import { button, countUp, h, icon, pageHead, toast } from "../ui.js";
 import { page } from "./common.js";
 
 export const STATES = ["waiting", "working", "done", "idle"];
@@ -9,7 +9,7 @@ export const STATES = ["waiting", "working", "done", "idle"];
 // Four figures: how many sessions are in each state.
 export function stateFigures(counts) {
   return h("div", { class: "figures" }, ...STATES.map((s) => h("div", { class: `figure state-${s}` },
-    h("div", { class: "figure-num" }, counts[s] ?? 0),
+    countUp(h("div", { class: "figure-num" }), counts[s] ?? 0, `sessions.${s}`),
     h("div", { class: "figure-label" }, t(`state.${s}`)),
     h("div", { class: "figure-hint" }, t(`state.${s}Hint`)))));
 }

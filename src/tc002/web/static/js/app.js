@@ -3,7 +3,7 @@
 import { loadAssets } from "./assets.js";
 import { t } from "./i18n.js";
 import { commands, openPalette } from "./palette.js";
-import { applyPrefs, prefs, setPref } from "./prefs.js";
+import { PALETTES, applyPrefs, prefs, setPref } from "./prefs.js";
 import { startPreview } from "./preview.js";
 import { openQuick } from "./quick.js";
 import * as store from "./store.js";
@@ -44,6 +44,21 @@ function navCount(id) {
   return null;
 }
 
+// One pill behind the nav that slides to the current page instead of jumping.
+const indicator = h("span", { class: "nav-indicator", "aria-hidden": "true", hidden: true });
+function moveIndicator() {
+  const nav = $("nav");
+  const item = nav.querySelector('.nav-item[aria-current="page"]');
+  nav.append(indicator);
+  if (!item) { indicator.hidden = true; return; }
+  const first = indicator.hidden || !indicator.style.transform; // appear in place, then slide
+  indicator.hidden = false;
+  if (first) indicator.style.transition = "none";
+  indicator.style.transform = `translateY(${item.offsetTop}px)`;
+  indicator.style.height = `${item.offsetHeight}px`;
+  if (first) requestAnimationFrame(() => { indicator.style.transition = ""; });
+}
+
 function renderNav() {
   const s = store.store;
   const groups = Map.groupBy(PAGES, ([, , , grp]) => grp);
@@ -54,6 +69,7 @@ function renderNav() {
       "aria-current": current() === id ? "page" : undefined,
     }, icon(ico), h("span", {}, t(`page.${id}`)),
     navCount(id))))));
+  moveIndicator();
   const clock = s.state?.clock;
   $("brand-sub").replaceChildren(h("span", { class: `dot ${clock?.online ? "ok" : "bad"}` }),
     clock ? (clock.online ? `${clock.host} · ${clock.base.appVer}` : t("badge.offline")) : "…");
@@ -98,6 +114,7 @@ function markDirty() {
 
 function render() {
   if (!store.store.state) return;
+  delete document.documentElement.dataset.refresh; // a real page change animates in again
   $("page").replaceChildren(PAGES.find(([id]) => id === current())[1]());
   renderNav();
   renderTopbar();
@@ -141,9 +158,18 @@ $("save").addEventListener("click", () => store.save());
 $("discard").addEventListener("click", store.discard);
 $("status").addEventListener("click", openActivity);
 $("palette-btn").addEventListener("click", palette);
-$("theme").addEventListener("click", (e) => menu(e.currentTarget, [[t("ui.theme"), [
-  ["system", t("pal.themeSystem"), "monitor"], ["light", t("pal.themeLight"), "sun"], ["dark", t("pal.themeDark"), "moon"],
-]]], (v) => setPref("theme", v, render)));
+function openTheme(anchor) {
+  const box = anchor.getBoundingClientRect();
+  const origin = { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+  const mode = (id, label, ico) => [`theme:${id}`, label, ico, null, { current: prefs.theme === id }];
+  const colour = (id) => [`palette:${id}`, t(`palette.${id}`), null, null, { swatch: id, current: prefs.palette === id }];
+  menu(anchor, [
+    [t("ui.theme"), [mode("system", t("pal.themeSystem"), "monitor"), mode("light", t("pal.themeLight"), "sun"),
+      mode("dark", t("pal.themeDark"), "moon")]],
+    [t("ui.palette"), PALETTES.map(colour)],
+  ], (v) => { const [key, value] = v.split(":"); setPref(key, value, render, origin); });
+}
+$("theme").addEventListener("click", (e) => openTheme(e.currentTarget));
 $("lang").addEventListener("click", () => setPref("lang", prefs.lang === "zh" ? "en" : "zh", render));
 $("quick").addEventListener("click", (e) => openQuick(e.currentTarget));
 const toggleSidebar = () => setPref("sidebar", prefs.sidebar === "collapsed" ? "open" : "collapsed", renderTopbar);
@@ -158,9 +184,12 @@ document.addEventListener("keydown", (e) => {
 window.addEventListener("beforeunload", (e) => { if (store.dirtyPaths().length) e.preventDefault(); });
 
 renderTopbar();
+// A refresh redraws in place: no entrance animations, only changed numbers count.
 pollAgents(() => {
   renderNav();
-  if (LIVE_PAGES.has(current())) $("page").replaceChildren(PAGES.find(([id]) => id === current())[1]());
+  if (!LIVE_PAGES.has(current())) return;
+  document.documentElement.dataset.refresh = "";
+  $("page").replaceChildren(PAGES.find(([id]) => id === current())[1]());
 });
 loadAssets() // icons and LED data first: pages draw with them
   .then(store.load)

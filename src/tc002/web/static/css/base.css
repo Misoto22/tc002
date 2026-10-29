@@ -91,7 +91,19 @@ kbd {
 
 .nav-item:hover { background: var(--hover); color: var(--text); }
 /* current page: a quiet filled pill, as in Linear and Notion — no edge bar */
-.nav-item[aria-current="page"] { background: var(--panel); box-shadow: 0 0 0 1px var(--border); color: var(--text); font-weight: 500; }
+.nav-item[aria-current="page"] { color: var(--text); font-weight: 500; }
+.nav-item { position: relative; z-index: 1; }
+#nav { position: relative; }
+
+/* the current-page pill: one element that slides between items (app.js moveIndicator) */
+.nav-indicator {
+  position: absolute;
+  inset: 0 0 auto;
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+  box-shadow: 0 0 0 1px var(--border), var(--button-shadow);
+  transition: transform var(--slow) var(--ease-spring), height var(--slow) var(--ease);
+}
 .nav-item .icon { color: var(--muted); }
 .nav-item[aria-current="page"] .icon { color: var(--text-2); }
 .nav-item .count { margin-left: auto; color: var(--faint); font: var(--text-sm) var(--mono); }
@@ -253,7 +265,7 @@ main { position: relative; overflow-y: auto; outline: none; }
   border-radius: var(--radius-pill);
   background: var(--knob);
   box-shadow: var(--knob-shadow);
-  transition: transform var(--normal) var(--ease);
+  transition: transform var(--normal) var(--ease-spring);
 }
 
 .toggle[aria-checked="true"] { background: var(--primary); }
@@ -288,7 +300,7 @@ main { position: relative; overflow-y: auto; outline: none; }
   background: var(--panel-raised);
   box-shadow: var(--knob-shadow);
   transform: translateX(calc(100% * var(--i)));
-  transition: transform var(--normal) var(--ease);
+  transition: transform var(--normal) var(--ease-spring);
 }
 
 .segmented.dragging .segmented-thumb { transition: none; }

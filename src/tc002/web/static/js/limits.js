@@ -3,7 +3,7 @@
 import { integration } from "./agents.js";
 import { t, until } from "./i18n.js";
 import { store } from "./store.js";
-import { appIcon, button, h } from "./ui.js";
+import { appIcon, button, countUp, h } from "./ui.js";
 
 const AGENTS = { claude: "Claude Code", codex: "Codex" };
 const WARN = 80;
@@ -23,12 +23,13 @@ function resetText(unix) {
   return t("limits.resetsAt", { t: when });
 }
 
-function meter(label, pct, reset, agent) {
+function meter(label, pct, reset, agent, key) {
   const known = pct !== null && pct !== undefined;
   const value = known ? Math.round(pct) : null;
   return h("div", { class: `meter${known && value >= WARN ? " warn" : ""}` },
     h("div", { class: "meter-label" }, label),
-    h("div", { class: "meter-num" }, known ? value : "—", known ? h("span", {}, "%") : null),
+    h("div", { class: "meter-num" }, known ? countUp(h("span", { class: "num" }), value, key) : "—",
+      known ? h("span", {}, "%") : null),
     h("div", { class: "meter-track", role: "img", "aria-label": `${label}: ${known ? `${value}%` : t("limits.unknown")}` },
       h("span", { class: `meter-fill agent-${agent}`, style: `width:${known ? Math.min(100, value) : 0}%` })),
     h("div", { class: "meter-hint" }, known ? resetText(reset) : t("limits.unknown")));
@@ -51,8 +52,8 @@ export function limitCard(agent) {
       h("span", { class: "spacer" }),
       h("span", { class: "muted mono" }, t("limits.tokensToday", { n: shortTokens(u.today) }))),
     h("div", { class: "meters" },
-      meter(t("limits.fiveHour"), u.limit_5h, u.reset_5h, agent),
-      meter(t("limits.week"), u.limit_week, u.reset_week, agent)),
+      meter(t("limits.fiveHour"), u.limit_5h, u.reset_5h, agent, `${agent}.5h`),
+      meter(t("limits.week"), u.limit_week, u.reset_week, agent, `${agent}.week`)),
     note);
 }
 

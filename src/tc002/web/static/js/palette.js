@@ -1,6 +1,7 @@
 // ⌘K command palette: fuzzy-search pages, actions, "show on clock" targets and preferences.
 
 import { appName, lang, t } from "./i18n.js";
+import { PALETTES } from "./prefs.js";
 import { h, icon, ms } from "./ui.js";
 
 let open = null;
@@ -118,6 +119,8 @@ export function commands({ pages, go, store, actions, setPref }) {
     { group: t("pal.prefs"), icon: "monitor", label: t("pal.themeSystem"), alt: "theme system", run: () => setPref("theme", "system") },
     { group: t("pal.prefs"), icon: "sun", label: t("pal.themeLight"), alt: "theme light", run: () => setPref("theme", "light") },
     { group: t("pal.prefs"), icon: "moon", label: t("pal.themeDark"), alt: "theme dark", run: () => setPref("theme", "dark") },
+    ...PALETTES.map((id) => ({ group: t("pal.prefs"), icon: "sun-moon", label: `${t("ui.palette")}: ${t(`palette.${id}`)}`,
+      alt: `colour palette theme ${id}`, run: () => setPref("palette", id) })),
     { group: t("pal.prefs"), icon: "languages", label: t(other === "zh" ? "pal.langZh" : "pal.langEn"), alt: "language", run: () => setPref("lang", other) },
   );
   return list;

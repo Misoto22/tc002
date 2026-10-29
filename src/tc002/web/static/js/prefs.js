@@ -1,4 +1,4 @@
-// Per-browser preferences: theme and language. Stored in localStorage when available;
+// Per-browser preferences: theme, colour palette and language. Stored in localStorage when available;
 // the page works the same when storage is blocked, it just forgets between visits.
 
 import { setLang } from "./i18n.js";
@@ -24,18 +24,32 @@ function write(prefs) {
 
 export const prefs = {
   theme: "system", // system | light | dark
+  palette: "paper", // see PALETTES
   sidebar: "open", // open | collapsed
   lang: navigator.language?.toLowerCase().startsWith("zh") ? "zh" : "en",
   ...read(),
 };
 
+// Colour themes (css/palettes.css); "paper" is the default look in tokens.css.
+export const PALETTES = ["paper", "matcha", "ai", "sakura", "kohaku"];
+
 export function applyPrefs() {
-  document.documentElement.dataset.theme = prefs.theme;
+  const root = document.documentElement;
+  root.dataset.theme = prefs.theme;
+  root.dataset.palette = PALETTES.includes(prefs.palette) ? prefs.palette : "paper";
   setLang(prefs.lang);
 }
 
-export function setPref(key, value, after) {
+// Change one preference. Theme and palette changes spread as a circle from `origin`
+// (the control that was used); everything else cross-fades.
+export function setPref(key, value, after, origin) {
   prefs[key] = value;
   write(prefs);
-  transition(() => { applyPrefs(); after?.(); }); // cross-fades the whole page
+  const root = document.documentElement;
+  if (origin && (key === "theme" || key === "palette")) {
+    root.style.setProperty("--reveal-x", `${origin.x}px`);
+    root.style.setProperty("--reveal-y", `${origin.y}px`);
+    root.dataset.transition = "reveal";
+  }
+  transition(() => { applyPrefs(); after?.(); }, () => delete root.dataset.transition);
 }
