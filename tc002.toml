@@ -1,29 +1,39 @@
-# tc002 configuration — what the clock shows. Versioned with the repository.
+# tc002 configuration — the single source of every setting tc002 manages.
+# Edit by hand or with `tc002 ui`; apply with `tc002 layout apply` (the UI applies for you).
 # Machine-local facts (the clock's IP) are kept by `tc002 setup`, never here.
 
+# Live screens run by the background service: claude, sys.
 [screens]
-# Live screens run by `tc002 watch` / the background service.
-#   claude — Claude Code sessions, BUSY/IDLE, sub-agents, DONE/WAIT from hooks
-#   sys    — this Mac's CPU chart and memory
 enabled = ["claude", "sys"]
 
-[device]
 # Built-in apps that stay on; `tc002 layout apply` turns every other one off.
-# tools:    clock weather busy scoreboard tomato stopwatch battery soundlight ipshow
-# social:   xhs douyin bilibili weibo youtube instagram facebook tiktok x
+# tools: clock weather busy scoreboard tomato stopwatch battery soundlight ipshow
+# social: xhs douyin bilibili weibo youtube instagram facebook tiktok x
 # calendar: feishu dingding wecom google icloud outlook
+[device]
 keep_builtins = ["clock"]
-# Optional: low | mid | high
-# brightness = "mid"
 
+# Clock-wide settings, applied with /setConfig. Omit a key to leave it as is.
+# [display]
+# volume = 2
+# timezone = "UTC+10"
+# brightness = { level = "mid" }
+
+# Settings of built-in apps (no credentials: those stay on the device).
+# [apps.clock]
+# timeFormat = "HH:MM"
+#
+# [apps.weather]
+# city = "Sydney"
+
+# Replaces the device's own carousel. Each slot is a screen or a kept built-in.
 [playlist]
-# Replaces the device's own carousel. Each slot is a screen or a kept built-in app.
 slots = [
   { screen = "claude", seconds = 30 },
   { screen = "sys", seconds = 15 },
   { builtin = "clock", seconds = 15 },
 ]
 
-[alerts]
 # Jump straight to the Claude screen when a hook reports DONE or WAIT.
+[alerts]
 takeover = true

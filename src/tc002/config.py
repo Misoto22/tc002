@@ -1,20 +1,34 @@
 """Settings: the versioned `tc002.toml` plus machine-local state.
 
-The repository's `tc002.toml` holds what to show (screens, playlist, which built-in
-apps stay on). Machine-local facts — the clock's IP, which config file to use, snapshots
-of the device's own settings — live under ~/.config/tc002 and are never committed.
+The repository's `tc002.toml` is the single source of every setting tc002 manages:
+screens, playlist, which built-in apps stay on, display settings and built-in app
+settings. `tc002 layout apply` and the web UI push it to the clock.
+
+Machine-local facts — the clock's IP, which config file to use, the clock's original
+layout — live under ~/.config/tc002 and are never committed.
 """
 
 import json
 import os
 import tomllib
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import builtins
+from . import builtins, device_settings
 
 STATE_DIR = Path(os.environ.get("TC002_STATE_DIR", "~/.config/tc002")).expanduser()
 LOCAL_FILE = STATE_DIR / "local.json"
+
+
+# Allowed keys per section; None = validated in depth elsewhere (device_settings).
+SECTION_KEYS = {
+    "screens": {"enabled"},
+    "device": {"keep_builtins"},
+    "display": None,
+    "apps": None,
+    "playlist": {"slots"},
+    "alerts": {"takeover"},
+}
 
 
 class ConfigError(ValueError):
@@ -40,7 +54,8 @@ class Settings:
     playlist: tuple[Slot, ...] = ()
     keep_builtins: tuple[str, ...] = ("clock",)
     alert_takeover: bool = True
-    brightness: str | None = None
+    display: dict = field(default_factory=dict)  # global settings, keys as in /setConfig
+    apps: dict = field(default_factory=dict)  # built-in app settings, see device_settings
     source: str = "<built-in defaults>"
 
 
@@ -48,6 +63,13 @@ def _parse(data, source):
     from .screens import SCREENS  # deferred: screens import runtime modules
 
     known_screens = set(SCREENS)
+    for section, keys in SECTION_KEYS.items():
+        if section not in data:
+            continue
+        if keys is not None and (extra := set(data[section]) - keys):
+            raise ConfigError(f"{source}: unknown key(s) in [{section}]: {sorted(extra)}")
+    if extra := set(data) - set(SECTION_KEYS):
+        raise ConfigError(f"{source}: unknown section(s) {sorted(extra)}")
     screens = tuple(data.get("screens", {}).get("enabled", ["claude", "sys"]))
     if bad := set(screens) - known_screens:
         raise ConfigError(f"{source}: unknown screens {sorted(bad)}; known {sorted(known_screens)}")
@@ -82,18 +104,49 @@ def _parse(data, source):
                 f"{source}: playlist uses built-in {slot.builtin!r}, "
                 "which must also be listed in device.keep_builtins"
             )
-    brightness = device.get("brightness")
-    if brightness not in (None, "low", "mid", "high"):
-        raise ConfigError(f"{source}: device.brightness must be low, mid or high")
+    display, apps = data.get("display", {}), data.get("apps", {})
+    if problems := device_settings.validate_display(display) + device_settings.validate_apps(apps):
+        raise ConfigError(f"{source}: " + "; ".join(problems))
 
     return Settings(
         screens=screens,
         playlist=tuple(slots),
         keep_builtins=keep,
         alert_takeover=bool(data.get("alerts", {}).get("takeover", True)),
-        brightness=brightness,
+        display=display,
+        apps=apps,
         source=source,
     )
+
+
+def parse(data, source="<input>"):
+    """Validate a tc002.toml-shaped dict (e.g. from the web UI) into Settings."""
+    return _parse(data, source)
+
+
+def to_data(settings):
+    """Settings back to the tc002.toml dict shape (inverse of `parse`)."""
+    return {
+        "screens": {"enabled": list(settings.screens)},
+        "device": {"keep_builtins": list(settings.keep_builtins)},
+        "display": settings.display,
+        "apps": settings.apps,
+        "playlist": {
+            "slots": [
+                {"screen": s.screen, "seconds": s.seconds}
+                if s.screen
+                else {"builtin": s.builtin, "seconds": s.seconds}
+                for s in settings.playlist
+            ]
+        },
+        "alerts": {"takeover": settings.alert_takeover},
+    }
+
+
+def path():
+    """The tc002.toml in use, or None when running on built-in defaults."""
+    chosen = os.environ.get("TC002_CONFIG") or local().get("config")
+    return Path(chosen).expanduser() if chosen else None
 
 
 def load(path=None):

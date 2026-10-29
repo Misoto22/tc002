@@ -9,3 +9,5 @@ build/
 .DS_Store
 # --preview output written into the clone by mistake
 tc002-*.gif
+# local editor / agent settings
+.claude/

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="tc002-token" content="{{TOKEN}}" />
+    <title>tc002</title>
+    <link rel="stylesheet" href="/app.css" />
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body>
+    <div class="app">
+      <nav class="sidebar" aria-label="Sections">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </span>
+          <span>
+            <div class="brand-name">TC002</div>
+            <div class="brand-sub" id="brand-sub">connecting…</div>
+          </span>
+        </div>
+        <div id="nav"></div>
+        <div class="sidebar-foot" id="config-path"></div>
+      </nav>
+      <main id="main" tabindex="-1"></main>
+    </div>
+    <div class="savebar" id="savebar" hidden role="status">
+      <span id="savebar-text">Unsaved changes</span>
+      <span class="kbd">⌘S</span>
+      <button class="btn ghost" id="discard" type="button">Discard</button>
+      <button class="btn primary" id="save" type="button">Save &amp; apply</button>
+    </div>
+    <div class="toasts" id="toasts" aria-live="polite"></div>
+  </body>
+</html>

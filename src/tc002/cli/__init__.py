@@ -11,7 +11,7 @@ from ..runtime.output import Output
 from . import commands, parser
 
 # Commands that never talk to the clock.
-LOCAL_ONLY = {"setup", "event", "service", "hooks"}
+LOCAL_ONLY = {"setup", "event", "service", "hooks", "ui"}
 
 
 def main(argv=None):

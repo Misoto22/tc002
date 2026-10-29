@@ -27,6 +27,24 @@ firmware over the LAN — no flashing, no cloud, no runtime dependencies beyond 
 Every animation is rendered locally and sent as one looping GIF, so the clock animates by
 itself and the screen is re-sent only when its content changes.
 
+## Settings UI
+
+```bash
+tc002 ui            # opens http://127.0.0.1:8742
+```
+
+![Settings UI — playlist](docs/ui-playlist.png)
+
+A local web app for everything tc002 manages: drag the playlist into order, choose which
+built-in apps stay on, set brightness, volume, time zone and the built-in apps' options,
+send a test message with a live LED preview, and check the service and hooks. Every change
+goes to `tc002.toml` first, is applied to the clock, and reloads the background service —
+the file stays the single source of truth, so a fresh clone reproduces your setup.
+
+It listens on 127.0.0.1 only, rejects foreign `Host` headers, and requires a per-session
+token on every change, so other web pages cannot reconfigure your clock. Keyboard: `⌘S`
+saves; in the playlist, focus a row and press `Alt+↑/↓` to move it.
+
 ## Requirements
 
 - A TC002 on stock firmware **V1.1.0+** (`tc002 doctor` checks), on the same network.
@@ -61,6 +79,7 @@ Find the IP in Ulanzi Studio, your router's client list, or `tc002 --host <ip> i
 ## Usage
 
 ```text
+tc002 ui                             settings UI in the browser (local only)
 tc002 doctor                         check config, clock, firmware, service, hooks
 tc002 text "BUILD OK" --color green  short text shimmers; long text scrolls, then clears
 tc002 text "HELLO" --show            ...and switch the clock to it
@@ -85,8 +104,8 @@ tc002 alert "TESTS GREEN" --kind done || true
 
 ## Configure
 
-Edit [`tc002.toml`](tc002.toml) — every option is described in the file — then run
-`tc002 install`. In short:
+Use `tc002 ui`, or edit [`tc002.toml`](tc002.toml) — every option is described in the file —
+and run `tc002 layout apply`. In short:
 
 ```toml
 [screens]
@@ -94,6 +113,14 @@ enabled = ["claude", "sys"]
 
 [device]
 keep_builtins = ["clock"]          # every other built-in app is turned off
+
+[display]                          # optional: clock-wide settings
+volume = 2
+timezone = "UTC+10"
+brightness = { level = "mid" }
+
+[apps.weather]                     # optional: built-in app settings (never credentials)
+city = "Sydney"
 
 [playlist]
 slots = [

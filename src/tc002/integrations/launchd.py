@@ -58,6 +58,14 @@ def install(executable):
     return executable
 
 
+def restart():
+    """Restart the running agent so it re-reads tc002.toml; no-op when not installed."""
+    if _launchctl("print", f"{_domain()}/{LABEL}", check=False).returncode != 0:
+        return False
+    _launchctl("kickstart", "-k", f"{_domain()}/{LABEL}")
+    return True
+
+
 def uninstall():
     """Stop the agent (its SIGTERM handler clears the clock) and delete the plist."""
     _stop()
