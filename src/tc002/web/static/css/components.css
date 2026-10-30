@@ -17,8 +17,8 @@
 /* sized from the box token, not a percentage: a % height on an SVG in a grid cell resolves
    against the row, not the box */
 .app-icon .icon { width: calc(var(--app-icon) * 0.72); height: calc(var(--app-icon) * 0.72); }
-.app-icon.sm { --app-icon: 18px; }
-.app-icon.lg { --app-icon: 32px; }
+.app-icon.sm { --app-icon: var(--app-icon-sm); }
+.app-icon.lg { --app-icon: var(--app-icon-lg); }
 
 /* ---- badges and status ------------------------------------------------------------ */
 
@@ -26,7 +26,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-6);
-  height: 22px;
+  height: var(--badge-h);
   padding: 0 var(--space-8);
   border: var(--hairline) solid var(--border);
   border-radius: var(--radius-pill);
@@ -35,16 +35,16 @@
   white-space: nowrap;
 }
 
-.dot { width: 7px; height: 7px; flex: none; border-radius: var(--radius-pill); background: var(--faint); }
-.dot.ok { background: var(--green); box-shadow: 0 0 0 3px var(--green-soft); }
-.dot.warn { background: var(--yellow); box-shadow: 0 0 0 3px var(--yellow-soft); }
-.dot.bad { background: var(--red); box-shadow: 0 0 0 3px var(--red-soft); }
+.dot { width: var(--dot-lg); height: var(--dot-lg); flex: none; border-radius: var(--radius-pill); background: var(--faint); }
+.dot.ok { background: var(--green); box-shadow: 0 0 0 var(--ring) var(--green-soft); }
+.dot.warn { background: var(--yellow); box-shadow: 0 0 0 var(--ring) var(--yellow-soft); }
+.dot.bad { background: var(--red); box-shadow: 0 0 0 var(--ring) var(--red-soft); }
 
 .status-pill {
   display: inline-flex;
   align-items: center;
   gap: var(--space-6);
-  height: 26px;
+  height: var(--control-sm-h);
   margin-right: var(--space-6);
   padding: 0 var(--space-10);
   border: var(--hairline) solid var(--border);
@@ -63,7 +63,7 @@
 .status-pill.error, .status-pill.live { color: var(--red); background: var(--red-soft); }
 .status-pill.live .icon { animation: pulse var(--loop-pulse) ease-in-out infinite; }
 
-.live-dot { width: 8px; height: 8px; border-radius: var(--radius-pill); background: var(--red); animation: live-ring 1.6s ease-out infinite; }
+.live-dot { width: var(--dot-lg); height: var(--dot-lg); border-radius: var(--radius-pill); background: var(--red); animation: live-ring 1.6s ease-out infinite; }
 
 /* ---- device bar: the clock preview, pinned above every page ---------------------- */
 
@@ -130,7 +130,7 @@
   cursor: pointer;
 }
 
-.chip .app-icon { --app-icon: 16px; }
+.chip .app-icon { --app-icon: var(--app-icon-xs); }
 .chip.current { color: var(--text); border-color: var(--border-accent); }
 .chip::before { /* progress of the slot now playing */
   content: "";
@@ -151,11 +151,7 @@
 .quick-row { display: flex; align-items: center; gap: var(--space-10); min-height: var(--brand-h); padding: 0 var(--space-8); }
 .quick-row .row-title { flex: 1; }
 .quick-row input[type="range"] { width: var(--slider-sm-w); }
-.quick-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(var(--quick-cell-min), 1fr)); gap: 0; }
 /* a label never breaks inside a word (亮/度); the controls wrap under it instead */
-.quick-grid .row { flex-wrap: wrap; row-gap: var(--space-8); }
-.quick-grid .row-title, .quick-row .row-title { flex: none; white-space: nowrap; }
-.quick-grid .row + .row { border-top: 0; }
 
 /* ---- rotation: presets and slots ------------------------------------------------- */
 
@@ -183,7 +179,7 @@
 
 .panel.slots { position: relative; }
 .slot { background: var(--panel); touch-action: none; }
-.handle { display: grid; place-items: center; width: 18px; height: var(--control-h); color: var(--faint); cursor: grab; }
+.handle { display: grid; place-items: center; width: var(--handle-w); height: var(--control-h); color: var(--faint); cursor: grab; }
 .slot.dragging { z-index: 2; border-radius: var(--radius); box-shadow: var(--shadow); cursor: grabbing; }
 
 
@@ -192,8 +188,8 @@
 .swatches { display: flex; gap: var(--space-6); }
 
 .swatch {
-  width: 20px;
-  height: 20px;
+  width: var(--control-xs-h);
+  height: var(--control-xs-h);
   border: var(--hairline-strong) solid var(--panel);
   border-radius: var(--radius-pill);
   background: var(--swatch);
@@ -203,7 +199,7 @@
 }
 
 .swatch:hover { transform: scale(1.1); }
-.swatch[aria-checked="true"] { box-shadow: 0 0 0 2px var(--text); }
+.swatch[aria-checked="true"] { box-shadow: 0 0 0 var(--hairline-strong) var(--text); }
 
 /* ---- popovers: menus, city list, palette ---------------------------------------------- */
 
@@ -226,7 +222,7 @@
   align-items: center;
   gap: var(--space-8);
   width: 100%;
-  min-height: 30px;
+  min-height: var(--menu-item-h);
   padding: var(--space-4) var(--space-10);
   border: 0;
   border-radius: var(--radius-xs);
@@ -243,8 +239,8 @@
 .city-field { position: relative; }
 .city-search { position: absolute; left: var(--space-9); top: var(--space-6); color: var(--muted); }
 .city-input { width: var(--city-w); padding-left: var(--space-30); }
-.city-option { display: flex; align-items: center; gap: var(--space-8); height: 32px; padding: 0 var(--space-10); border-radius: var(--radius-xs); cursor: pointer; }
-.city-option .muted { margin-left: auto; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-sm); }
+.city-option { display: flex; align-items: center; gap: var(--space-8); height: var(--menu-item-h); padding: 0 var(--space-10); border-radius: var(--radius-xs); cursor: pointer; }
+.city-option .muted { margin-left: auto; max-width: var(--city-region-max); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-sm); }
 .city-option[aria-selected="true"] { background: var(--hover); }
 .city-source { padding: var(--space-6) var(--space-10) var(--space-2); color: var(--faint); font-size: var(--text-sm); }
 
@@ -261,7 +257,7 @@
 }
 
 .palette {
-  width: min(620px, calc(100vw - 32px));
+  width: min(var(--palette-w), calc(100vw - var(--space-32)));
   align-self: start;
   overflow: hidden;
   border-radius: var(--radius-xl);
@@ -272,10 +268,10 @@
 
 .palette-search { display: flex; align-items: center; gap: var(--space-10); padding: 0 var(--space-16); border-bottom: var(--hairline) solid var(--border); }
 .palette-search .icon { color: var(--muted); }
-.palette-input { flex: 1; height: 52px; border: 0; background: none; font-size: var(--text-lg); outline: none; }
+.palette-input { flex: 1; height: var(--palette-input-h); border: 0; background: none; font-size: var(--text-lg); outline: none; }
 .palette-list { max-height: var(--list-max-h); overflow-y: auto; padding: var(--space-6); }
 .palette-group { padding: var(--space-8) var(--space-10) var(--space-4); color: var(--faint); font-size: var(--text-sm); }
-.palette-item { display: flex; align-items: center; gap: var(--space-10); height: 36px; padding: 0 var(--space-10); border-radius: var(--radius-sm); cursor: pointer; }
+.palette-item { display: flex; align-items: center; gap: var(--space-10); height: var(--palette-item-h); padding: 0 var(--space-10); border-radius: var(--radius-sm); cursor: pointer; }
 .palette-item > .icon { color: var(--muted); }
 .palette-item[aria-selected="true"] { background: var(--hover); }
 .palette-item[aria-selected="true"] > .icon { color: var(--accent-text); }
@@ -300,8 +296,8 @@
   transition: transform var(--normal) var(--ease), opacity var(--normal);
 }
 
-.savebar[hidden] { display: flex !important; opacity: 0; transform: translate(-50%, 20px); pointer-events: none; }
-.savebar-dot { width: 8px; height: 8px; border-radius: var(--radius-pill); background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.savebar[hidden] { display: flex !important; opacity: 0; transform: translate(-50%, var(--space-20)); pointer-events: none; }
+.savebar-dot { width: var(--dot-lg); height: var(--dot-lg); border-radius: var(--radius-pill); background: var(--accent); box-shadow: 0 0 0 var(--ring) var(--accent-soft); }
 
 .toasts { position: fixed; right: var(--space-20); bottom: var(--space-20); z-index: var(--z-toast); display: grid; gap: var(--space-8); }
 
@@ -333,13 +329,3 @@
 
 .skeleton.short { width: 60%; }
 
-/* a built-in app in the rotation list: its icon on a dark LED-like tile */
-.thumb-tile {
-  display: grid;
-  place-items: center;
-  width: var(--thumb-w);
-  height: 32px;
-  flex: none;
-  border-radius: var(--radius-xs);
-  background: var(--led-panel);
-}

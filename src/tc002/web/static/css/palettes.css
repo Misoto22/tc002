@@ -13,17 +13,13 @@
   --sidebar: #ebeee4;
   --panel: #fafbf6;
   --hover: #e6e9dd;
-  --active: #dfe3d4;
   --field: #ebeee4;
   --border: #dfe3d4;
   --border-strong: #ccd2bf;
-  --track: #e4e8db;
   --track-strong: #d3d9c7;
   --accent: #4f7a3a;
   --accent-hover: #3f6430;
-  --accent-deep: #e1ead6;
   --accent-soft: rgb(79 122 58 / 11%);
-  --accent-glow: rgb(79 122 58 / 25%);
   --accent-text: #3f6430;
 }
 
@@ -33,17 +29,13 @@
   --sidebar: #eaecf0;
   --panel: #fafbfc;
   --hover: #e4e7ec;
-  --active: #dce0e7;
   --field: #eaecf0;
   --border: #dde1e8;
   --border-strong: #c9cfd9;
-  --track: #e2e6ed;
   --track-strong: #d0d6e0;
   --accent: #2f5d9e;
   --accent-hover: #244a80;
-  --accent-deep: #dbe4f2;
   --accent-soft: rgb(47 93 158 / 10%);
-  --accent-glow: rgb(47 93 158 / 25%);
   --accent-text: #244a80;
 }
 
@@ -53,17 +45,13 @@
   --sidebar: #f0e8e9;
   --panel: #fcf9f9;
   --hover: #ece2e3;
-  --active: #e5d9db;
   --field: #f0e8e9;
   --border: #e8dcde;
   --border-strong: #d8c8cb;
-  --track: #ede3e4;
   --track-strong: #ddcfd1;
   --accent: #b84a6f;
   --accent-hover: #9c3c5c;
-  --accent-deep: #f5dde5;
   --accent-soft: rgb(184 74 111 / 10%);
-  --accent-glow: rgb(184 74 111 / 25%);
   --accent-text: #9c3c5c;
 }
 
@@ -73,55 +61,51 @@
   --sidebar: #efeadf;
   --panel: #fcfaf5;
   --hover: #ebe5d8;
-  --active: #e4ddcd;
   --field: #efeadf;
   --border: #e5dece;
   --border-strong: #d4cab5;
-  --track: #ebe5d6;
   --track-strong: #dbd2bf;
   --accent: #9a6412;
   --accent-hover: #7f520e;
-  --accent-deep: #f2e4c9;
   --accent-soft: rgb(154 100 18 / 11%);
-  --accent-glow: rgb(154 100 18 / 25%);
   --accent-text: #7f520e;
 }
 
 /* ---- dark: accents only ------------------------------------------------------------ */
 
 :root[data-palette="matcha"][data-theme="dark"] {
-  --accent: #9cc37f; --accent-hover: #b2d398; --accent-deep: #26331d;
-  --accent-soft: rgb(156 195 127 / 15%); --accent-glow: rgb(156 195 127 / 30%); --accent-text: #b2d398;
+  --accent: #9cc37f; --accent-hover: #b2d398;
+  --accent-soft: rgb(156 195 127 / 15%); --accent-text: #b2d398;
 }
 :root[data-palette="ai"][data-theme="dark"] {
-  --accent: #7ea6e0; --accent-hover: #98b9e8; --accent-deep: #1b2a40;
-  --accent-soft: rgb(126 166 224 / 15%); --accent-glow: rgb(126 166 224 / 30%); --accent-text: #98b9e8;
+  --accent: #7ea6e0; --accent-hover: #98b9e8;
+  --accent-soft: rgb(126 166 224 / 15%); --accent-text: #98b9e8;
 }
 :root[data-palette="sakura"][data-theme="dark"] {
-  --accent: #e889a8; --accent-hover: #efa3bb; --accent-deep: #3d1d28;
-  --accent-soft: rgb(232 137 168 / 15%); --accent-glow: rgb(232 137 168 / 30%); --accent-text: #efa3bb;
+  --accent: #e889a8; --accent-hover: #efa3bb;
+  --accent-soft: rgb(232 137 168 / 15%); --accent-text: #efa3bb;
 }
 :root[data-palette="kohaku"][data-theme="dark"] {
-  --accent: #e0aa52; --accent-hover: #e8bd75; --accent-deep: #3a2a10;
-  --accent-soft: rgb(224 170 82 / 15%); --accent-glow: rgb(224 170 82 / 30%); --accent-text: #e8bd75;
+  --accent: #e0aa52; --accent-hover: #e8bd75;
+  --accent-soft: rgb(224 170 82 / 15%); --accent-text: #e8bd75;
 }
 
 @media (prefers-color-scheme: dark) {
   :root[data-palette="matcha"][data-theme="system"] {
-    --accent: #9cc37f; --accent-hover: #b2d398; --accent-deep: #26331d;
-    --accent-soft: rgb(156 195 127 / 15%); --accent-glow: rgb(156 195 127 / 30%); --accent-text: #b2d398;
+    --accent: #9cc37f; --accent-hover: #b2d398;
+    --accent-soft: rgb(156 195 127 / 15%); --accent-text: #b2d398;
   }
   :root[data-palette="ai"][data-theme="system"] {
-    --accent: #7ea6e0; --accent-hover: #98b9e8; --accent-deep: #1b2a40;
-    --accent-soft: rgb(126 166 224 / 15%); --accent-glow: rgb(126 166 224 / 30%); --accent-text: #98b9e8;
+    --accent: #7ea6e0; --accent-hover: #98b9e8;
+    --accent-soft: rgb(126 166 224 / 15%); --accent-text: #98b9e8;
   }
   :root[data-palette="sakura"][data-theme="system"] {
-    --accent: #e889a8; --accent-hover: #efa3bb; --accent-deep: #3d1d28;
-    --accent-soft: rgb(232 137 168 / 15%); --accent-glow: rgb(232 137 168 / 30%); --accent-text: #efa3bb;
+    --accent: #e889a8; --accent-hover: #efa3bb;
+    --accent-soft: rgb(232 137 168 / 15%); --accent-text: #efa3bb;
   }
   :root[data-palette="kohaku"][data-theme="system"] {
-    --accent: #e0aa52; --accent-hover: #e8bd75; --accent-deep: #3a2a10;
-    --accent-soft: rgb(224 170 82 / 15%); --accent-glow: rgb(224 170 82 / 30%); --accent-text: #e8bd75;
+    --accent: #e0aa52; --accent-hover: #e8bd75;
+    --accent-soft: rgb(224 170 82 / 15%); --accent-text: #e8bd75;
   }
 }
 

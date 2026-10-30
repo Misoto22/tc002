@@ -7,7 +7,7 @@ import { appName, t } from "../i18n.js";
 import { applySaved, load, setFocus, store } from "../store.js";
 import { post } from "../api.js";
 import { badge, button, h, icon, pageHead, panel, row, section, toast } from "../ui.js";
-import { page, slotKey, thumb } from "./common.js";
+import { clockProblem, page, serviceSummary, slotKey, thumb } from "./common.js";
 
 function nowShowing() {
   const r = store.draft.rotation;
@@ -54,11 +54,11 @@ function statusPanel() {
   const drift = clock.drift ?? [];
   const running = integrations.service.startsWith("state: running");
   return panel(
-    row(t("row.clock"), clock.online ? `${clock.host} · ${t("fact.firmware")} ${clock.base.appVer}` : { text: clock.error, warn: true },
+    row(t("row.clock"), clock.online ? `${clock.host} · ${t("fact.firmware")} ${clock.base.appVer}` : clockProblem(clock),
       [badge(clock.online ? t("badge.online") : t("badge.offline"), clock.online ? "ok" : "bad"),
         h("a", { class: "btn ghost", href: "#setup", title: t("overview.wizardHint") }, icon("wand-sparkles"), t("overview.wizard"))],
       { icon: "wifi" }),
-    row(t("row.service"), integrations.service.split("\n")[0],
+    row(t("row.service"), serviceSummary(integrations.service),
       badge(running ? t("badge.running") : t("badge.stopped"), running ? "ok" : "warn"), { icon: "power" }),
     row(t("int.hooks"), t("int.hooksHint"),
       h("a", { class: "link", href: "#integrations" },

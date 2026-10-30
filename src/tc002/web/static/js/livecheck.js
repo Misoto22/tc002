@@ -52,7 +52,7 @@ export function liveCheck(screen, options = null, { unsaved = false } = {}) {
     body.replaceChildren(status(null));
     const r = await check(screen, options, force);
     if (!card.isConnected && !force) return;
-    if (r.ok) { img.src = r.gif; tag.textContent = t("live.title"); }
+    if (r.ok) { img.src = r.gif; tag.textContent = t("live.justNow"); }
     body.replaceChildren(status(r), factList(r) ?? "");
   }
   run();

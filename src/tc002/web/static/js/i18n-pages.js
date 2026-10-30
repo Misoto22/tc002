@@ -2,6 +2,11 @@
 // the options added with them. Merged into the dictionaries by i18n.js.
 
 export const en = {
+  "service.running": "Running · started {n} times since login", "service.stopped": "Stopped",
+  "service.notInstalled": "Not installed", "service.other": "Unknown state",
+  "live.justNow": "Read just now", "detail.onClock": "On the clock",
+  "detail.firmwareDraws": "The clock's firmware draws this app itself; the picture is a close imitation.",
+  "clock.unreachable": "No answer from {host}: the clock may be unplugged, or its address changed. Hover for details.",
   "fact.symbol": "Symbol", "fact.price": "Price", "fact.change": "Change %", "fact.previous": "Previous close",
   "fact.title": "Title", "fact.points": "Points", "fact.comments": "Comments", "fact.reviews": "Reviews for you",
   "fact.mine": "Your open PRs", "fact.unread": "Unread notifications", "fact.account": "Signed in as",
@@ -47,6 +52,11 @@ export const en = {
 };
 
 export const zh = {
+  "service.running": "运行中 · 本次登录以来启动 {n} 次", "service.stopped": "已停止",
+  "service.notInstalled": "未安装", "service.other": "状态未知",
+  "live.justNow": "刚刚读取", "detail.onClock": "在时钟上",
+  "detail.firmwareDraws": "这个应用由时钟固件自己绘制，这里的画面是近似效果。",
+  "clock.unreachable": "{host} 没有响应：时钟可能断电了，或者 IP 地址变了。悬停可看详细原因。",
   "fact.symbol": "代码", "fact.price": "价格", "fact.change": "涨跌 %", "fact.previous": "昨收",
   "fact.title": "标题", "fact.points": "分数", "fact.comments": "评论数", "fact.reviews": "等你评审",
   "fact.mine": "你的 PR", "fact.unread": "未读通知", "fact.account": "登录账号",

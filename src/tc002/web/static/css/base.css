@@ -13,7 +13,7 @@ body {
 }
 
 button, input, select { font: inherit; color: inherit; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+:focus-visible { outline: var(--focus-w) solid var(--accent); outline-offset: var(--hairline); }
 
 kbd {
   padding: var(--space-1) var(--space-5);
@@ -108,7 +108,7 @@ kbd {
 .nav-item .icon { color: var(--muted); }
 .nav-item[aria-current="page"] .icon { color: var(--text-2); }
 .nav-item .count { margin-left: auto; color: var(--faint); font: var(--text-sm) var(--mono); }
-.nav-item .count.alert { min-width: 20px; padding: 0 var(--space-6); border-radius: var(--radius-pill); background: var(--accent); color: var(--on-accent); text-align: center; }
+.nav-item .count.alert { min-width: var(--control-xs-h); padding: 0 var(--space-6); border-radius: var(--radius-pill); background: var(--accent); color: var(--on-accent); text-align: center; }
 
 .sidebar-foot { display: grid; gap: var(--space-6); margin-top: auto; padding-top: var(--space-10); }
 .quick-btn { width: 100%; border: 0; background: none; font: inherit; cursor: pointer; }
@@ -170,7 +170,6 @@ main { position: relative; overflow-y: auto; outline: none; }
 
 .panel > :first-child { border-top-left-radius: inherit; border-top-right-radius: inherit; }
 .panel > :last-child { border-bottom-left-radius: inherit; border-bottom-right-radius: inherit; }
-.panel.focused { border-color: var(--border-accent); }
 
 .row {
   position: relative;
@@ -183,6 +182,10 @@ main { position: relative; overflow-y: auto; outline: none; }
 }
 
 .row + .row { border-top: var(--hairline) solid var(--border); }
+/* in a panel where some rows have an icon, the rows without one keep the same text edge */
+.panel:has(> .row > .row-icon, > .row > .app-icon) > .row:not(:has(> .row-icon, > .app-icon, > .led-thumb, > .handle)) {
+  padding-left: calc(var(--space-16) + var(--app-icon) + var(--space-14));
+}
 .row-text { flex: 1; min-width: 0; }
 .row-title { display: flex; align-items: center; gap: var(--space-8); color: var(--text); }
 .row-hint { color: var(--muted); font-size: var(--text-sm); }
@@ -207,7 +210,7 @@ main { position: relative; overflow-y: auto; outline: none; }
   flex: none;
   border-radius: var(--radius-pill);
   background: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  box-shadow: 0 0 0 var(--ring) var(--accent-soft);
 }
 
 .panel.slots.dirty { border-color: var(--border-accent); }
@@ -278,7 +281,7 @@ a.btn { text-decoration: none; }
 }
 
 .toggle[aria-checked="true"] { background: var(--primary); }
-.toggle[aria-checked="true"]::after { background: var(--knob-on); transform: translateX(12px); }
+.toggle[aria-checked="true"]::after { background: var(--knob-on); transform: translateX(calc(var(--toggle-w) - var(--knob-size) - var(--space-4))); }
 .toggle:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* Segmented control: equal cells and one thumb that slides under the chosen cell. While
@@ -304,7 +307,7 @@ a.btn { text-decoration: none; }
 .segmented-thumb {
   position: absolute;
   inset: var(--space-2) auto var(--space-2) var(--space-2);
-  width: calc((100% - 4px) / var(--n));
+  width: calc((100% - var(--space-4)) / var(--n));
   border-radius: var(--radius-sm);
   background: var(--panel-raised);
   box-shadow: var(--knob-shadow);
@@ -338,7 +341,7 @@ a.btn { text-decoration: none; }
   transition: border-color var(--fast), box-shadow var(--fast);
 }
 
-.field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.field:focus { border-color: var(--accent); box-shadow: 0 0 0 var(--ring) var(--accent-soft); }
 .field.num { width: var(--field-num-w); text-align: right; font-variant-numeric: tabular-nums; }
 .wide-field { width: var(--field-wide-w); }
 .seconds { display: flex; align-items: center; gap: var(--space-6); }
@@ -348,10 +351,10 @@ a.btn { text-decoration: none; }
 .select-caret { position: absolute; right: var(--space-8); top: var(--space-6); color: var(--muted); pointer-events: none; }
 
 .slider { display: flex; align-items: center; gap: var(--space-10); }
-.slider output { width: 28px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.slider output { width: var(--slider-out-w); color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
 
 input[type="range"] { width: var(--slider-w); height: var(--toggle-h); appearance: none; background: none; }
-input[type="range"]::-webkit-slider-runnable-track { height: 4px; border-radius: var(--radius-pill); background: var(--border-strong); }
+input[type="range"]::-webkit-slider-runnable-track { height: var(--track-h); border-radius: var(--radius-pill); background: var(--border-strong); }
 input[type="range"]::-webkit-slider-thumb {
   appearance: none;
   width: var(--knob-size);
@@ -363,9 +366,9 @@ input[type="range"]::-webkit-slider-thumb {
   transition: transform var(--fast);
 }
 input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.15); }
-input[type="range"]::-moz-range-track { height: 4px; border-radius: var(--radius-pill); background: var(--border-strong); }
-input[type="range"]::-moz-range-progress { height: 4px; border-radius: var(--radius-pill); background: var(--primary); }
-input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border: 0; border-radius: var(--radius-pill); background: var(--knob); }
+input[type="range"]::-moz-range-track { height: var(--track-h); border-radius: var(--radius-pill); background: var(--border-strong); }
+input[type="range"]::-moz-range-progress { height: var(--track-h); border-radius: var(--radius-pill); background: var(--primary); }
+input[type="range"]::-moz-range-thumb { width: var(--knob-size); height: var(--knob-size); border: 0; border-radius: var(--radius-pill); background: var(--knob); }
 
 /* a phone: a row's controls take a line of their own under its label (after the base
    rules above, which they override) */

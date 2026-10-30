@@ -25,7 +25,7 @@ function tester(screen) {
 const settingsLink = (screen) => h("a", { class: "btn ghost", href: `#rotation/${screen}` }, t("place.settings"));
 
 function secretRow(connection, field, status) {
-  const input = h("input", { class: "field", type: "password", autocomplete: "off",
+  const input = h("input", { class: "field wide-field", type: "password", autocomplete: "off",
     placeholder: t(`conn.${connection}.${field}Placeholder`), "aria-label": t(`conn.${connection}.${field}`) });
   const save = async (value) => {
     try {
@@ -40,7 +40,7 @@ function secretRow(connection, field, status) {
     status.saved ? badge(t("conn.inKeychain"), "ok") : null,
     input,
     button(t("conn.save"), () => save(input.value), { ico: "key-round" }),
-    status.saved ? button(t("conn.remove"), () => save(""), { kind: "ghost" }) : null,
+    status.saved ? button(t("conn.remove"), () => save(""), { ico: "x" }) : null,
   ], { icon: "key-round" });
 }
 
@@ -63,7 +63,7 @@ export function connections() {
     const test = tester(screen);
     return [
       section(t(`conn.${name}`), h("span", { class: "muted" }, `· ${t(`conn.${name}Hint`)}`), h("span", { class: "spacer" }),
-        settingsLink(screen), button(t("conn.try"), test.open, { kind: "ghost", ico: "play" })),
+        settingsLink(screen), button(t("conn.try"), test.open, { ico: "play" })),
       panel(...Object.entries(fields).map(([field, s]) => (s.secret ? secretRow(name, field, s) : plainRow(name, field)))),
       test.slot,
     ];
@@ -75,7 +75,7 @@ export function connections() {
     panel(...OPEN.map((screen) => {
       const test = tester(screen);
       return h("div", { class: "conn-item" }, row(appName(screen), t(`conn.about.${screen}`),
-        [settingsLink(screen), button(t("conn.try"), test.open, { kind: "ghost", ico: "play" })], { app: screen }), test.slot);
+        [settingsLink(screen), button(t("conn.try"), test.open, { ico: "play" })], { app: screen }), test.slot);
     })),
   );
 }

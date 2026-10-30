@@ -26,8 +26,9 @@ function placementPanel(kind, key) {
   const p = placementOf(kind, key);
   const { min, max } = store.state.slotSeconds;
   const choices = ["off", "kept", "rotate", "pin"].map((v) => [v, t(`place.${v}`)]);
+  const paused = p === "rotate" && store.draft.rotation.mode === "single";
   return panel(
-    row(t("place.title"), p === "rotate" && store.draft.rotation.mode === "single" ? t("place.pausedHint") : t(`place.${p}Hint`),
+    row(paused ? t("place.badgePaused") : t(`place.${p}`), paused ? t("place.pausedHint") : t(`place.${p}Hint`),
       segmented(choices, p, (v) => setPlacement(kind, key, v), t("place.title")),
       { icon: p === "pin" ? "pin" : "repeat", path: kind === "screen" ? "screens.enabled" : "device.keep_builtins" }),
     p === "rotate" ? row(t("place.seconds"), null,
@@ -60,11 +61,19 @@ export function appPage(key) {
   const live = store.state.clock.builtins?.[key];
   const settings = appSettings(key);
   const state = live ? (live.enabled ? t("builtins.onNow") : t("builtins.offNow")) : null;
+  const online = store.state.clock.online;
+  const card = h("div", { class: "live-card" },
+    h("figure", { class: "live-figure" }, thumb(key, false)),
+    h("div", { class: "live-side" },
+      h("div", { class: "live-head" }, h("span", { class: "live-title" }, t("detail.onClock"))),
+      h("div", { class: `live-status ${online ? "ok" : "bad"}` }, h("span", { class: `dot ${online ? (live?.enabled ? "ok" : "") : "bad"}` }),
+        h("strong", {}, online ? state ?? t("builtins.offNow") : t("badge.offline")),
+        live?.credentials ? h("span", { class: "muted" }, t("builtins.linked")) : null),
+      h("p", { class: "muted detail-about" }, t("detail.firmwareDraws"))));
   return page(
     breadcrumb("builtins", appName(key)),
-    head(key, [state, live?.credentials ? t("builtins.linked") : null].filter(Boolean).join(" · ")),
-    h("figure", { class: "detail-figure" }, thumb(key, false),
-      h("figcaption", { class: "muted" }, t("preview.approx"))),
+    head(key, t(`builtins.cat.${store.state.catalogue.find((a) => a.key === key).category}`)),
+    card,
     section(t("place.title")), placementPanel("builtin", key),
     settings.length ? section(t("builtins.settings")) : null,
     settings.length ? panel(...settings) : null,
