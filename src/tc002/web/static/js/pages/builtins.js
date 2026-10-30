@@ -16,13 +16,13 @@ function appItem(key) {
   if (live[key]?.credentials) hints.push(t("builtins.linked"));
   if (appSettings(key).length) hints.push(t("builtins.hasSettings"));
   const p = placementOf("builtin", key);
-  return h("a", {
-    class: `row library-row link-row${p === "off" ? "" : " on"}`, href, "data-path": "device.keep_builtins",
-    onFocus: () => setFocus({ type: "builtin", key }),
+  return h("div", {
+    class: `row library-row link-row${p === "off" ? "" : " on"}`, "data-path": "device.keep_builtins",
+    onFocusin: () => setFocus({ type: "builtin", key }),
   },
   thumb(key, false),
   h("div", { class: "row-text" },
-    h("div", { class: "row-title" }, appIcon(key, "sm"), appName(key)),
+    h("div", { class: "row-title" }, appIcon(key, "sm"), h("a", { class: "row-link", href }, appName(key))),
     h("div", { class: "row-hint" }, hints.join(" · "))),
   h("div", { class: "row-control" }, placementButton("builtin", key, href), icon("chevron-right", "icon faint")));
 }

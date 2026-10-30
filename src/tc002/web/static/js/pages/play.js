@@ -7,7 +7,7 @@ import { H, SCALE, W, draw } from "../led.js";
 import { setFocus, store } from "../store.js";
 import { TIMING } from "../timing.js";
 import { button, h, pageHead, toast } from "../ui.js";
-import { page } from "./common.js";
+import { offlineNotice, page } from "./common.js";
 
 const KEYS = { ArrowLeft: "left", ArrowRight: "right", ArrowUp: "up", ArrowDown: "down", " ": "space",
   a: "left", d: "right", w: "up", s: "down" };
@@ -84,8 +84,8 @@ export function play() {
   setFocus({ type: "rotation" });
   if (!playing) {
     return page(pageHead(t("page.play"), t("desc.play")),
-      h("div", { class: "games" }, ...Object.keys(store.state.games).map(card)),
-      store.state.clock.online ? null : h("p", { class: "muted" }, t("play.offline")));
+      store.state.clock.online ? null : offlineNotice(store.state.clock),
+      h("div", { class: "games" }, ...Object.keys(store.state.games).map(card)));
   }
   canvas = h("canvas", { class: "led-canvas game-canvas", width: W * SCALE, height: H * SCALE, "aria-label": t(`play.${playing}`) });
   scoreEl = h("div", { class: "game-score mono" });

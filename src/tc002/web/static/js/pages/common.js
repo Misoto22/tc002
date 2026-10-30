@@ -17,9 +17,26 @@ export function thumb(key, isScreen) {
   });
 }
 
+// Why the clock is not answering, in words: the technical reason stays in the tooltip.
+export function clockProblem(clock) {
+  return { text: t("clock.unreachable", { host: clock.host ?? "—" }), warn: true, title: clock.error ?? "" };
+}
+
 export function offlineNotice(clock) {
-  return panel(row(t("badge.offline"), { text: clock.error ?? "", warn: true },
+  return panel(row(t("badge.offline"), clockProblem(clock),
     [button(t("btn.retry"), load, { ico: "refresh-cw" })], { icon: "cloud-off" }));
 }
 
 export const page = (...children) => h("div", { class: "page" }, ...children);
+
+// The background service's launchctl status in words ("Running · started 4 times since
+// login"); the raw line stays in the tooltip for anyone debugging.
+export function serviceSummary(status) {
+  const line = status.split("\n")[0];
+  const runs = line.match(/runs: (\d+)/)?.[1];
+  let text = t("service.other");
+  if (line.startsWith("not installed")) text = t("service.notInstalled");
+  else if (line.includes("state: running")) text = t("service.running", { n: runs ?? "?" });
+  else if (line.includes("state:")) text = t("service.stopped");
+  return { text, title: line };
+}

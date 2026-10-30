@@ -34,18 +34,16 @@
   --panel: #fbfaf7;
   --panel-raised: #ffffff;
   --hover: #ebe8e0;
-  --active: #e4e0d6;
   --field: #efece5;
   --border: #e3dfd6;
   --border-strong: #d3cec2;
-  --track: #e9e5dc; /* empty part of bars and meters */
   --track-strong: #d9d5cb;
 
   /* text */
   --text: #22211f;
   --text-2: #3d3b37;
   --muted: #55534e;
-  --faint: #6f6c66;
+  --faint: #66625b; /* 5.1:1 on --field: the lightest text that still passes AA */
   --on-accent: #fbfaf7; /* text and glyphs on accent, ink or brand-coloured fills */
 
   /* ink: primary actions, selected states, data */
@@ -56,9 +54,7 @@
   /* the one accent, vermilion: what needs you */
   --accent: #c2482f;
   --accent-hover: #a93d27;
-  --accent-deep: #f3dfd9;
   --accent-soft: rgb(194 72 47 / 10%);
-  --accent-glow: rgb(194 72 47 / 25%);
   --accent-text: #a93d27;
 
   /* derived: tinted borders and the frosted bar background follow any palette */
@@ -69,14 +65,10 @@
   /* states */
   --green: #4f6b45;
   --green-soft: rgb(79 107 69 / 12%);
-  --yellow: #a86a12;
+  --yellow: #85600d; /* 4.8:1 on --field, for warning text */
   --yellow-soft: rgb(168 106 18 / 12%);
   --red: #b3261e;
   --red-soft: rgb(179 38 30 / 10%);
-  --state-working: var(--primary);
-  --state-waiting: var(--accent);
-  --state-done: var(--green);
-  --state-idle: var(--faint);
 
   /* agents, for limit bars (muted so the accent stays the loudest colour) */
   --agent-claude: #d97757;
@@ -94,14 +86,10 @@
   --stage-ring: #2c2a27;
   --stage-shine: rgb(255 255 255 / 4%);
   --stage-shadow: 0 10px 30px rgb(34 33 31 / 18%);
-  --led-panel: #0b0c0e;
-  --led-label: #9aa0aa;
 
   /* overlays and elevation */
   --backdrop: rgb(34 33 31 / 22%);
   --shadow: 0 12px 40px rgb(34 33 31 / 14%), 0 0 0 1px var(--border-strong);
-  --shadow-sm: 0 2px 8px rgb(34 33 31 / 8%);
-  --shadow-lift: 0 12px 28px rgb(34 33 31 / 14%), 0 0 0 1px var(--border);
 
   /* shape */
   --radius-xs: 4px;
@@ -109,7 +97,6 @@
   --radius: 8px;
   --radius-lg: 10px;
   --radius-xl: 12px;
-  --radius-2xl: 16px;
   --radius-pill: 999px;
 
   /* spacing: one scale for every padding, margin and gap (the number is its px) */
@@ -125,9 +112,7 @@
   --space-12: 12px;
   --space-14: 14px;
   --space-16: 16px;
-  --space-18: 18px;
   --space-20: 20px;
-  --space-22: 22px;
   --space-24: 24px;
   --space-28: 28px;
   --space-30: 30px;
@@ -136,7 +121,10 @@
   --space-40: 40px;
   --space-120: 120px; /* room under a page for the save bar */
   --hairline: 1px;
+  --hairline-mid: 1.5px; /* the outline of a chosen card */
   --hairline-strong: 2px;
+  --ring: 3px; /* the soft halo around a focused field or a status dot */
+  --focus-w: 2px; /* keyboard focus outline */
 
   /* layers, lowest to highest */
   --z-raised: 1;
@@ -154,7 +142,19 @@
   /* components */
   --brand-h: 40px;
   --brand-mark: 30px;
-  --dot: 6px;
+  --dot: 6px; /* status dots in rows and headers */
+  --dot-lg: 7px; /* status dots in badges and buttons */
+  --track-h: 4px; /* slider track */
+  --handle-w: 18px; /* drag handle of a rotation slot */
+  --check-size: 18px;
+  --badge-h: 22px;
+  --menu-item-h: 32px;
+  --palette-item-h: 36px;
+  --palette-input-h: 52px;
+  --palette-w: 620px;
+  --slider-out-w: 28px; /* the number beside a slider */
+  --field-label-max: 320px;
+  --city-region-max: 150px;
   --toggle-w: 30px;
   --toggle-h: 18px;
   --knob-size: 14px;
@@ -166,9 +166,7 @@
   --popover-min: 220px;
   --popover-max: 420px;
   --quick-min: 280px;
-  --quick-cell-min: 340px;
   --preset-min: 160px;
-  --card-min: 300px;
   --choice-min: 200px;
   --preview-min: 200px;
   --preview-max: 300px;
@@ -177,15 +175,20 @@
   --toast-max: 380px;
   --step-num: 24px;
   /* layout breakpoints (CSS variables cannot be used in @media, so these are written
-     there as literals and listed here as the reference): 640px, 760px, 900px */
+     there as literals and listed here as the reference): 640px, 760px (phone), 900px */
 
   /* sizes */
   --control-h: 32px;
   --control-sm-h: 26px;
+  --control-xs-h: 20px; /* icon buttons inside chips, colour swatches */
   --row-h: 56px;
   --icon: 16px;
   --icon-sm: 14px;
+  --icon-xs: 12px;
   --app-icon: 28px;
+  --app-icon-sm: 18px;
+  --app-icon-xs: 16px;
+  --app-icon-lg: 32px;
   --sidebar-w: 232px;
   --sidebar-rail-w: 56px;
   --topbar-h: 52px;
@@ -208,7 +211,6 @@
   --text-lg: 15px;
   --text-xl: 18px;
   --text-2xl: 28px;
-  --text-num: 36px; /* big figures: counts, percentages */
   --tracking-label: 0.12em; /* small upper-case labels */
 
   /* motion */
@@ -219,13 +221,10 @@
   --normal: 240ms;
   --slow: 320ms;
   --led-fade: 400ms;
-  --count: 650ms; /* numbers counting to a new value */
   --reveal: 560ms; /* a new theme spreading from the control that chose it */
-  --stagger: 25ms; /* delay between rows entering */
   --loop-spin: 0.9s; /* repeating animations */
   --loop-shimmer: 1.2s;
   --loop-pulse: 1.6s;
-  --loop-breath: 1.8s;
 }
 
 :root[data-theme="dark"] {
@@ -235,11 +234,9 @@
   --panel: #1f1e1b;
   --panel-raised: #252421;
   --hover: #2a2926;
-  --active: #302f2b;
   --field: #232220;
   --border: #2f2d29;
   --border-strong: #3c3a35;
-  --track: #2c2a27;
   --track-strong: #3c3a35;
   --text: #f1eee7;
   --text-2: #d6d2c8;
@@ -251,9 +248,7 @@
   --on-primary: #161513;
   --accent: #e5694e;
   --accent-hover: #ee8068;
-  --accent-deep: #4a2017;
   --accent-soft: rgb(229 105 78 / 16%);
-  --accent-glow: rgb(229 105 78 / 30%);
   --accent-text: #f08a70;
   --green: #9cbc8c;
   --green-soft: rgb(156 188 140 / 14%);
@@ -273,8 +268,6 @@
   --stage-shadow: 0 10px 30px rgb(0 0 0 / 40%);
   --backdrop: rgb(0 0 0 / 40%);
   --shadow: 0 12px 40px rgb(0 0 0 / 50%), 0 0 0 1px var(--border-strong);
-  --shadow-sm: 0 2px 8px rgb(0 0 0 / 35%);
-  --shadow-lift: 0 12px 28px rgb(0 0 0 / 45%), 0 0 0 1px var(--border-strong);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -285,11 +278,9 @@
     --panel: #1f1e1b;
     --panel-raised: #252421;
     --hover: #2a2926;
-    --active: #302f2b;
     --field: #232220;
     --border: #2f2d29;
     --border-strong: #3c3a35;
-    --track: #2c2a27;
     --track-strong: #3c3a35;
     --text: #f1eee7;
     --text-2: #d6d2c8;
@@ -301,9 +292,7 @@
     --on-primary: #161513;
     --accent: #e5694e;
     --accent-hover: #ee8068;
-    --accent-deep: #4a2017;
     --accent-soft: rgb(229 105 78 / 16%);
-    --accent-glow: rgb(229 105 78 / 30%);
     --accent-text: #f08a70;
     --green: #9cbc8c;
     --green-soft: rgb(156 188 140 / 14%);
@@ -323,7 +312,5 @@
     --stage-shadow: 0 10px 30px rgb(0 0 0 / 40%);
     --backdrop: rgb(0 0 0 / 40%);
     --shadow: 0 12px 40px rgb(0 0 0 / 50%), 0 0 0 1px var(--border-strong);
-    --shadow-sm: 0 2px 8px rgb(0 0 0 / 35%);
-    --shadow-lift: 0 12px 28px rgb(0 0 0 / 45%), 0 0 0 1px var(--border-strong);
   }
 }

@@ -78,8 +78,7 @@ export function placementButton(kind, key, href) {
   return h("button", {
     type: "button", class: `place-btn place-${p}`, "aria-haspopup": "menu",
     onClick: (e) => {
-      e.preventDefault(); // the button sits in a row that links to the item's page
-      e.stopPropagation();
+      e.stopPropagation(); // the row around it opens the item's page
       menu(e.currentTarget, [[t("place.title"), [
         ["off", t("place.off"), "power", null, { current: p === "off" }],
         ["kept", t("place.kept"), "layers", null, { current: p === "kept" }],

@@ -58,13 +58,13 @@ a.link:hover { color: var(--accent-text); }
 }
 
 .choice:hover { box-shadow: inset 0 0 0 1px var(--border-strong); }
-.choice[aria-pressed="true"] { box-shadow: inset 0 0 0 1.5px var(--primary); }
+.choice[aria-pressed="true"] { box-shadow: inset 0 0 0 var(--hairline-mid) var(--primary); }
 .choice-title { font-weight: 500; }
 .choice-icons { display: flex; gap: var(--space-4); }
 
-.field-label { display: grid; gap: var(--space-6); max-width: 320px; color: var(--muted); }
+.field-label { display: grid; gap: var(--space-6); max-width: var(--field-label-max); color: var(--muted); }
 .check { display: flex; align-items: flex-start; gap: var(--space-12); cursor: pointer; }
-.check input { width: 18px; height: 18px; margin-top: var(--space-2); accent-color: var(--primary); }
+.check input { width: var(--check-size); height: var(--check-size); margin-top: var(--space-2); accent-color: var(--primary); }
 .check > span { display: grid; }
 .check-title { font-weight: 500; }
 .step-actions { display: flex; justify-content: flex-end; padding-top: var(--space-24); }
@@ -133,7 +133,7 @@ a.link:hover { color: var(--accent-text); }
 }
 
 .screen-card:hover { box-shadow: inset 0 0 0 var(--hairline) var(--border-strong); }
-.screen-card[aria-checked="true"] { background: var(--accent-soft); box-shadow: inset 0 0 0 1.5px var(--border-accent); }
+.screen-card[aria-checked="true"] { background: var(--accent-soft); box-shadow: inset 0 0 0 var(--hairline-mid) var(--border-accent); }
 .screen-card .led-thumb { width: 100%; }
 .screen-card-title { display: flex; align-items: center; gap: var(--space-6); }
 .screen-card-check { margin-left: auto; color: var(--accent-text); }
@@ -159,12 +159,8 @@ a.link:hover { color: var(--accent-text); }
 
 /* ---- the library: a picture, a line, a switch; options open under a switched-on item -- */
 
-.library-item + .library-item { border-top: var(--hairline) solid var(--border); }
 .library-row { min-height: calc(var(--row-h) + var(--space-16)); }
 .library-row .row-title { flex-wrap: wrap; }
-.library-item:not(.on) .led-thumb { opacity: 0.55; filter: saturate(0.6); }
-.library-options { margin: 0 var(--space-16) var(--space-14) calc(var(--thumb-w) + var(--space-16) * 2); border-radius: var(--radius); background: var(--field); }
-.library-options .row { min-height: var(--control-h); }
 .tag { padding: 0 var(--space-6); border-radius: var(--radius-pill); background: var(--field); color: var(--muted); font-size: var(--text-xs); }
 .icon.faint { color: var(--faint); }
 
@@ -172,14 +168,11 @@ a.link:hover { color: var(--accent-text); }
 .example .led-thumb { width: var(--thumb-sm-w); }
 .example figcaption { color: var(--faint); font-size: var(--text-xs); }
 
-@media (max-width: 720px) {
-  .library-options { margin-left: var(--space-16); }
+@media (max-width: 760px) {
   .library-row, .slot { flex-wrap: wrap; }
   .library-row .led-thumb, .now-strip .led-thumb { width: 100%; }
-  .slot .led-thumb { width: calc(100% - 18px - var(--space-14)); } /* beside the drag handle */
+  .slot .led-thumb { width: calc(100% - var(--handle-w) - var(--space-14)); } /* beside the drag handle */
   .library-row .row-text, .slot .row-text { flex: 1 1 60%; }
-  .library-options .row { flex-wrap: wrap; }
-  .library-options .row-control { flex: 1 1 100%; flex-wrap: wrap; min-width: 0; }
   .zones { width: 100%; }
   .zones .field { flex: 1 1 100%; min-width: 0; }
 }
@@ -189,15 +182,14 @@ a.link:hover { color: var(--accent-text); }
 .breadcrumb { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-12); color: var(--muted); font-size: var(--text-sm); }
 .breadcrumb a { color: var(--muted); text-decoration: none; }
 .breadcrumb a:hover { color: var(--text); }
-.breadcrumb .icon { width: 14px; height: 14px; color: var(--faint); }
+.breadcrumb .icon { width: var(--icon-sm); height: var(--icon-sm); color: var(--faint); }
 .breadcrumb [aria-current] { color: var(--text-2); }
 .crumb { display: flex; align-items: center; gap: var(--space-4); }
 .crumb a { color: var(--muted); text-decoration: none; }
 .crumb a:hover { color: var(--text); }
-.crumb .icon { width: 14px; height: 14px; color: var(--faint); }
+.crumb .icon { width: var(--icon-sm); height: var(--icon-sm); color: var(--faint); }
 .detail-head h1 { display: flex; align-items: center; gap: var(--space-10); }
-.detail-figure { display: grid; justify-items: start; gap: var(--space-6); margin: 0 0 var(--space-8); }
-.detail-figure .led-thumb { width: min(100%, var(--detail-thumb-w)); }
+.detail-about { margin: 0; font-size: var(--text-sm); }
 .detail-note { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-6); margin-top: var(--space-16); }
 
 .live-card {
@@ -211,7 +203,7 @@ a.link:hover { color: var(--accent-text); }
 }
 
 .live-figure { display: grid; gap: var(--space-6); margin: 0; }
-.live-img { width: 100%; }
+.live-figure .led-thumb { width: 100%; }
 .live-tag { color: var(--muted); font-size: var(--text-xs); }
 .live-side { display: grid; align-content: start; gap: var(--space-10); min-width: 0; }
 .live-head { display: flex; align-items: center; gap: var(--space-8); }
@@ -228,8 +220,12 @@ a.link:hover { color: var(--accent-text); }
 .conn-item .conn-result:not(:empty) { padding: 0 var(--space-16) var(--space-14); }
 
 /* a list row that opens the item's page */
-.link-row { color: inherit; text-decoration: none; cursor: pointer; transition: background var(--fast); }
+.link-row { cursor: pointer; transition: background var(--fast); }
 .link-row:hover { background: var(--hover); }
+.row-link { color: inherit; text-decoration: none; }
+.row-link::after { content: ""; position: absolute; inset: 0; } /* the whole row opens the page */
+.link-row .place-btn { position: relative; z-index: var(--z-raised); }
+.link-row:focus-within { background: var(--hover); }
 .library .link-row + .link-row { border-top: var(--hairline) solid var(--border); }
 .link-row:not(.on) .led-thumb { opacity: 0.55; filter: saturate(0.6); }
 
@@ -250,19 +246,20 @@ a.link:hover { color: var(--accent-text); }
 }
 
 .place-btn:hover { box-shadow: inset 0 0 0 var(--hairline) var(--border-strong); }
-.place-btn .icon { width: 14px; height: 14px; color: var(--faint); }
-.place-dot { width: 7px; height: 7px; border-radius: var(--radius-pill); background: var(--track-strong); }
+.place-btn .icon { width: var(--icon-sm); height: var(--icon-sm); color: var(--faint); }
+.place-dot { width: var(--dot-lg); height: var(--dot-lg); border-radius: var(--radius-pill); background: var(--track-strong); }
 .place-rotate .place-dot { background: var(--green); }
 .place-pin .place-dot { background: var(--accent); }
 .place-kept .place-dot { background: var(--border-strong); }
 
 .picker { display: grid; gap: var(--space-8); width: min(100%, var(--picker-w)); }
+.picker .city-field, .picker .pick-input { width: 100%; }
 .pick-chips { display: flex; flex-wrap: wrap; gap: var(--space-6); }
 .pick-chips:empty { display: none; }
 .pick-chip { display: inline-flex; align-items: center; gap: var(--space-6); height: var(--control-sm-h); padding: 0 var(--space-4) 0 var(--space-10); border-radius: var(--radius-pill); background: var(--field); font-size: var(--text-sm); }
-.pick-x { display: grid; place-items: center; width: 20px; height: 20px; border: 0; border-radius: var(--radius-pill); background: none; color: var(--muted); cursor: pointer; }
+.pick-x { display: grid; place-items: center; width: var(--control-xs-h); height: var(--control-xs-h); border: 0; border-radius: var(--radius-pill); background: none; color: var(--muted); cursor: pointer; }
 .pick-x:hover { background: var(--hover); color: var(--text); }
-.pick-x .icon { width: 12px; height: 12px; }
+.pick-x .icon { width: var(--icon-xs); height: var(--icon-xs); }
 .pick-list { display: grid; width: var(--picker-w); max-height: var(--log-max-h); padding: var(--space-4); overflow: auto; }
 .pick-option { display: grid; gap: var(--space-2); padding: var(--space-6) var(--space-10); border: 0; border-radius: var(--radius-sm); background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .pick-option:hover, .pick-option:focus-visible { background: var(--hover); }

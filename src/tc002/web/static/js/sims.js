@@ -84,16 +84,14 @@ function timer(settings, apps, now, key) {
   return f;
 }
 
-function nameTile(label) {
-  const f = new Frame();
-  f.centred(5, label.slice(0, 12), c("soft_white"), false);
-  return f;
-}
+// The built-in apps drawn here because their picture follows unsaved settings (format,
+// city, timer lengths). Every other app's picture comes from the server
+// (/api/preview/builtin-<key>.gif), the same one its list row shows.
+export const SIMULATED = new Set(["clock", "weather", "busy", "tomato"]);
 
-// One frame of built-in app `key` at time `now` (ms).
+// One frame of built-in app `key` (one of SIMULATED) at time `now` (ms).
 export function simulate(key, settings, apps, now) {
   if (key === "clock") return clock(settings, apps, now);
   if (key === "weather") return weather(settings, apps, now);
-  if (key === "busy" || key === "tomato") return timer(settings, apps, now, key);
-  return nameTile(key.toUpperCase());
+  return timer(settings, apps, now, key);
 }

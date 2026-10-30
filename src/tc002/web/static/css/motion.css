@@ -4,13 +4,13 @@
 @keyframes fade-in { from { opacity: 0; } }
 @keyframes pop-in { from { opacity: 0; transform: translateY(-4px) scale(0.98); } }
 @keyframes palette-in { from { opacity: 0; transform: translateY(-8px) scale(0.98); } }
-@keyframes toast-in { from { opacity: 0; transform: translateY(10px) scale(0.98); } }
-@keyframes toast-out { to { opacity: 0; transform: translateX(16px); } }
-@keyframes page-in { from { opacity: 0; transform: translateY(6px); } }
+@keyframes toast-in { from { opacity: 0; transform: translateY(var(--space-10)) scale(0.98); } }
+@keyframes toast-out { to { opacity: 0; transform: translateX(var(--space-16)); } }
+@keyframes page-in { from { opacity: 0; transform: translateY(var(--space-6)); } }
 @keyframes shimmer { to { background-position: -200% 0; } }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes pulse { 50% { opacity: 0.35; } }
-@keyframes live-ring { 70% { box-shadow: 0 0 0 6px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+@keyframes live-ring { 70% { box-shadow: 0 0 0 var(--space-6) transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
 @keyframes reveal {
   from { clip-path: circle(0 at var(--reveal-x) var(--reveal-y)); }
   to { clip-path: circle(150vmax at var(--reveal-x) var(--reveal-y)); }

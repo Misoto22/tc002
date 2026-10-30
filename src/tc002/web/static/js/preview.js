@@ -4,7 +4,7 @@
 import { appName, t } from "./i18n.js";
 import { H, SCALE, W, draw } from "./led.js";
 import { screenPreview } from "./media.js";
-import { simulate } from "./sims.js";
+import { SIMULATED, simulate } from "./sims.js";
 import { setLive, store, subscribe } from "./store.js";
 import { appIcon, h, icon, ms, toggle, token } from "./ui.js";
 import { TIMING } from "./timing.js";
@@ -39,18 +39,23 @@ function schedule() {
   return r.mode === "single" && r.show ? [{ ...r.show, seconds: Infinity }] : r.slots;
 }
 
+// A built-in app: drawn here when its picture follows the draft, else the server's.
+const builtinSource = (key) => (SIMULATED.has(key)
+  ? { kind: "sim", key, label: appName(key) }
+  : { kind: "gif", src: `/api/preview/builtin-${key}.gif`, key, label: appName(key), approx: true });
+
 // What to draw now: { kind: "sim" | "gif", key, src, label }.
 function source() {
   const f = store.focus;
   if (f.type === "message") return { kind: "gif", src: f.src, key: null, label: t("preview.message") };
   if (f.type === "screen") return { kind: "gif", src: screenPreview(f.key), key: f.key, label: appName(f.key) };
-  if (f.type === "builtin") return { kind: "sim", key: f.key, label: appName(f.key) };
+  if (f.type === "builtin") return builtinSource(f.key);
   const slots = schedule();
   if (!slots.length) return { kind: "sim", key: "clock", label: appName("clock") };
   const slot = slots[cycle.index % slots.length];
   return slot.screen
     ? { kind: "gif", src: screenPreview(slot.screen), key: slot.screen, label: appName(slot.screen) }
-    : { kind: "sim", key: slot.builtin, label: appName(slot.builtin) };
+    : builtinSource(slot.builtin);
 }
 
 function tick() {
@@ -74,7 +79,7 @@ function tick() {
     els.title.replaceChildren(...[ // native replaceChildren would print a null as "null"
       src.key ? appIcon(src.key, "sm") : icon("message-square-text"),
       h("span", {}, src.label),
-      src.kind === "sim" ? h("span", { class: "muted" }, `${t("preview.approx")}${src.key === "weather" ? ` · ${t("preview.sample")}` : ""}`) : null,
+      src.kind === "sim" || src.approx ? h("span", { class: "muted" }, `${t("preview.approx")}${src.key === "weather" ? ` · ${t("preview.sample")}` : ""}`) : null,
     ].filter(Boolean));
   }
   if (src.kind === "gif") {

@@ -12,13 +12,13 @@ import { thumb } from "./common.js";
 function screenRow(name) {
   const p = placementOf("screen", name);
   const href = `#rotation/${name}`;
-  return h("a", {
-    class: `row library-row link-row${p === "off" ? "" : " on"}`, href, "data-path": "screens.enabled",
-    onFocus: () => setFocus({ type: "screen", key: name }),
+  return h("div", {
+    class: `row library-row link-row${p === "off" ? "" : " on"}`, "data-path": "screens.enabled",
+    onFocusin: () => setFocus({ type: "screen", key: name }),
   },
   thumb(name, true),
   h("div", { class: "row-text" },
-    h("div", { class: "row-title" }, appIcon(name, "sm"), appName(name),
+    h("div", { class: "row-title" }, appIcon(name, "sm"), h("a", { class: "row-link", href }, appName(name)),
       store.state.networked.includes(name) ? h("span", { class: "tag" }, t("library.networked")) : null),
     h("div", { class: "row-hint" }, t(`screen.${name}`))),
   h("div", { class: "row-control" }, placementButton("screen", name, href), icon("chevron-right", "icon faint")));

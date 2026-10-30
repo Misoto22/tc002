@@ -246,3 +246,24 @@ again on every request (about 0.4 s each).
 6. Social apps' previews draw each service's mark as pixel art.
 7. Pages draw at once with a 120 ms fade; fixed previews are drawn once per LED theme
    and warmed at start-up.
+
+## 2026-10-30 — Hold the design system with tests
+
+**Problem.** After three rounds of features the UI had drifted: 47 sizes written as
+literals, 21 tokens and 5 classes nobody used, a 720px breakpoint beside the listed
+ones, warning text at 4.0:1 contrast, rows whose text started at different edges,
+buttons of four kinds for the same weight of action, a control inside a link, raw
+`urlopen` errors and launchctl lines shown to users, and the device bar drawing social
+apps as initials while their rows drew their marks.
+
+**Choices.**
+1. `docs/design-system.md` states the tokens, components, layout and contrast rules;
+   `tests/test_design_system.py` fails on a literal colour or size, an unknown or unused
+   token, an unlisted breakpoint, or text under 4.5:1 on any surface in either theme.
+2. Rows without an icon line up with rows that have one; list rows link by their title,
+   stretched over the row, with the placement button beside it.
+3. One button hierarchy: a primary per area, outlined buttons with icons for other
+   actions, ghost for text-like links and heading actions.
+4. Errors say what to check; the technical reason moves to the tooltip.
+5. Built-in apps the browser does not simulate show the server's picture in the device
+   bar too, so each app has one picture everywhere.

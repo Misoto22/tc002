@@ -149,7 +149,7 @@ export function row(title, hint, controls = [], { path, icon: ico, app, onFocus 
     app ? appIcon(app) : ico && h("span", { class: "row-icon" }, icon(ico)),
     h("div", { class: "row-text" },
       h("div", { class: "row-title" }, title),
-      hint && h("div", { class: `row-hint${hint.warn ? " warn" : ""}` }, hint.text ?? hint)),
+      hint && h("div", { class: `row-hint${hint.warn ? " warn" : ""}`, title: hint.title }, hint.text ?? hint)),
     h("div", { class: "row-control" }, ...[controls].flat()));
 }
 
@@ -249,24 +249,4 @@ export function transition(update, finished) {
   vt.ready.catch(() => {}); // a skipped transition rejects ready; the update still ran
   vt.finished.finally(() => finished?.());
   setTimeout(() => { if (!done) { vt.skipTransition(); run(); } }, TIMING.transitionStartMs);
-}
-
-// Count a number up (or down) to `to` from what the element with this `key` showed last
-// time; the first showing counts up from zero. Text only: no layout work per frame.
-const shown = new Map();
-export function countUp(el, to, key, format = (n) => String(Math.round(n))) {
-  const from = shown.get(key) ?? 0;
-  shown.set(key, to);
-  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (from === to || reduce) { el.textContent = format(to); return el; }
-  const start = performance.now();
-  const span = ms("--count");
-  const step = (now) => {
-    const k = Math.min(1, (now - start) / span);
-    el.textContent = format(from + (to - from) * (1 - (1 - k) ** 3));
-    if (k < 1) requestAnimationFrame(step);
-  };
-  el.textContent = format(from);
-  requestAnimationFrame(step);
-  return el;
 }
