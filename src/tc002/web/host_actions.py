@@ -1,39 +1,32 @@
-"""What the Integrations page can do to this Mac: connect Claude Code, run the service,
-show its log, reveal a file in Finder. Each action is one of a fixed set."""
+"""What the Integrations page can do to this Mac: connect Claude Code, run the service
+(both through the application layer), show its log, reveal a file in Finder. Each action
+is one of a fixed set."""
 
 import subprocess
 from collections import deque
 
-from ..integrations import claude_hooks, executable, launchd, statusline
+from ..integrations import launchd
 
 LOG_LINES = 200
 
 
-def _connect():
-    exe = executable()
-    return {"hooks": claude_hooks.install(exe), "statusline": statusline.install(exe)}
+def _installed(done):
+    return {"installed": done["installed"], "service": done["status"]}
 
 
-def _disconnect():
-    exe = executable()
-    return {"hooks": claude_hooks.uninstall(exe), "statusline": statusline.uninstall(exe)}
-
-
+# the Integrations page's buttons: action -> App method
 ACTIONS = {
-    "connect-claude": _connect,
-    "disconnect-claude": _disconnect,
-    "install-service": lambda: {
-        "installed": launchd.install(executable()),
-        "service": launchd.status(),
-    },
-    "restart-service": lambda: {"restarted": launchd.restart(), "service": launchd.status()},
+    "connect-claude": lambda app: app.connect_claude(),
+    "disconnect-claude": lambda app: app.disconnect_claude(),
+    "install-service": lambda app: _installed(app.service_install()),
+    "restart-service": lambda app: app.service_restart(),
 }
 
 
-def run(action):
+def run(app, action):
     if action not in ACTIONS:
         raise KeyError(action)
-    return ACTIONS[action]() or {}
+    return ACTIONS[action](app) or {}
 
 
 def log_tail(lines=LOG_LINES):

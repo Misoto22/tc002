@@ -50,6 +50,8 @@ def build():
     )
     ui.add_argument("--no-open", action="store_true", help="do not open a browser")
 
+    sub.add_parser("mcp", help="serve tc002 to AI agents over MCP (stdio), for `claude mcp add`")
+
     sub.add_parser("info", help="clock firmware, Wi-Fi and global settings")
     sub.add_parser("apps", help="list custom apps on the clock")
     rm = sub.add_parser("rm", help="remove custom apps (all when none named)")

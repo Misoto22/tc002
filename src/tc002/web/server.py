@@ -16,9 +16,11 @@ from importlib import resources
 from urllib.parse import parse_qsl, urlsplit
 
 from .. import config
+from ..app import AppError
 from ..device import DeviceError
 from . import previews
 from .api import Api, ApiError
+from .errors import app_status
 
 MAX_BODY = 256 * 1024
 LOOPBACK = "127.0.0.1"  # the UI never listens beyond this machine
@@ -168,6 +170,8 @@ def make_handler(api, token, port):
                 # launchctl / open failing: say what it printed, not a dropped connection
                 stderr = (getattr(exc, "stderr", None) or "").strip()
                 self._fail(500, "Command failed", f"{exc}: {stderr}" if stderr else str(exc))
+            except AppError as exc:
+                self._fail(app_status(exc), exc.title, exc.detail, exc.errors)
             except (OSError, RuntimeError, ValueError) as exc:
                 self._fail(500, "Request failed", str(exc))
 

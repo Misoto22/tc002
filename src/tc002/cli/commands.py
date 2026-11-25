@@ -1,22 +1,17 @@
-"""Command handlers. Each takes the parsed args plus a context and returns an exit code."""
+"""Command handlers. Each takes the parsed args plus a context, calls the application
+layer (`tc002.app.App`) and prints its result; it returns an exit code."""
 
 import json
 import time
 from dataclasses import dataclass
 
-from .. import builtins, config, sync
-from ..device import MIN_FIRMWARE, Device, DeviceError, firmware
-from ..integrations import claude_hooks, executable, launchd, statusline
-from ..runtime import sessions, watcher
-from ..runtime.output import Output
-from ..screens import message
+from .. import config
+from ..app import App
 
 
 @dataclass
 class Context:
-    settings: config.Settings
-    device: Device | None  # None in --preview mode
-    out: Output
+    app: App
 
 
 def _say(ok, label, detail=""):
@@ -29,37 +24,17 @@ def _say(ok, label, detail=""):
 
 
 def text(args, ctx):
-    segments = message.text_animation(args.text, args.color)
-    if len(segments) == 1:
-        ctx.out.show(args.app, segments[0])
-    else:  # long text: segments back to back, then leave the clock clean
-        for _ in range(max(1, args.passes)):
-            for seg in segments:
-                ctx.out.show(args.app, seg)
-                if ctx.device is None:
-                    break
-                time.sleep(seg.duration_s())
-        if ctx.device is not None:
-            ctx.out.remove(args.app)
-            return 0
-    if args.show and ctx.device is not None:
-        ctx.device.switch_custom(args.app)
+    ctx.app.send_text(args.text, args.color, args.app, args.passes, args.show)
     return 0
 
 
 def alert(args, ctx):
-    ctx.out.show(args.app, message.alert_animation(args.text, args.kind, args.color))
-    if ctx.device is None:
-        return 0
-    ctx.device.switch_custom(args.app)
-    if not args.keep:
-        time.sleep(args.seconds)
-        ctx.out.remove(args.app)
+    ctx.app.send_alert(args.text, args.kind, args.color, args.app, args.seconds, args.keep)
     return 0
 
 
 def watch(args, ctx):
-    watcher.watch(ctx.device, ctx.settings, ctx.out.preview_dir, once=args.once)
+    ctx.app.watch(once=args.once)
     return 0
 
 
@@ -67,18 +42,17 @@ def watch(args, ctx):
 
 
 def info(args, ctx):
-    print(json.dumps(ctx.device.info(), indent=2, ensure_ascii=False))
+    print(json.dumps(ctx.app.info(), indent=2, ensure_ascii=False))
     return 0
 
 
 def apps(args, ctx):
-    print("\n".join(ctx.device.apps()) or "(none)")
+    print("\n".join(ctx.app.custom_apps()) or "(none)")
     return 0
 
 
 def rm(args, ctx):
-    for app in args.apps or ctx.device.apps():
-        ctx.device.remove(app)
+    for app in ctx.app.remove_apps(args.apps):
         print(f"removed {app}")
     return 0
 
@@ -89,24 +63,21 @@ def layout(args, ctx):
 
 
 def show_layout(ctx):
-    dev, settings = ctx.device, ctx.settings
-    snap = builtins.snapshot(dev)
-    for category, saved in snap.items():
+    layout = ctx.app.layout()
+    for category, saved in layout["categories"].items():
         on = [k for k, v in saved["enable"].items() if v]
         print(f"{category:9} on: {', '.join(on) or '-'}")
-    print(f"carousel: {dev.config().get('carouselSpeed')}s (0 = off)")
-    print(f"tc002.toml keeps: {', '.join(settings.keep_builtins) or '-'}")
+    print(f"carousel: {layout['carouselSpeed']}s (0 = off)")
+    print(f"tc002.toml keeps: {', '.join(layout['keepBuiltins']) or '-'}")
 
 
 def apply_layout(ctx):
     """Make the clock match tc002.toml (saving its original layout first)."""
-    changes = sync.apply(ctx.device, ctx.settings, config.STATE_DIR)
-    print("\n".join(changes) or "the clock already matches tc002.toml")
+    print("\n".join(ctx.app.apply()) or "the clock already matches tc002.toml")
 
 
 def restore_layout(ctx):
-    path = sync.restore(ctx.device, config.STATE_DIR)
-    print(f"restored built-in apps and settings from {path}")
+    print(f"restored built-in apps and settings from {ctx.app.restore()}")
 
 
 # -- host integration --------------------------------------------------------------
@@ -114,64 +85,60 @@ def restore_layout(ctx):
 
 def service(args, ctx):
     if args.action == "install":
-        launchd.install(executable())
-        print(f"installed {launchd.PLIST}")
+        print(f"installed {ctx.app.service_install()['plist']}")
     elif args.action == "uninstall":
-        launchd.uninstall()
-        print(f"removed {launchd.PLIST}")
-    print(launchd.status())
+        print(f"removed {ctx.app.service_uninstall()['plist']}")
+    print(ctx.app.service_status())
     return 0
 
 
 def hooks(args, ctx):
-    exe = executable()
     if args.action == "install":
-        _connect_claude(exe)
+        _print_connected(ctx.app.connect_claude())
     elif args.action == "uninstall":
-        _disconnect_claude(exe)
-    for event, present in claude_hooks.status(exe).items():
+        _print_disconnected(ctx.app.disconnect_claude())
+    state = ctx.app.claude_status()
+    for event, present in state["hooks"].items():
         print(f"  {event:17} {'installed' if present else '-'}")
-    print(f"  {'status line':17} {'wrapped' if statusline.status(exe) else '-'}")
+    print(f"  {'status line':17} {'wrapped' if state['statusline'] else '-'}")
     return 0
 
 
-def _connect_claude(exe):
-    print("hooks added: " + (", ".join(claude_hooks.install(exe)) or "already installed"))
-    wrapped = statusline.install(exe)
+def _print_connected(done):
+    print("hooks added: " + (", ".join(done["hooks"]) or "already installed"))
+    wrapped = done["statusline"]
     print("status line: " + ("now saves plan limits" if wrapped else "already saves plan limits"))
 
 
-def _disconnect_claude(exe):
-    print("hooks removed: " + (", ".join(claude_hooks.uninstall(exe)) or "none were installed"))
-    if statusline.uninstall(exe):
+def _print_disconnected(done):
+    print("hooks removed: " + (", ".join(done["hooks"]) or "none were installed"))
+    if done["statusline"]:
         print("status line: restored")
 
 
 def install(args, ctx):
-    exe = executable()
-    _connect_claude(exe)
-    if ctx.device is None:
+    done = ctx.app.install()
+    _print_connected(done["claude"])
+    layout = done["layout"]
+    if layout["applied"]:
+        print("\n".join(layout["changes"]) or "the clock already matches tc002.toml")
+    elif not ctx.app.host:
         print("layout not applied: no clock configured; run `tc002 setup` first")
     else:
-        try:
-            apply_layout(ctx)
-        except DeviceError as exc:
-            print(f"layout not applied, clock unreachable ({exc}); run `tc002 layout apply` later")
-    launchd.install(exe)
-    print(f"service: {launchd.status()}")
+        error = layout["error"]
+        print(f"layout not applied, clock unreachable ({error}); run `tc002 layout apply` later")
+    print(f"service: {done['service']}")
     return 0
 
 
 def uninstall(args, ctx):
-    launchd.uninstall()
+    done = ctx.app.uninstall()
     print("service removed")
-    _disconnect_claude(executable())
-    if ctx.device is None:
-        return 0
-    try:
-        restore_layout(ctx)
-    except (DeviceError, FileNotFoundError) as exc:
-        print(f"built-in apps not restored: {exc}")
+    _print_disconnected(done["claude"])
+    if done.get("error"):
+        print(f"built-in apps not restored: {done['error']}")
+    elif done["restored"]:
+        print(f"restored built-in apps and settings from {done['restored']}")
     return 0
 
 
@@ -189,72 +156,47 @@ def ui(args, ctx):
     return 0
 
 
+def mcp(args, ctx):
+    from ..mcp import server
+
+    server.serve(ctx.app)
+    return 0
+
+
 def doctor(args, ctx):
-    healthy = _say(True, "config", ctx.settings.source)
-    if ctx.device is None:
-        healthy &= _say(False, "clock", "no host: run `tc002 setup --host <IP>`")
-    else:
-        try:
-            base = ctx.device.info()["base"]
-            fw = firmware(base.get("appVer"))
-            _say(True, "clock", f"{ctx.device.base} firmware {base.get('appVer')}")
-            healthy &= _say(
-                fw >= MIN_FIRMWARE or None,
-                "firmware",
-                "screen switching supported" if fw >= MIN_FIRMWARE else "update for switching",
-            )
-            _say(True, "custom apps", ", ".join(ctx.device.apps()) or "(none)")
-        except DeviceError as exc:
-            healthy &= _say(False, "clock", str(exc))
-    status = launchd.status()
-    healthy &= _say(status.startswith("state: running") or None, "service", status.splitlines()[0])
-    try:
-        hook_state = claude_hooks.status(executable())
-        healthy &= _say(all(hook_state.values()) or None, "hooks", json.dumps(hook_state))
-    except RuntimeError as exc:
-        healthy &= _say(None, "hooks", str(exc))
-    healthy &= _say(statusline.status(executable()) or None, "status line", "saves plan limits")
-    known = sessions.load()
-    if known:
-        latest = f"{known[0].project} {known[0].state} {time.time() - known[0].since:.0f}s ago"
-        _say(True, "sessions", f"{len(known)} known, latest: {latest}")
-    else:
-        _say(True, "sessions", "none yet")
+    healthy = True
+    for check in ctx.app.checks():
+        healthy &= _say(check["ok"], check["name"], check["detail"])
     return 0 if healthy else 1
 
 
 def focus(args, ctx):
     """Start or stop the focus timer; the focus screen shows it (enable it to see it)."""
-    from ..runtime import focus as timer
-    from ..screens import build
-
     if args.action == "stop":
-        timer.stop()
+        ctx.app.focus_stop()
         print("focus timer stopped")
         return 0
-    screen = build("focus", ctx.settings)
-    minutes = args.minutes or screen.minutes
-    timer.start(minutes, screen.break_minutes)
-    print(f"focus: {minutes} min, then a {screen.break_minutes} min break")
-    if "focus" not in ctx.settings.screens:
+    done = ctx.app.focus_start(args.minutes)
+    print(f"focus: {done['minutes']} min, then a {done['break']} min break")
+    if not done["screenEnabled"]:
         print("note: the focus screen is not enabled; turn it on in `tc002 ui` → Rotation")
     return 0
 
 
 def display(args, ctx):
     """Screen off now / back on, or show whether it is dark and why."""
-    from .. import night
 
     def at(epoch):
         return time.strftime("%H:%M", time.localtime(epoch))
 
     if args.action == "off":
-        until = night.until_morning(ctx.settings) if args.until_morning else None
-        night.turn_off(ctx.device, ctx.settings, until)
+        st = ctx.app.screen_off(until_morning=args.until_morning)
+        until = st["until"] if args.until_morning else None
         print(f"screen off until {at(until) if until else 'you turn it on'}")
     elif args.action == "on":
-        night.turn_on(ctx.device, ctx.settings)
-    st = night.status(ctx.settings)
+        st = ctx.app.screen_on()
+    else:
+        st = ctx.app.night_status()
     sched = st["schedule"]
     why = {"off": "screen off", "on": "kept on", "schedule": "night schedule"}.get(st["why"])
     line = "dark" if st["dark"] else "on"

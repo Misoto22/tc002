@@ -114,7 +114,7 @@ class ScreenActions:
         """Ask the clock for its firmware and network now, and time the answer."""
         started = time.monotonic()
         try:
-            base = self._device().base_info()
+            base = self.app.base_info()
         except DeviceError as exc:
             ms = round((time.monotonic() - started) * 1000)
             return {"ok": False, "error": str(exc)[:200], "ms": ms}

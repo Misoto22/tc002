@@ -463,12 +463,13 @@ def test_a_failing_launchctl_is_a_problem_not_a_dropped_connection(ui, monkeypat
 
 
 def test_install_service_answers_with_an_object(monkeypatch):
+    from tc002 import app as app_layer
     from tc002.web import host_actions
 
     monkeypatch.setattr(launchd, "install", lambda exe: exe)
     monkeypatch.setattr(launchd, "status", lambda: "state: running")
-    monkeypatch.setattr(host_actions, "executable", lambda: "/bin/tc002")
-    assert host_actions.run("install-service") == {
+    monkeypatch.setattr(app_layer, "executable", lambda: "/bin/tc002")
+    assert host_actions.run(app_layer.App(), "install-service") == {
         "installed": "/bin/tc002",
         "service": "state: running",
     }

@@ -6,13 +6,13 @@ import sys
 from pathlib import Path
 
 from .. import config
-from ..device import Device, DeviceError
+from ..app import App, AppError
+from ..device import DeviceError
 from ..runtime import sessions
-from ..runtime.output import Output
 from . import commands, parser
 
 # Commands that never talk to the clock.
-LOCAL_ONLY = {"setup", "service", "hooks", "ui", "focus"}
+LOCAL_ONLY = {"setup", "service", "hooks", "ui", "focus", "mcp"}
 
 
 def _from_claude(args):
@@ -50,7 +50,7 @@ def main(argv=None):
         return 0
 
     try:
-        settings = config.load(args.config)
+        config.load(args.config)  # fail early on a broken tc002.toml
     except config.ConfigError as exc:
         sys.exit(f"tc002: {exc}")
 
@@ -58,13 +58,13 @@ def main(argv=None):
     needs_clock = args.cmd not in LOCAL_ONLY and args.cmd != "doctor"
     if args.preview is None and host is None and needs_clock:
         sys.exit("tc002: no clock configured; run `tc002 setup --host <IP>` or set TC002_HOST")
-    device = None if (args.preview or host is None) else Device(host)
-    ctx = commands.Context(settings, device, Output(device, args.preview))
-
     if args.preview and args.cmd not in {"text", "alert", "watch"}:
         sys.exit(f"tc002: --preview only applies to text, alert and watch, not {args.cmd}")
+    app = App(host, args.config or config.path(), preview=args.preview)
     try:
-        return getattr(commands, args.cmd)(args, ctx)
+        return getattr(commands, args.cmd)(args, commands.Context(app))
+    except AppError as exc:
+        sys.exit(f"tc002: {exc.detail}")
     except DeviceError as exc:
         sys.exit(f"tc002: {exc}")
     except (RuntimeError, FileNotFoundError, ValueError) as exc:

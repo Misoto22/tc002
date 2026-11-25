@@ -5,6 +5,9 @@
 ```text
 cli/            parser.py (commands, help)  ·  commands.py (handlers)  ·  __init__ (dispatch, errors)
 web/            server.py (HTTP, host/token guard)  ·  api.py (state, save, actions)  ·  static/ (UI)
+mcp/            server.py (JSON-RPC 2.0 over stdio)  ·  tools.py (tools, schemas, hints)
+  │             front ends: turn input into an App call, its result into output
+app/            App (every use case)  ·  errors.py (typed errors)  ·  state.py (clock state, drift)
   │
 integrations/   launchd.py (background service)  ·  claude_hooks.py, statusline.py (~/.claude/settings.json)
 runtime/        watcher.py (threads, signals)  ·  rotation.py (what is on screen)
@@ -23,6 +26,8 @@ builtins.py (built-in app catalogue)  ·  device.py (HTTP client)
 
 | Module | Owns |
 |---|---|
+| `app/` | Every use case (status, show, messages, display settings, save → apply → restart, night, focus, service, Claude hooks) as `App` methods returning plain dicts; raises `NotConfigured`, `InvalidRequest`/`InvalidSettings`, `ClockUnreachable`. The CLI, web API and MCP server call only this |
+| `mcp/` | `tc002 mcp`: a stdlib MCP server on stdio; each tool maps to one `App` method, read-only tools apart from changing ones (`readOnlyHint`/`destructiveHint`) |
 | `device.py` | Every HTTP call to the clock, proxy bypass, retry, error mapping |
 | `builtins.py` | Built-in app names → category/index, enabling/disabling them, the saved original layout |
 | `config.py` | Parsing and validating `tc002.toml`; machine-local state in `~/.config/tc002/local.json` |
@@ -31,7 +36,7 @@ builtins.py (built-in app catalogue)  ·  device.py (HTTP client)
 | `sync.py` | The only code that pushes `tc002.toml` to the clock; saves and restores the original layout |
 | `night.py` | The screen fully dark: the `[night]` schedule, "screen off/on now", the black `night` app, and `Watch`, which pauses the service while it is dark |
 | `tz.py` | The clock following this Mac's time zone: the zone's POSIX rule (from /etc/localtime) sent as `timezoneEx`, and `Follow`, which the service runs to send it again when the Mac moves |
-| `web/` | `tc002 ui`: a stdlib HTTP server bound to 127.0.0.1 and a no-build ES-module front end |
+| `web/` | `tc002 ui`: a stdlib HTTP server bound to 127.0.0.1 and a no-build ES-module front end; `api.py` checks request shapes and calls `App`, `errors.py` maps App errors to HTTP statuses |
 | `render/` | Pixels only: no I/O except writing bytes |
 | `screens/` | One class per live screen: `APP`, `TICK`, `sample() → state`, `render(state) → Animation` |
 | `runtime/output.py` | Sending an `Animation`; skips unchanged ones; logs an outage once |
@@ -104,6 +109,17 @@ builtins.py (built-in app catalogue)  ·  device.py (HTTP client)
 | `POST /api/night` | Screen off now (`{"off": true, "until": "morning" \| null}`) or back on |
 | `POST /api/show` · `/api/message` | Switch the clock now · play a text or alert, then clear it |
 
-Errors are RFC 9457 `application/problem+json`. Requests must name this server in `Host`
+Application errors map to HTTP as `NotConfigured` → 409, `InvalidRequest`/`InvalidSettings`
+→ 422, `ClockUnreachable` → 502 (404 when the clock has no such app). Errors are RFC 9457 `application/problem+json`. Requests must name this server in `Host`
 (DNS-rebinding guard); writes must send the token embedded in the page (cross-site guard);
 the page's CSP allows only same-origin scripts and styles.
+
+## MCP server
+
+`tc002 mcp` reads one JSON-RPC 2.0 message per line on stdin and writes each reply as one
+line on stdout (the MCP stdio transport), with no SDK: `initialize`, `ping`, `tools/list`,
+`tools/call`, `resources/list`, `resources/read`. While it runs, `sys.stdout` points at
+stderr, so nothing but protocol messages reaches the client. Tool arguments are checked
+against each tool's JSON Schema before the `App` method runs; an `AppError` comes back as a
+tool result with `isError: true` and its title and detail, so the model can correct itself.
+`send_message` returns at once and plays in the background, like the UI.

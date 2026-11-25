@@ -6,8 +6,7 @@ connections.py."""
 
 import subprocess
 
-from .. import builtins, connections, device_settings, keychain
-from ..device import CATEGORY_ENDPOINTS
+from .. import connections, device_settings, keychain
 from ..integrations import launchd
 from . import host_actions
 from .errors import ApiError
@@ -46,18 +45,11 @@ class HostActions:
             )
         if not isinstance(token, str) or not token.strip() or len(token) > 4096:
             raise ApiError(422, "Invalid settings", "Paste the token the platform gave you.")
-        dev = self._device()
-        _, _, infos_key, order_key = CATEGORY_ENDPOINTS["social"]
-        cfg = dev.category_config("social")
-        infos = cfg.get(infos_key, {})
-        infos.setdefault(app, {})["token"] = token.strip()
-        order = cfg.get(order_key) or builtins.full_order("social")
-        dev.set_category_config("social", {infos_key: infos, order_key: order})
-        return {"app": app, "tokenSet": True}
+        return self.app.set_social_token(app, token.strip())
 
     def integration(self, action):
         try:
-            return host_actions.run(action)
+            return host_actions.run(self.app, action)
         except KeyError:
             raise ApiError(404, "Not found", f"No integration action {action!r}.") from None
 

@@ -2,7 +2,7 @@
 
 Mixed into web.api.Api; see web/setup.py for discovery and provision.py for Wi-Fi."""
 
-from .. import config, provision, sync
+from .. import config, provision
 from ..device import DeviceError
 from . import setup
 from .errors import ApiError
@@ -24,7 +24,7 @@ class SetupActions:
             raise ApiError(422, "No clock there", str(exc)) from None
         self.host, self.config_path = done["host"], config.path()
         try:  # the clock should look like its new settings straight away
-            changes = sync.apply(self._device(), done["settings"], self.state_dir)
+            changes = self.app.apply()
         except DeviceError as exc:
             changes = [f"not applied yet: {exc}"]
         return {"host": done["host"], "config": done["config"], "changes": changes}
