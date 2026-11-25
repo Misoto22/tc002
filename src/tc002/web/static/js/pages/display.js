@@ -12,6 +12,12 @@ const ICONS = { volume: "bell", timezone: "clock", dateFormat: "history", showWe
 function managed(key, clockValue) {
   if (!(key in store.draft.display)) return t("display.fromClock");
   const want = store.draft.display[key];
+  if (key === "timezone" && want === "auto") { // the clock holds a rule, not "auto"
+    const ex = store.state.clock.settings?.timezoneEx ?? {};
+    const follows = ex.customPosixEnabled && ex.location === store.state.schema.macZone;
+    const differs = store.state.clock.online && !follows;
+    return { text: differs ? t("display.pending") : t("display.inToml"), warn: differs };
+  }
   const differs = store.state.clock.online && (want && typeof want === "object"
     ? Object.entries(want).some(([k, v]) => clockValue?.[k] !== v)
     : clockValue !== want);
@@ -35,6 +41,8 @@ export function display() {
     else if (rule.kind === "int") control = slider(rule.options[0], rule.options[1], value(key) ?? rule.options[0], (v) => set(key, v), label);
     else if (key === "weekStart") control = segmented([[1, t("day.monday")], [0, t("day.sunday")]], value(key), (v) => set(key, v), label);
     else if (rule.options.length <= 3) control = segmented(rule.options.map((o) => [o, o]), value(key), (v) => set(key, v), label);
+    else if (key === "timezone") control = select(rule.options.map((o) => [o, o !== "auto" ? o
+      : schema.macZone ? t("tz.auto", { zone: schema.macZone }) : t("tz.autoPlain")]), value(key), (v) => set(key, v), label);
     else control = select(rule.options.map((o) => [o, o]), value(key), (v) => set(key, v), label);
     return row(label, managed(key, clock[key]), control, { path: `display.${key}`, icon: ICONS[key] });
   });

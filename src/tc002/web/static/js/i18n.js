@@ -77,7 +77,7 @@ const en = {
   "level.low": "Low", "level.mid": "Mid", "level.high": "High",
   "day.monday": "Monday", "day.sunday": "Sunday",
 
-  "field.volume": "Volume", "field.timezone": "Time zone", "field.dateFormat": "Date format",
+  "field.volume": "Volume", "field.timezone": "Time zone", "tz.auto": "Follow this Mac ({zone})", "tz.autoPlain": "Follow this Mac", "field.dateFormat": "Date format",
   "field.showWeek": "Show weekday on clock", "field.weekStart": "Week starts on",
   "field.scrollSpeed": "Text scroll speed", "field.lowBatteryAutoSleep": "Sleep on low battery",
   "field.timeFormat": "Time format", "field.city": "City", "field.cityHint": "Search any city; sets coordinates",
@@ -220,7 +220,7 @@ const zh = {
   "level.low": "低", "level.mid": "中", "level.high": "高",
   "day.monday": "周一", "day.sunday": "周日",
 
-  "field.volume": "音量", "field.timezone": "时区", "field.dateFormat": "日期格式",
+  "field.volume": "音量", "field.timezone": "时区", "tz.auto": "跟随这台 Mac（{zone}）", "tz.autoPlain": "跟随这台 Mac", "field.dateFormat": "日期格式",
   "field.showWeek": "时钟显示星期", "field.weekStart": "每周起始日",
   "field.scrollSpeed": "文字滚动速度", "field.lowBatteryAutoSleep": "低电量自动休眠",
   "field.timeFormat": "时间格式", "field.city": "城市", "field.cityHint": "搜索任意城市，自动填入经纬度",

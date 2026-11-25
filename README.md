@@ -26,7 +26,8 @@ Or try it without installing: `uvx tc002 ui`.
   Codex. Everything can be changed later.
 - **Display & sound** — brightness (three levels, each with its own percentage), volume,
   time zone, date format, week start, scroll speed. **Brightness & volume** at the foot of
-  the sidebar applies them at once, from any page.
+  the sidebar applies them at once, from any page. Time zone **Follow this Mac** keeps the
+  clock on the Mac's own zone, summer time included, and moves with it when you travel.
 - **Night** — the screen fully dark: every night between two times, or right now with
   **Screen off** (in Brightness & volume, on Display & sound, or `tc002 display off`).
   It stays dark if the Mac sleeps; `tc002 display on` or **Turn on** lights it again.
@@ -205,7 +206,7 @@ keep_builtins = ["clock", "weather"]   # every other built-in app is turned off
 
 [display]                              # optional: clock-wide settings
 volume = 2
-timezone = "UTC+1"
+timezone = "auto"                      # this Mac's zone, summer time included; or "UTC+1"
 brightness = { level = "mid" }
 
 [apps.weather]                         # optional: built-in app settings (never credentials)

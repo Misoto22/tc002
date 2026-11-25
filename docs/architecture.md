@@ -30,6 +30,7 @@ builtins.py (built-in app catalogue)  ·  device.py (HTTP client)
 | `device_settings.py` | The allowed values of every `[display]` and `[apps.*]` setting; validates the file and describes the UI's controls |
 | `sync.py` | The only code that pushes `tc002.toml` to the clock; saves and restores the original layout |
 | `night.py` | The screen fully dark: the `[night]` schedule, "screen off/on now", the black `night` app, and `Watch`, which pauses the service while it is dark |
+| `tz.py` | The clock following this Mac's time zone: the zone's POSIX rule (from /etc/localtime) sent as `timezoneEx`, and `Follow`, which the service runs to send it again when the Mac moves |
 | `web/` | `tc002 ui`: a stdlib HTTP server bound to 127.0.0.1 and a no-build ES-module front end |
 | `render/` | Pixels only: no I/O except writing bytes |
 | `screens/` | One class per live screen: `APP`, `TICK`, `sample() → state`, `render(state) → Animation` |

@@ -5,7 +5,7 @@ import subprocess
 import threading
 import time
 
-from .. import night
+from .. import night, tz
 from ..screens import build, stale
 from .freshness import Freshness
 from .output import Output, log
@@ -92,8 +92,17 @@ def watch(device, settings, preview_dir=None, once=False):
     for t in threads:
         t.start()
     log(f"watching {', '.join(s.APP for s in screens)} (config: {settings.source})")
+    follow = None
+    if (
+        device is not None
+        and not once
+        and getattr(settings, "display", {}).get("timezone") == "auto"
+    ):
+        follow = tz.Follow(device, log=log)  # the clock moves when this Mac does
     try:
         while any(t.is_alive() for t in threads) and not stop.is_set():
+            if follow:
+                follow.tick()
             stop.wait(0.5)
     except KeyboardInterrupt:
         pass

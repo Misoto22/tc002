@@ -8,9 +8,10 @@ one way to give the clock a social token is write-only (`TOKEN_APPS`, web/api.py
 to the clock, never stored, never read back.
 """
 
-from . import builtins
+from . import builtins, tz
 
-TIMEZONES = [f"UTC{n:+d}" if n else "UTC+0" for n in range(-12, 13)]
+# "auto" follows this Mac's time zone, summer time included (tz.py); the rest are fixed
+TIMEZONES = ["auto", *(f"UTC{n:+d}" if n else "UTC+0" for n in range(-12, 13))]
 
 # key: (kind, label, options or (min, max))
 DISPLAY = {
@@ -141,4 +142,12 @@ def schema():
         "brightnessDefaults": BRIGHTNESS_DEFAULTS,
         "apps": {app: describe(rules) for app, rules in APPS.items()},
         "tokenApps": list(TOKEN_APPS),
+        "macZone": _mac_zone_name(),
     }
+
+
+def _mac_zone_name():
+    try:
+        return tz.mac_zone()[0]
+    except ValueError:
+        return None

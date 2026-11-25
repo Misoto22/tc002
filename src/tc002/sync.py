@@ -6,10 +6,10 @@ clock's original layout (flags, orders and non-secret settings only) so `restore
 undo tc002 entirely.
 """
 
-from . import builtins, device_settings
+from . import builtins, device_settings, tz
 from .device import CATEGORY_ENDPOINTS
 
-GLOBAL_KEYS = ["carouselSpeed", "brightness", *device_settings.DISPLAY]
+GLOBAL_KEYS = ["carouselSpeed", "brightness", "timezoneEx", *device_settings.DISPLAY]
 
 
 def _infos(device, category):
@@ -46,6 +46,7 @@ def apply(device, settings, state_dir):
     if "brightness" in update and isinstance(current.get("brightness"), dict):
         # send the whole object: the device wants low < mid < high every time
         update["brightness"] = current["brightness"] | update["brightness"]
+    _timezone(update, current)
     if settings.schedule:
         update["carouselSpeed"] = 0  # the tc002 rotation drives the screen
     changed = {k: v for k, v in update.items() if current.get(k) != v}
@@ -55,6 +56,21 @@ def apply(device, settings, state_dir):
 
     changes += _apply_apps(device, settings.apps)
     return changes
+
+
+def _timezone(update, current):
+    """[display] timezone: "auto" follows this Mac (a POSIX rule, so summer time too);
+    a fixed UTC±N switches that rule off, or the clock would keep following it."""
+    want = update.pop("timezone", None)
+    ex = current.get("timezoneEx") or {}
+    if want == "auto":
+        update["timezoneEx"] = tz.wanted(ex)
+    elif want is not None:
+        update["timezone"] = want
+        if ex.get("customPosixEnabled"):
+            # the firmware refuses a location that is not one of its own for a fixed zone
+            off = {"location": "", "customPosixEnabled": False, "customPosix": ""}
+            update["timezoneEx"] = {**ex, **off}
 
 
 def _apply_apps(device, apps):
