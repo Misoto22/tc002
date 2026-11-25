@@ -316,6 +316,18 @@
 .toast.error .icon { color: var(--red); }
 .toast.warn .icon { color: var(--yellow); }
 .toast .muted { display: block; font-size: var(--text-sm); }
+.toast-text { flex: 1; min-width: 0; }
+.toast-count { margin-left: var(--space-6); color: var(--muted); font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
+.toast-count:empty { display: none; }
+.toast-close {
+  display: grid; place-items: center; flex: none;
+  width: var(--space-20); height: var(--space-20); margin: var(--space-2) calc(var(--space-6) * -1) 0 0;
+  border: 0; border-radius: var(--radius-sm); background: none; color: var(--muted); cursor: pointer;
+  transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+}
+.toast-close:hover { background: var(--hover); color: var(--text); }
+.toast .toast-close .icon { margin: 0; color: inherit; }
+.toast.bump { animation: toast-bump var(--fast) var(--ease); }
 .toast.leaving { animation: toast-out var(--normal) ease-in forwards; }
 
 .skeleton {
