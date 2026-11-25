@@ -13,6 +13,7 @@ export class ApiFailure extends Error {
     // the type's last segment names the error; show its title in the UI's language
     const key = `err.${(problem.type ?? "").split("/").pop()}`;
     this.title = t(key) === key ? fallback : t(key);
+    this.status = problem.status;
   }
 }
 
@@ -27,7 +28,8 @@ async function request(path, options = {}) {
 }
 
 export const get = (path) => request(path);
-export const post = (path, body) => request(path, { method: "POST", body: JSON.stringify(body) });
+export const post = (path, body, headers = {}) =>
+  request(path, { method: "POST", body: JSON.stringify(body), headers });
 
 // For page unload: must not be cancelled when the tab goes away.
 export function postOnExit(path, body) {

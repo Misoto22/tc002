@@ -52,6 +52,11 @@ def test_no_config_means_builtin_defaults(monkeypatch, tmp_path):
         ('[rotation]\nshow = { builtin = "weather" }', "keep_builtins"),
         ('[rotation]\nshow = "clock"', "must be a table"),
         ("[screens\n", "Expected"),
+        ('[alerts]\ntakeover = "false"', "true or false"),
+        ('[screens]\nenabled = "sys"', "list of names"),
+        ("[screens]\nenabled = [1]", "list of names"),
+        ('[device]\nkeep_builtins = "clock"', "must be a list"),
+        ("alerts = 1", "must be a table"),
     ],
 )
 def test_invalid_configs_are_rejected_with_a_pointer(tmp_path, body, message):

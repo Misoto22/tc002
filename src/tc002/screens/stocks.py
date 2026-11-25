@@ -48,11 +48,25 @@ def price_text(price, room):
 
 
 def fetch_quote(get, symbol):
-    result = get(URL.format(symbol=symbol))["chart"]["result"][0]
-    meta = result["meta"]
-    closes = [p for p in result["indicators"]["quote"][0]["close"] if p is not None]
-    price = meta["regularMarketPrice"]
-    previous = meta.get("chartPreviousClose") or meta.get("previousClose") or closes[0]
+    """One symbol's quote; ValueError when Yahoo's reply has no usable data (an unknown
+    symbol comes back as `"result": null`)."""
+    chart = get(URL.format(symbol=symbol)).get("chart") or {}
+    results = chart.get("result") or []
+    if not results:
+        error = (chart.get("error") or {}).get("description") or "no data"
+        raise ValueError(f"{symbol}: {error}")
+    result = results[0]
+    meta = result.get("meta") or {}
+    quotes = (result.get("indicators") or {}).get("quote") or [{}]
+    closes = [p for p in quotes[0].get("close") or [] if p is not None]
+    price = meta.get("regularMarketPrice")
+    previous = (
+        meta.get("chartPreviousClose")
+        or meta.get("previousClose")
+        or (closes[0] if closes else None)
+    )
+    if price is None or not previous:
+        raise ValueError(f"{symbol}: no price or previous close")
     change = round((price - previous) / previous * 100, 2)
     return Quote(symbol, round(price, 2), change, tuple(closes), previous)
 

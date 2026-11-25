@@ -8,6 +8,7 @@ rebinding) and every write must carry the per-process token embedded in index.ht
 
 import json
 import secrets
+import subprocess
 import threading
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -109,12 +110,26 @@ def make_handler(api, token, port):
             if self.headers.get("Host") not in allowed_hosts:
                 self._fail(421, "Wrong host", f"Open the UI at http://{LOOPBACK}:{port}.")
                 return False
+            token_ok = secrets.compare_digest(self.headers.get("X-TC002-Token", ""), token)
+            # A read can still have side effects (discover scans the LAN, a preview runs a
+            # screen) or leak timing, so a browser's cross-site request for /api/* is refused
+            # too. Browsers always send Sec-Fetch-Site; tools like curl send none and are
+            # not a cross-site threat.
+            fetch_site = self.headers.get("Sec-Fetch-Site")
+            if (
+                not write
+                and self.path.startswith("/api/")
+                and fetch_site not in (None, "same-origin", "none")
+                and not token_ok
+            ):
+                self._fail(403, "Cross-site request", "Requests must come from the tc002 UI.")
+                return False
             if write:
                 origin = self.headers.get("Origin")
                 if origin and urlsplit(origin).netloc not in allowed_hosts:
                     self._fail(403, "Cross-site request", "Requests must come from the tc002 UI.")
                     return False
-                if not secrets.compare_digest(self.headers.get("X-TC002-Token", ""), token):
+                if not token_ok:
                     self._fail(403, "Missing token", "Reload the page and try again.")
                     return False
             return True
@@ -149,6 +164,10 @@ def make_handler(api, token, port):
                     self._fail(404, "Not on the clock", f"The clock has no such app: {exc}")
                 else:
                     self._fail(502, "Clock refused the request", str(exc))
+            except subprocess.SubprocessError as exc:
+                # launchctl / open failing: say what it printed, not a dropped connection
+                stderr = (getattr(exc, "stderr", None) or "").strip()
+                self._fail(500, "Command failed", f"{exc}: {stderr}" if stderr else str(exc))
             except (OSError, RuntimeError, ValueError) as exc:
                 self._fail(500, "Request failed", str(exc))
 
@@ -177,7 +196,9 @@ def make_handler(api, token, port):
 
         def _post(self, path, body):
             routes = {
-                "/api/config": api.save_config,
+                "/api/config": lambda data: api.save_config(
+                    data, expected=self.headers.get("If-Match")
+                ),
                 "/api/show": api.show,
                 "/api/message": api.send_message,
                 "/api/live": api.live,

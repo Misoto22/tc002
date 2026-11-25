@@ -83,6 +83,7 @@ def setup(host, preset=None, timezone=None, weather=None):
         data["apps"] = {**data["apps"], "weather": {**data["apps"].get("weather", {}), **city}}
     settings = config.parse(data, str(path))  # raises ConfigError on a bad time zone
     path.parent.mkdir(parents=True, exist_ok=True)
-    config_writer.save(settings, path)
+    with config_writer.WRITE_LOCK:
+        config_writer.save(settings, path)
     config.save_local(host=host, config=str(path))
     return {"host": host, "config": str(path), "settings": settings}

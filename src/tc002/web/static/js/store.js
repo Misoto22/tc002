@@ -99,7 +99,9 @@ export async function save(data = store.draft) {
   store.op = { kind: "saving", at: Date.now() };
   notify("status");
   try {
-    const result = await post("/api/config", data);
+    // the version this page loaded: the server refuses (409) if the file changed since
+    const version = store.state.config.version;
+    const result = await post("/api/config", data, version ? { "If-Match": version } : {});
     store.op = { kind: result.error ? "offline" : "applied", at: Date.now(), detail: result.error };
     record("activity.save", !result.error, result.error ?? changesText(result.changes));
     if (result.error) toast(t("save.saved"), result.error, "warn");
@@ -113,6 +115,9 @@ export async function save(data = store.draft) {
     record("activity.save", false, err.message);
     toast(err.title ?? t("status.error"), err.message, "error");
     notify("status");
+    // changed elsewhere: load the file as it is now, keeping the draft, so the next save
+    // is made knowingly against the current version
+    if (err.status === 409) await load().catch(() => {});
   }
 }
 
@@ -225,6 +230,7 @@ export function quick(display) {
     quickPatch = {};
     try {
       const r = await post("/api/quick", { display: patch });
+      if (r.version) store.state.config.version = r.version; // our own write is not a conflict
       store.op = { kind: r.error ? "offline" : "applied", at: Date.now(), detail: r.error };
       record("quick.title", !r.error, r.error ?? changesText(r.changes));
     } catch (err) {

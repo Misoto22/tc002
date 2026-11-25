@@ -64,10 +64,10 @@ class Output:
         self._last[app] = (anim.key, now)
         self._quiet.ok(app)
 
-    def remove(self, app):
+    def remove(self, app, **request):
         if self.device is None:
             return
         try:
-            self.device.remove(app)
+            self.device.remove(app, **request)
         except DeviceError as exc:
             log(f"[{app}] remove failed: {exc}")

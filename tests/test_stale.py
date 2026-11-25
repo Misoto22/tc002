@@ -72,3 +72,38 @@ def test_stale_pictures_fit_the_clock():
     stale.no_data("sys", 900).payload()
     stale.no_data("claude").payload()
     stale.mark(sysmon.SysScreen().render(sysmon.State(1, 2, (1,) * 52)), 75).payload()
+
+
+class Buggy(Flaky):
+    """A screen whose sample has a bug: not an OSError, so it used to kill its thread."""
+
+    def sample(self):
+        if self.broken:
+            raise TypeError("'NoneType' object is not subscriptable")
+        return super().sample()
+
+
+def test_an_unexpected_error_keeps_the_loop_alive_and_is_recorded(tmp_path):
+    path = tmp_path / "s.json"
+    record = freshness.Freshness(path, clock=lambda: T0)
+    screen, out, stop = Buggy(), Recorder(), threading.Event()
+    screen.broken = True
+    ticks = []
+    screen.TICK = 0.01
+    original = screen.sample
+
+    def sample():
+        ticks.append(1)
+        if len(ticks) >= 3:
+            stop.set()
+        return original()
+
+    screen.sample = sample
+    thread = threading.Thread(
+        target=watcher.screen_loop, args=(out, screen, stop, watcher.Attention(), False, record)
+    )
+    thread.start()
+    thread.join(timeout=5)
+    assert len(ticks) >= 3  # the loop survived the first TypeError
+    assert "NoneType" in freshness.read(path, now=T0)["sys"]["error"]
+    assert out.shown[-1].key[0] == "no-data"

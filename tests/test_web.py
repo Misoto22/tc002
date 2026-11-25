@@ -444,3 +444,88 @@ def test_fixed_previews_are_drawn_once(ui, monkeypatch):
     for _ in range(3):
         assert call(url, "/api/preview/builtin-youtube.gif")[0] == 200
     assert previews._fixed.cache_info().misses == 1
+
+
+def test_a_failing_launchctl_is_a_problem_not_a_dropped_connection(ui, monkeypatch):
+    import subprocess
+
+    url, token, _ = ui
+
+    def boom(exe):
+        raise subprocess.CalledProcessError(5, ["launchctl"], stderr="Bootstrap failed: 5")
+
+    monkeypatch.setattr(launchd, "install", boom)
+    status, headers, body = call(
+        url, "/api/integrations/install-service", {}, {"X-TC002-Token": token}
+    )
+    assert status == 500 and headers["Content-Type"] == "application/problem+json"
+    assert "Bootstrap failed" in json.loads(body)["detail"]
+
+
+def test_install_service_answers_with_an_object(monkeypatch):
+    from tc002.web import host_actions
+
+    monkeypatch.setattr(launchd, "install", lambda exe: exe)
+    monkeypatch.setattr(launchd, "status", lambda: "state: running")
+    monkeypatch.setattr(host_actions, "executable", lambda: "/bin/tc002")
+    assert host_actions.run("install-service") == {
+        "installed": "/bin/tc002",
+        "service": "state: running",
+    }
+
+
+def test_a_save_against_a_file_changed_elsewhere_is_refused(ui):
+    url, token, cfg = ui
+    state = json.loads(call(url, "/api/state")[2])
+    loaded, data = state["config"]["version"], state["config"]["data"]
+    assert loaded
+    cfg.write_text(cfg.read_text().replace("seconds = 30", "seconds = 45"))  # another editor
+    data["display"] = {"volume": 3}
+    headers = {"X-TC002-Token": token, "If-Match": loaded}
+    status, _, body = call(url, "/api/config", data, headers)
+    assert status == 409 and json.loads(body)["title"] == "Config changed"
+    assert "seconds = 45" in cfg.read_text()  # the other edit survived
+    # reloaded, the page saves knowingly against the current version
+    fresh = json.loads(call(url, "/api/state")[2])["config"]["version"]
+    status, _, body = call(url, "/api/config", data, {**headers, "If-Match": fresh})
+    assert status == 200 and json.loads(body)["version"] != fresh
+
+
+def test_quick_settings_wait_for_a_save_in_progress(tmp_path, monkeypatch):
+    """Read-modify-write under one lock: a quick setting cannot read the file mid-save."""
+    from tc002 import config_writer
+    from tc002.web.api import Api
+
+    cfg = tmp_path / "tc002.toml"
+    cfg.write_text(TOML)
+    monkeypatch.setattr(launchd, "restart", lambda: False)
+    api = Api(None, cfg)
+    done = threading.Event()
+    with config_writer.WRITE_LOCK:  # a save is writing
+        worker = threading.Thread(
+            target=lambda: (api.quick({"display": {"volume": 2}}), done.set())
+        )
+        worker.start()
+        assert not done.wait(0.3)  # it waits instead of reading the old file
+        cfg.write_text(TOML.replace("takeover = true", "takeover = false"))
+    worker.join(5)
+    text = cfg.read_text()
+    assert done.is_set() and "volume = 2" in text and "takeover = false" in text
+
+
+def test_a_broken_tc002_toml_is_explained_not_a_500(ui):
+    url, _, cfg = ui
+    cfg.write_text("[alerts]\ntakeover = maybe\n")
+    status, headers, body = call(url, "/api/state")
+    problem = json.loads(body)
+    assert status == 422 and headers["Content-Type"] == "application/problem+json"
+    assert problem["title"] == "Invalid tc002.toml" and str(cfg) in problem["detail"]
+
+
+def test_cross_site_reads_of_the_api_are_refused(ui):
+    url, token, _ = ui
+    cross = {"Sec-Fetch-Site": "cross-site"}
+    assert call(url, "/api/state", headers=cross)[0] == 403
+    assert call(url, "/api/state", headers={**cross, "X-TC002-Token": token})[0] == 200
+    assert call(url, "/api/state", headers={"Sec-Fetch-Site": "same-origin"})[0] == 200
+    assert call(url, "/", headers=cross)[0] == 200  # the page itself may be opened from a link
