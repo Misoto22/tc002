@@ -22,7 +22,10 @@ def _disconnect():
 ACTIONS = {
     "connect-claude": _connect,
     "disconnect-claude": _disconnect,
-    "install-service": lambda: launchd.install(executable()) or {"service": launchd.status()},
+    "install-service": lambda: {
+        "installed": launchd.install(executable()),
+        "service": launchd.status(),
+    },
     "restart-service": lambda: {"restarted": launchd.restart(), "service": launchd.status()},
 }
 

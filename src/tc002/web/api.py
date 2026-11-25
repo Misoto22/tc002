@@ -67,6 +67,9 @@ class Api(SetupActions, PlayActions, HostActions, Previews, ScreenActions):
         except config.ConfigError:
             return None
 
+    def _config_version(self):
+        return config_writer.version(self.config_path) if self.config_path else None
+
     def _led_theme(self):
         """The saved LED theme; classic until a readable tc002.toml says otherwise."""
         try:
@@ -77,7 +80,13 @@ class Api(SetupActions, PlayActions, HostActions, Previews, ScreenActions):
     # -- reads --------------------------------------------------------------------
 
     def state(self):
-        settings = self._settings()
+        try:
+            settings = self._settings()
+        except config.ConfigError as exc:
+            # a hand edit gone wrong: say where, so the page can show it instead of a 500
+            raise ApiError(
+                422, "Invalid tc002.toml", f"{exc}. Fix the file, then reload this page."
+            ) from None
         clock = self._clock_state(settings)
         return {
             "night": night.status(settings),
@@ -85,6 +94,8 @@ class Api(SetupActions, PlayActions, HostActions, Previews, ScreenActions):
                 "path": str(self.config_path) if self.config_path else None,
                 "shown": _home_relative(self.config_path),
                 "data": config.to_data(settings),
+                # sent back with a save (If-Match): a file changed since is not overwritten
+                "version": self._config_version(),
             },
             "clock": clock,
             "integrations": self._integrations(),
@@ -176,20 +187,23 @@ class Api(SetupActions, PlayActions, HostActions, Previews, ScreenActions):
         """
         if not self.config_path:
             raise ApiError(409, "No tc002.toml", "Run `tc002 setup --config <path>` first.")
-        before = self._settings()
-        data = config.to_data(before)
-        data["appearance"] = {
-            **data["appearance"],
-            **{k: body[k] for k in ("led_theme", "ui_palette") if k in body},
-        }
-        try:
-            settings = config.parse(data, str(self.config_path))
-        except config.ConfigError as exc:
-            raise ApiError(422, "Invalid settings", str(exc)) from None
-        config_writer.save(settings, self.config_path)
+        with config_writer.WRITE_LOCK:
+            before = self._settings()
+            data = config.to_data(before)
+            data["appearance"] = {
+                **data["appearance"],
+                **{k: body[k] for k in ("led_theme", "ui_palette") if k in body},
+            }
+            try:
+                settings = config.parse(data, str(self.config_path))
+            except config.ConfigError as exc:
+                raise ApiError(422, "Invalid settings", str(exc)) from None
+            config_writer.save(settings, self.config_path)
+            version = self._config_version()
         return {
             "appearance": settings.appearance,
             "ledTheme": settings.led_theme,
+            "version": version,
             # only a change the clock can see is worth redrawing every screen for
             "serviceRestarted": settings.led_theme != before.led_theme and launchd.restart(),
         }
@@ -207,8 +221,11 @@ class Api(SetupActions, PlayActions, HostActions, Previews, ScreenActions):
 
     # -- writes -------------------------------------------------------------------
 
-    def save_config(self, data, restart=True):
-        """Validate, write tc002.toml, push it to the clock, reload the service."""
+    def save_config(self, data, restart=True, expected=None):
+        """Validate, write tc002.toml, push it to the clock, reload the service.
+
+        `expected` is the version the page loaded (state()["config"]["version"]); when the
+        file has changed since (another tab, the CLI, an editor) nothing is written."""
         if not self.config_path:
             raise ApiError(409, "No tc002.toml", "Run `tc002 setup --config <path>` first.")
         try:
@@ -221,8 +238,22 @@ class Api(SetupActions, PlayActions, HostActions, Previews, ScreenActions):
                 "tc002.toml was not changed.",
                 [{"field": "config", "message": p} for p in problems],
             ) from None
-        config_writer.save(settings, self.config_path)
-        result = {"saved": str(self.config_path), "changes": [], "applied": False}
+        with config_writer.WRITE_LOCK:
+            if expected is not None and expected != self._config_version():
+                raise ApiError(
+                    409,
+                    "Config changed",
+                    "tc002.toml was changed elsewhere since this page loaded it, so it was "
+                    "not overwritten. Your edits are kept: review them and save again.",
+                )
+            config_writer.save(settings, self.config_path)
+            version = self._config_version()
+        result = {
+            "saved": str(self.config_path),
+            "version": version,
+            "changes": [],
+            "applied": False,
+        }
         if self.host:
             try:
                 result["changes"] = sync.apply(self._device(), settings, self.state_dir)
@@ -239,15 +270,20 @@ class Api(SetupActions, PlayActions, HostActions, Previews, ScreenActions):
         patch = body.get("display")
         if not isinstance(patch, dict) or not patch:
             raise ApiError(422, "Nothing to change", 'Send {"display": {...}}.')
-        data = config.to_data(self._settings())
-        display = dict(data["display"])
-        for key, value in patch.items():
-            if key == "brightness" and isinstance(value, dict):
-                current = (self._clock_state_settings() or {}).get("brightness", {})
-                value = {**current, **display.get("brightness", {}), **value}
-            display[key] = value
-        data["display"] = display
-        return self.save_config(data, restart=False)
+        if any(key == "brightness" and isinstance(v, dict) for key, v in patch.items()):
+            clock = (self._clock_state_settings() or {}).get("brightness", {})
+        else:
+            clock = {}
+        # read and write under one lock: a concurrent save cannot land in between and be lost
+        with config_writer.WRITE_LOCK:
+            data = config.to_data(self._settings())
+            display = dict(data["display"])
+            for key, value in patch.items():
+                if key == "brightness" and isinstance(value, dict):
+                    value = {**clock, **display.get("brightness", {}), **value}
+                display[key] = value
+            data["display"] = display
+            return self.save_config(data, restart=False)
 
     def _clock_state_settings(self):
         if not self.host:

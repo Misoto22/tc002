@@ -5,9 +5,11 @@ so this emitter covers exactly what tc002.toml uses: tables, nested tables, arra
 inline tables of strings, numbers and booleans.
 """
 
+import hashlib
 import json
 import os
 import tempfile
+import threading
 from pathlib import Path
 
 from . import builtins
@@ -94,6 +96,21 @@ def dump(settings):
         lines.extend(f"# {line}" for line in COMMENTS[section].splitlines())
         _table(section, body, lines)
     return "\n".join(lines).rstrip() + "\n"
+
+
+# Every writer in this process (web UI requests run in threads) takes this lock around
+# its read-modify-write, so two requests cannot each read the old file and the second
+# silently undo the first. Re-entrant: a quick setting saves through save_config.
+WRITE_LOCK = threading.RLock()
+
+
+def version(path):
+    """A fingerprint of the file as it is on disk; None when it does not exist. The UI
+    sends back the one it loaded, so a save cannot overwrite a file changed meanwhile."""
+    try:
+        return hashlib.sha256(Path(path).read_bytes()).hexdigest()[:16]
+    except FileNotFoundError:
+        return None
 
 
 def save(settings, path):

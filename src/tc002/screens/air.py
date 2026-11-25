@@ -36,8 +36,11 @@ class AirScreen:
     def sample(self):
         if self.lat is None or self.lon is None:
             return State(None)
-        now = self.get(URL.format(lat=self.lat, lon=self.lon))["current"]
-        return State(round(now["european_aqi"]), round(now["pm2_5"], 1))
+        now = self.get(URL.format(lat=self.lat, lon=self.lon)).get("current") or {}
+        aqi, pm25 = now.get("european_aqi"), now.get("pm2_5")
+        if aqi is None or pm25 is None:  # a station gap: Open-Meteo answers null
+            raise ValueError("no air quality reading for this place right now")
+        return State(round(aqi), round(pm25, 1))
 
     def render(self, state):
         c = Canvas()

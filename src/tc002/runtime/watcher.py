@@ -3,12 +3,16 @@
 import signal
 import subprocess
 import threading
+import time
 
 from .. import night
 from ..screens import build, stale
 from .freshness import Freshness
 from .output import Output, log
 from .rotation import Attention, Rotation
+
+JOIN_WAIT = 5  # seconds the screen threads get, together, to finish after a stop
+REMOVE_TIMEOUT = 1  # per screen removal on the way out
 
 
 def _show_stale(out, screen, freshness):
@@ -22,26 +26,42 @@ def _show_stale(out, screen, freshness):
         out.show(screen.APP, stale.no_data(screen.APP, age))
 
 
+def _tick(out, screen, attention, freshness):
+    """One sample + render of `screen`; an expected probe failure shows the stale picture."""
+    try:
+        state = screen.sample()
+    except (OSError, ValueError, subprocess.SubprocessError) as exc:
+        # a failed probe must not kill a long-running watcher
+        log(f"[{screen.APP}] sample failed: {exc}")
+        freshness.failed(screen.APP, exc)
+        _show_stale(out, screen, freshness)
+        return
+    anim = screen.render(state)
+    freshness.ok(screen.APP, state)
+    out.show(screen.APP, anim)
+    if hasattr(state, "alert"):
+        current = attention.get()
+        if state.alert:
+            attention.set(screen.APP)
+        elif current == screen.APP:
+            attention.set(None)
+
+
 def screen_loop(out, screen, stop, attention, once=False, freshness=None):
     """Sample + render `screen` every screen.TICK seconds until `stop` is set."""
     freshness = freshness or Freshness()
     while not stop.is_set():
         try:
-            state = screen.sample()
-        except (OSError, ValueError, subprocess.SubprocessError) as exc:
-            # a failed probe must not kill a long-running watcher
-            log(f"[{screen.APP}] sample failed: {exc}")
+            _tick(out, screen, attention, freshness)
+        except Exception as exc:  # noqa: BLE001 — the thread must outlive any bug
+            # a screen bug (a None in an API reply, a division by zero) must not kill the
+            # thread silently and leave the clock frozen on its last picture
+            log(f"[{screen.APP}] failed: {type(exc).__name__}: {exc}")
             freshness.failed(screen.APP, exc)
-            _show_stale(out, screen, freshness)
-        else:
-            freshness.ok(screen.APP, state)
-            out.show(screen.APP, screen.render(state))
-            if hasattr(state, "alert"):
-                current = attention.get()
-                if state.alert:
-                    attention.set(screen.APP)
-                elif current == screen.APP:
-                    attention.set(None)
+            try:
+                _show_stale(out, screen, freshness)
+            except Exception as again:  # noqa: BLE001
+                log(f"[{screen.APP}] stale picture failed: {type(again).__name__}: {again}")
         if once:
             return
         stop.wait(screen.TICK)
@@ -78,9 +98,12 @@ def watch(device, settings, preview_dir=None, once=False):
     except KeyboardInterrupt:
         pass
     stop.set()
+    deadline = time.monotonic() + JOIN_WAIT  # one budget for all threads, not 5 s each
     for t in threads:
-        t.join(timeout=5)
+        t.join(timeout=max(0, deadline - time.monotonic()))
     if not once:
+        # one quick try each: with the clock off, 2 x 5 s per screen would outlast
+        # launchd's stop (integrations/launchd.py) and fail `tc002 uninstall`
         for s in screens:
-            out.remove(s.APP)
+            out.remove(s.APP, timeout=REMOVE_TIMEOUT, attempts=1)
         log("stopped; screens removed from the clock")

@@ -98,11 +98,16 @@ def _parse(data, source):
     for section, keys in SECTION_KEYS.items():
         if section not in data:
             continue
+        if not isinstance(data[section], dict):
+            raise ConfigError(f"{source}: {section} must be a table, i.e. [{section}]")
         if keys is not None and (extra := set(data[section]) - keys):
             raise ConfigError(f"{source}: unknown key(s) in [{section}]: {sorted(extra)}")
     if extra := set(data) - set(SECTION_KEYS):
         raise ConfigError(f"{source}: unknown section(s) {sorted(extra)}")
-    screens = tuple(data.get("screens", {}).get("enabled", ["claude", "sys"]))
+    enabled = data.get("screens", {}).get("enabled", ["claude", "sys"])
+    if not isinstance(enabled, list) or not all(isinstance(n, str) for n in enabled):
+        raise ConfigError(f'{source}: screens.enabled must be a list of names, e.g. ["sys"]')
+    screens = tuple(enabled)
     if bad := set(screens) - known_screens:
         raise ConfigError(f"{source}: unknown screens {sorted(bad)}; known {sorted(known_screens)}")
 
@@ -124,8 +129,15 @@ def _parse(data, source):
     if mode == SINGLE and pinned is None:
         raise ConfigError(f"{source}: rotation.mode = {SINGLE!r} needs rotation.show")
 
+    takeover = data.get("alerts", {}).get("takeover", True)
+    if not isinstance(takeover, bool):  # bool("false") would be True
+        raise ConfigError(f"{source}: alerts.takeover must be true or false")
+
     device = data.get("device", {})
-    keep = tuple(device.get("keep_builtins", ["clock"]))
+    keep = device.get("keep_builtins", ["clock"])
+    if not isinstance(keep, list) or not all(isinstance(n, str) for n in keep):
+        raise ConfigError(f'{source}: device.keep_builtins must be a list, e.g. ["clock"]')
+    keep = tuple(keep)
     for name in keep:
         try:
             builtins.lookup(name)
@@ -170,7 +182,7 @@ def _parse(data, source):
         rotation_mode=mode,
         pinned=pinned,
         keep_builtins=keep,
-        alert_takeover=bool(data.get("alerts", {}).get("takeover", True)),
+        alert_takeover=takeover,
         display=display,
         apps=apps,
         source=source,

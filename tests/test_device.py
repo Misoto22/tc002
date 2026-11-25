@@ -85,3 +85,20 @@ def test_http_proxy_env_is_ignored(clock, monkeypatch):
     monkeypatch.setenv("NO_PROXY", "")
     Device(clock, timeout=2).push("msg", {"draw": []})
     assert FakeClock.apps
+
+
+def test_a_reply_cut_off_mid_way_is_retried_then_a_device_error(monkeypatch):
+    import http.client
+
+    from tc002 import device
+
+    calls = []
+
+    def broken(req, timeout):
+        calls.append(req.full_url)
+        raise http.client.IncompleteRead(b"{")
+
+    monkeypatch.setattr(device._DIRECT, "open", broken)
+    with pytest.raises(DeviceError):
+        Device("10.0.0.9").apps()
+    assert len(calls) == 2  # one retry, like any dropped connection

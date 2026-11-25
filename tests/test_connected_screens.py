@@ -294,3 +294,28 @@ def test_without_a_keychain_nothing_is_saved_and_saving_says_so():
     assert keychain.get("x", run=missing) is None and not keychain.has("x", run=missing)
     with pytest.raises(OSError):
         keychain.save("x", "value", run=missing)
+
+
+def test_bad_yahoo_and_open_meteo_replies_are_value_errors_not_crashes():
+    import pytest
+
+    unknown = {"chart": {"result": None, "error": {"description": "No data found"}}}
+    with pytest.raises(ValueError, match="No data found"):
+        stocks.fetch_quote(lambda url: unknown, "NOPE")
+    zero = {
+        "chart": {
+            "result": [
+                {
+                    "meta": {"regularMarketPrice": 1.0, "chartPreviousClose": 0},
+                    "indicators": {"quote": [{"close": [None]}]},
+                }
+            ]
+        }
+    }
+    with pytest.raises(ValueError):
+        stocks.fetch_quote(lambda url: zero, "ZERO")
+    gap = air.AirScreen(
+        {"lat": "1", "lon": "2"}, get=lambda url: {"current": {"european_aqi": None, "pm2_5": None}}
+    )
+    with pytest.raises(ValueError):
+        gap.sample()

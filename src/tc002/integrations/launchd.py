@@ -73,7 +73,12 @@ def plist(executable, path=None):
     }
 
 
-def _stop(timeout=10):
+# How long a stopping agent may take: watcher.JOIN_WAIT for its threads plus one quick
+# removal per screen (watcher.REMOVE_TIMEOUT), with room to spare.
+STOP_TIMEOUT = 30
+
+
+def _stop(timeout=STOP_TIMEOUT):
     """Boot the agent out and wait until launchd has really dropped it.
 
     bootout returns before the old process exits; bootstrapping in that window fails

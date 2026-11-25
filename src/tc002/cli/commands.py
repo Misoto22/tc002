@@ -215,8 +215,11 @@ def doctor(args, ctx):
         healthy &= _say(None, "hooks", str(exc))
     healthy &= _say(statusline.status(executable()) or None, "status line", "saves plan limits")
     known = sessions.load()
-    latest = f"{known[0].project} {known[0].state} {time.time() - known[0].since:.0f}s ago"
-    _say(True, "sessions", f"{len(known)} known, latest: {latest}" if known else "none yet")
+    if known:
+        latest = f"{known[0].project} {known[0].state} {time.time() - known[0].since:.0f}s ago"
+        _say(True, "sessions", f"{len(known)} known, latest: {latest}")
+    else:
+        _say(True, "sessions", "none yet")
     return 0 if healthy else 1
 
 

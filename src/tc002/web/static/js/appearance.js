@@ -18,6 +18,7 @@ async function change(patch, quiet = false) {
   try {
     const result = await post("/api/appearance", patch);
     remember(result.appearance);
+    if (result.version) store.state.config.version = result.version; // our own write
     if (!quiet) toast(t("led.applied"), result.serviceRestarted ? t("save.serviceReloaded") : null);
   } catch (err) {
     toast(err.title, err.message, "error");

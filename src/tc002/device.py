@@ -4,6 +4,7 @@ Endpoints follow Ulanzi's protocol reference
 (github.com/UlanziTechnology/Ulanzi-U-Clock-TC002/tree/main/protocol).
 """
 
+import http.client
 import json
 import re
 import urllib.error
@@ -46,7 +47,7 @@ class Device:
         self.base = f"http://{host}"
         self.timeout = timeout
 
-    def _request(self, path, body=None, method=None):
+    def _request(self, path, body=None, method=None, timeout=None, attempts=2):
         data = None if body is None else json.dumps(body).encode()
         req = urllib.request.Request(
             self.base + path,
@@ -55,17 +56,19 @@ class Device:
             headers={"Content-Type": "application/json"},
         )
         # The clock's Wi-Fi power saving can drop the first request after idle; retry once.
-        for attempt in (1, 2):
+        for attempt in range(1, attempts + 1):
             try:
-                with _DIRECT.open(req, timeout=self.timeout) as resp:
+                with _DIRECT.open(req, timeout=timeout or self.timeout) as resp:
                     raw = resp.read()
                 break
             except urllib.error.HTTPError as exc:
                 raise DeviceError(
                     f"{self.base}{path}: HTTP {exc.code} {exc.reason}", exc.code
                 ) from exc
-            except (urllib.error.URLError, OSError) as exc:
-                if attempt == 2:
+            except (urllib.error.URLError, OSError, http.client.HTTPException) as exc:
+                # HTTPException: IncompleteRead, BadStatusLine, RemoteDisconnected ... from
+                # a clock whose Wi-Fi dropped mid-reply
+                if attempt == attempts:
                     raise DeviceError(f"{self.base}{path}: {exc}") from exc
         try:
             reply = json.loads(raw) if raw else {}
@@ -77,13 +80,14 @@ class Device:
 
     # -- custom (DIY) apps ------------------------------------------------------
 
-    def push(self, app, frame):
+    def push(self, app, frame, **request):
         """Create or replace the custom app `app` with `frame` (text/image/draw)."""
-        return self._request("/api/custom?name=" + urllib.parse.quote(app), frame)
+        return self._request("/api/custom?name=" + urllib.parse.quote(app), frame, **request)
 
-    def remove(self, app):
-        """An empty body deletes the custom app."""
-        return self.push(app, {})
+    def remove(self, app, **request):
+        """An empty body deletes the custom app. `request` (timeout, attempts) lets a
+        shutdown give up fast on a clock that is off."""
+        return self.push(app, {}, **request)
 
     def apps(self):
         return self._request("/api/customList").get("apps", [])

@@ -100,5 +100,10 @@ class Rotation:
             log("rotation: " + " -> ".join(f"{s.label} {s.seconds:g}s" for s in self.slots))
         state = (0, None)
         while not stop.is_set():
-            state = self.step(state)
+            try:
+                state = self.step(state)
+            except Exception as exc:  # noqa: BLE001 — the thread must outlive any bug
+                # e.g. a malformed reply: log it and keep rotating rather than die silently
+                log(f"rotation step failed: {type(exc).__name__}: {exc}")
+                self.showing = None
             stop.wait(POLL)
