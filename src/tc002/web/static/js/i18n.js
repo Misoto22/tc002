@@ -65,7 +65,7 @@ const en = {
   "rotation.drag": "Drag to reorder", "rotation.seconds": "seconds",
 
   "builtins.onNow": "On the clock now", "builtins.offNow": "Off on the clock",
-  "builtins.linked": "account linked in Ulanzi Studio", "builtins.inRotation": "in the rotation",
+  "builtins.linked": "account linked in Ulanzi Studio", "builtins.hidden": "not on this clock: its firmware hides it", "builtins.hiddenNote": "This clock's firmware hides this app, so it cannot be switched on or shown. Keep it off and out of the rotation.", "builtins.inRotation": "in the rotation",
   "builtins.cat.tools": "Tools", "builtins.cat.social": "Social", "builtins.cat.calendar": "Calendar",
 
   "display.fromClock": "Clock's own value", "display.inToml": "Set in tc002.toml",
@@ -208,7 +208,7 @@ const zh = {
   "rotation.drag": "拖动排序", "rotation.seconds": "秒",
 
   "builtins.onNow": "时钟上已开启", "builtins.offNow": "时钟上已关闭",
-  "builtins.linked": "已在 Ulanzi Studio 绑定账号", "builtins.inRotation": "在轮播中",
+  "builtins.linked": "已在 Ulanzi Studio 绑定账号", "builtins.hidden": "这台时钟不支持：固件隐藏了它", "builtins.hiddenNote": "这台时钟的固件隐藏了这个应用，无法打开也无法显示。请不要保留它，也不要放进轮播。", "builtins.inRotation": "在轮播中",
   "builtins.cat.tools": "工具", "builtins.cat.social": "社媒", "builtins.cat.calendar": "日历",
 
   "display.fromClock": "时钟当前值", "display.inToml": "已写入 tc002.toml",

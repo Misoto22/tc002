@@ -193,3 +193,63 @@ def test_no_attribute_hides_a_use_case(tmp_path):
     app.agents()  # creates the readers it keeps
     hidden = [name for name in vars(app) if callable(getattr(App, name, None))]
     assert not hidden, f"instance attributes named like App methods: {hidden}"
+
+
+class HidingClock(Clock):
+    """A clock whose firmware hides xhs, with timezoneEx following a known zone rule."""
+
+    RULE = "AEST-10AEDT,M10.1.0,M4.1.0/3"
+
+    def info(self):
+        return {"base": self.base_info(), "config": self.config()}
+
+    def config(self):
+        ex = {"location": "Australia/Sydney", "customPosixEnabled": True, "customPosix": self.RULE}
+        return {"carouselSpeed": 0, "timezone": "UTC+0", "timezoneEx": ex}
+
+    def category_config(self, category):
+        if category == "social":
+            return {
+                "socialInfos": {"xhs": {"enable": False, "uid": "1"}, "douyin": {"enable": False}},
+                "socialOrder": list(range(1, 10)),
+                "hiddenPlatforms": ["xhs", "facebook", "x"],
+            }
+        if category == "tools":
+            return {"toolsInfos": {"clock": {"enable": True}}, "toolsOrder": list(range(1, 11))}
+        return {"calendarInfos": {}, "calendarOrder": list(range(1, 7))}
+
+
+HIDDEN_TOML = TOML.replace('keep_builtins = ["clock"]', 'keep_builtins = ["clock", "xhs"]') + (
+    '[display]\ntimezone = "auto"\n'
+)
+
+
+def hiding_app(tmp_path, monkeypatch, rule=HidingClock.RULE):
+    from tc002.clock import tz
+
+    monkeypatch.setattr(tz, "mac_zone", lambda: ("Australia/Sydney", rule))
+    cfg = tmp_path / "tc002.toml"
+    cfg.write_text(HIDDEN_TOML)
+    return App("192.0.2.1", cfg, tmp_path / "state", device=HidingClock)
+
+
+def test_clock_state_marks_hidden_apps_and_leaves_them_out_of_drift(tmp_path, monkeypatch):
+    state = hiding_app(tmp_path, monkeypatch).clock_state()
+    assert state["builtins"]["xhs"]["hidden"] is True
+    assert state["builtins"]["douyin"]["hidden"] is False
+    assert state["unavailable"] == ["xhs"]
+    assert "builtin.xhs" not in state["drift"]
+
+
+def test_auto_time_zone_is_drift_only_when_the_clock_does_not_follow_this_mac(
+    tmp_path, monkeypatch
+):
+    assert "display.timezone" not in hiding_app(tmp_path, monkeypatch).clock_state()["drift"]
+    moved = hiding_app(tmp_path, monkeypatch, rule="CET-1CEST,M3.5.0,M10.5.0/3")
+    assert "display.timezone" in moved.clock_state()["drift"]
+
+
+def test_doctor_warns_about_a_kept_app_the_firmware_hides(tmp_path, monkeypatch, no_service):
+    checks = {c["name"]: c for c in hiding_app(tmp_path, monkeypatch).checks()}
+    builtin = checks["built-in apps"]
+    assert builtin["ok"] is None and builtin["detail"].startswith("xhs: this clock's firmware")

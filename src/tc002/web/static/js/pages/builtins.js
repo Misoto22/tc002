@@ -12,7 +12,8 @@ function appItem(key) {
   const live = store.state.clock.builtins ?? {};
   const href = `#builtins/${key}`;
   const hints = [];
-  if (live[key]) hints.push(live[key].enabled ? t("builtins.onNow") : t("builtins.offNow"));
+  if (live[key]?.hidden) hints.push(t("builtins.hidden"));
+  else if (live[key]) hints.push(live[key].enabled ? t("builtins.onNow") : t("builtins.offNow"));
   if (live[key]?.credentials) hints.push(t("builtins.linked"));
   if (appSettings(key).length) hints.push(t("builtins.hasSettings"));
   const p = placementOf("builtin", key);

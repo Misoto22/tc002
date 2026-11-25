@@ -38,8 +38,11 @@ def apply(device, settings, state_dir):
     if saved:
         changes.append(f"saved original layout to {path}")
 
-    off_on = builtins.apply_enabled(device, set(settings.keep_builtins))
+    off_on, unavailable = builtins.apply_enabled(device, set(settings.keep_builtins))
     changes += [f"built-in {c}" for c in off_on]
+    if unavailable:
+        names = ", ".join(sorted(unavailable))
+        changes.append(f"built-in {names} not available: this clock's firmware hides it")
 
     current = device.config()
     update = dict(settings.display)

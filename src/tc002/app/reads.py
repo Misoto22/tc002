@@ -177,6 +177,16 @@ class Reads:
                     "screen switching supported" if fw >= MIN_FIRMWARE else "update for switching",
                 )
                 check(True, "custom apps", ", ".join(dev.apps()) or "(none)")
+                if settings is not None:
+                    blocked = sorted(clock_report.wanted_builtins(settings) & builtins.hidden(dev))
+                    check(
+                        not blocked or None,
+                        "built-in apps",
+                        f"{', '.join(blocked)}: this clock's firmware hides it, so it is never "
+                        "shown; take it out of keep_builtins and the rotation"
+                        if blocked
+                        else "every kept app can be shown",
+                    )
             except DeviceError as exc:
                 check(False, "clock", str(exc))
         status = launchd.status()
