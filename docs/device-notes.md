@@ -33,6 +33,8 @@ this page records what tc002 relies on and what was measured.
 | The first request after a quiet period sometimes times out | One automatic retry |
 | Full-screen `db` pushes sustain about 17 per second | Viable fallback for real-time effects |
 | A 24-frame GIF pushed once animates on the device | Basis of every screen |
+| `/getConfig` has an undocumented `nightMode` (`enable`, `startTime`, `endTime`); on firmware 2.0.4 it darkened the screen once, then ignored every later window (wrapping midnight or not, built-in app or custom) | Night is a black custom app instead (`night.py`), which reliably turns every LED off |
+| Any app switch lights a dark screen | The service switches and pushes nothing while night is on |
 | A launchd agent's first requests can fail with `No route to host` until macOS grants Local Network access | Documented under Troubleshooting |
 
 ## Getting on Wi-Fi, and being found

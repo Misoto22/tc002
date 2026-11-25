@@ -3,6 +3,7 @@ import { edit, setFocus, store } from "../store.js";
 import { badge, pageHead, panel, row, section, segmented, select, slider, toggle } from "../ui.js";
 import { offlineNotice, page } from "./common.js";
 import { ledThemes } from "../appearance.js";
+import { nightSection } from "../night.js";
 
 const ICONS = { volume: "bell", timezone: "clock", dateFormat: "history", showWeek: "history",
   weekStart: "history", scrollSpeed: "zap", lowBatteryAutoSleep: "power" };
@@ -52,6 +53,7 @@ export function display() {
       ...levels.map((l) => row(t("display.levelPercent", { level: t(`level.${l}`) }), t("display.percentHint"),
         slider(...schema.brightnessRange, bright[l], (v) => setBright({ [l]: v }), l), { path: "display.brightness" })),
     ),
+    ...nightSection(),
     section(t("section.general")),
     panel(...rows,
       row(t("display.carousel"), hasRotation ? t("display.carouselOff") : t("display.carouselDevice"),

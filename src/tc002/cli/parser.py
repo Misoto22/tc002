@@ -81,6 +81,14 @@ def build():
     fo.add_argument("action", choices=["start", "stop"])
     fo.add_argument("--minutes", type=int, help="focus minutes (default: [screen.focus] or 25)")
 
+    dp = sub.add_parser("display", help="turn the screen off (fully dark) or on, or see why")
+    dp.add_argument("action", choices=["off", "on", "status"])
+    dp.add_argument(
+        "--until-morning",
+        action="store_true",
+        help="with off: light again at the night schedule's end time",
+    )
+
     w = sub.add_parser("watch", help="run screens + rotation in the foreground")
     w.add_argument("--once", action="store_true", help="push one animation per screen, exit")
 

@@ -1,9 +1,10 @@
-// Quick settings: the controls people reach for most (brightness, volume), applied to the
+// Quick settings: the controls people reach for most (brightness, volume, screen off), applied to the
 // clock at once. Shared by the top-bar popover and the overview page.
 
 import { t } from "./i18n.js";
 import { quick, store } from "./store.js";
 import { attachPopover, h, icon, segmented, slider } from "./ui.js";
+import { nightSwitch } from "./night.js";
 
 function current() {
   const clock = store.state.clock.settings ?? {};
@@ -36,6 +37,7 @@ export function quickControls({ compact = false } = {}) {
       h("span", { class: "row-icon" }, icon("volume-2")),
       h("div", { class: "row-title" }, t("quick.volume")),
       slider(volumeRange[0], volumeRange[1], now.volume, (v) => quick({ volume: v }), t("quick.volume"))),
+    nightSwitch({ compact }),
   ];
 }
 

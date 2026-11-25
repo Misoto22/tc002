@@ -4,7 +4,8 @@ The device's own carousel is switched off by `tc002 layout apply`; this driver t
 its place, stepping through custom screens (`/api/switchDiyApp`) and the built-in apps
 you kept (`/switchApp`). When a screen raises an alert (Claude DONE/WAIT) it jumps
 there at once and holds until the alert clears. While the web UI's live preview holds
-the screen (see hold.py) it switches nothing.
+the screen (see hold.py) it switches nothing, and while the screen is meant to be dark
+(night.py) it switches nothing either: any switch would light it.
 """
 
 import threading
@@ -36,10 +37,17 @@ class Attention:
 
 class Rotation:
     def __init__(
-        self, device, slots, attention, takeover=True, clock=time.monotonic, held=hold.active
+        self,
+        device,
+        slots,
+        attention,
+        takeover=True,
+        clock=time.monotonic,
+        held=hold.active,
+        dark=lambda: False,
     ):
         self.device, self.slots, self.attention = device, list(slots), attention
-        self.takeover, self.clock, self.held = takeover, clock, held
+        self.takeover, self.clock, self.held, self.dark = takeover, clock, held, dark
         self._quiet = Quiet()
         self.showing = None  # label of what was last switched to
 
@@ -62,6 +70,9 @@ class Rotation:
     def step(self, state):
         """One scheduling decision. `state` is (slot index, slot started at)."""
         index, started = state
+        if self.dark():  # night: hands off, or the switch would light the screen
+            self.showing = None  # show the current slot again in the morning
+            return index, None
         if self.held():  # the UI is previewing something on the clock
             self.showing = None  # re-show the current slot once the hold ends
             return index, None

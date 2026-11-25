@@ -16,6 +16,7 @@ from .. import (
     config,
     config_writer,
     device_settings,
+    night,
     presets,
     sync,
 )
@@ -77,13 +78,15 @@ class Api(SetupActions, PlayActions, HostActions, Previews, ScreenActions):
 
     def state(self):
         settings = self._settings()
+        clock = self._clock_state(settings)
         return {
+            "night": night.status(settings),
             "config": {
                 "path": str(self.config_path) if self.config_path else None,
                 "shown": _home_relative(self.config_path),
                 "data": config.to_data(settings),
             },
-            "clock": self._clock_state(settings),
+            "clock": clock,
             "integrations": self._integrations(),
             "agents": self.agents.snapshot(),
             "freshness": freshness.read(),
@@ -281,6 +284,18 @@ class Api(SetupActions, PlayActions, HostActions, Previews, ScreenActions):
         if not self.host:
             return {"changes": []}
         return {"changes": sync.apply(self._device(), self._settings(), self.state_dir)}
+
+    def night(self, body):
+        """Screen off now (`{"off": true, "until": "morning" | null}`) or on (`{"off": false}`)."""
+        dev = self._device()
+        settings = self._settings_or_none()
+        try:
+            if body.get("off"):
+                until = night.until_morning(settings) if body.get("until") == "morning" else None
+                return night.turn_off(dev, settings, until)
+            return night.turn_on(dev, settings)
+        except DeviceError as exc:
+            raise ApiError(502, "Clock unreachable", str(exc)) from None
 
     def show(self, body):
         dev = self._device()

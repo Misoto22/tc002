@@ -29,6 +29,7 @@ builtins.py (built-in app catalogue)  ·  device.py (HTTP client)
 | `config_writer.py` | Writing `tc002.toml` back in a canonical, commented form (stdlib cannot write TOML) |
 | `device_settings.py` | The allowed values of every `[display]` and `[apps.*]` setting; validates the file and describes the UI's controls |
 | `sync.py` | The only code that pushes `tc002.toml` to the clock; saves and restores the original layout |
+| `night.py` | The screen fully dark: the `[night]` schedule, "screen off/on now", the black `night` app, and `Watch`, which pauses the service while it is dark |
 | `web/` | `tc002 ui`: a stdlib HTTP server bound to 127.0.0.1 and a no-build ES-module front end |
 | `render/` | Pixels only: no I/O except writing bytes |
 | `screens/` | One class per live screen: `APP`, `TICK`, `sample() → state`, `render(state) → Animation` |
@@ -66,6 +67,7 @@ builtins.py (built-in app catalogue)  ·  device.py (HTTP client)
 | `~/.config/tc002/local.json` | Clock IP and the path of your `tc002.toml` |
 | `~/.config/tc002/original-layout.json` | Built-in app enable flags, orders and carousel before tc002 changed them — **no tokens or passwords** |
 | `~/.cache/tc002/sessions/*.json` | Each Claude Code session's state (working, waiting, done, idle) |
+| `~/.cache/tc002/night.json` | "Screen off now" / "kept on tonight", with when it ends |
 | `~/.cache/tc002/claude-limits.json` | Last 5-hour and 7-day % from the status line |
 | `~/.config/tc002/statusline.json` | Your previous status line command, restored on uninstall |
 | `~/Library/LaunchAgents/dev.tc002.watch.plist` | Background service |
@@ -98,6 +100,7 @@ builtins.py (built-in app catalogue)  ·  device.py (HTTP client)
 | `GET /api/preview/<name>.gif` | LED mock-up of an example screen or a message draft |
 | `POST /api/config` | Validate a full tc002.toml document, write it, `sync.apply` it, restart the service |
 | `POST /api/live` · `/api/live/stop` | Apply a draft without saving and hold the rotation (`runtime/hold.py`, ≤5 min) · put tc002.toml back and release |
+| `POST /api/night` | Screen off now (`{"off": true, "until": "morning" \| null}`) or back on |
 | `POST /api/show` · `/api/message` | Switch the clock now · play a text or alert, then clear it |
 
 Errors are RFC 9457 `application/problem+json`. Requests must name this server in `Host`

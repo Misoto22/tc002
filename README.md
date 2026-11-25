@@ -27,6 +27,9 @@ Or try it without installing: `uvx tc002 ui`.
 - **Display & sound** — brightness (three levels, each with its own percentage), volume,
   time zone, date format, week start, scroll speed. **Brightness & volume** at the foot of
   the sidebar applies them at once, from any page.
+- **Night** — the screen fully dark: every night between two times, or right now with
+  **Screen off** (in Brightness & volume, on Display & sound, or `tc002 display off`).
+  It stays dark if the Mac sleeps; `tc002 display on` or **Turn on** lights it again.
 - **Built-in apps** — keep the ones you want (clock, weather, Pomodoro, social counters,
   calendars…), turn the rest off, and set each one up right under its switch: clock
   format, weather city (search by name; cities, not villages that share the name), a
@@ -239,6 +242,7 @@ tc002 ui ─► local server (127.0.0.1 only, per-session token) ─► tc002.to
 | Log shows `No route to host` | macOS Local Network permission for uv's Python: System Settings → Privacy & Security → Local Network. |
 | Screens never appear | No rotation is set and the clock is not on its DIY page — add slots, or press the knob to DIY. |
 | `doctor` says to update the firmware | Firmware before V1.1.0 cannot switch screens remotely; update in Ulanzi Studio. |
+| The clock is dark and nothing changes | Night is on: **Turn on** on the Overview, or `tc002 display on`; `tc002 display status` says why. |
 | Clock unplugged | The service keeps retrying quietly and re-sends everything when it is back. |
 
 Log: `~/Library/Logs/tc002.log`.
