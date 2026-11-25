@@ -65,7 +65,7 @@ class Rotation:
         if slot.screen:
             return self._switch(slot.label, lambda: self.device.switch_custom(slot.screen))
         app = builtins.lookup(slot.builtin)
-        return self._switch(slot.label, lambda: self.device.switch_builtin(app.category, app.index))
+        return self._switch(slot.label, lambda: _switch_builtin(self.device, app))
 
     def step(self, state):
         """One scheduling decision. `state` is (slot index, slot started at)."""
@@ -107,3 +107,17 @@ class Rotation:
                 log(f"rotation step failed: {type(exc).__name__}: {exc}")
                 self.showing = None
             stop.wait(POLL)
+
+
+def _switch_builtin(device, app):
+    """/switchApp, with a 404 explained: the firmware only switches to apps that are on,
+    and some it hides altogether (builtins.HIDDEN_KEY)."""
+    try:
+        device.switch_builtin(app.category, app.index)
+    except DeviceError as exc:
+        if exc.status != 404:
+            raise
+        raise DeviceError(
+            f"{exc} ({app.key} is off on the clock, or its firmware hides it: see `tc002 doctor`)",
+            404,
+        ) from exc

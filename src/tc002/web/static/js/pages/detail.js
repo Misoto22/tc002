@@ -60,7 +60,8 @@ export function appPage(key) {
   setFocus({ type: "builtin", key });
   const live = store.state.clock.builtins?.[key];
   const settings = appSettings(key);
-  const state = live ? (live.enabled ? t("builtins.onNow") : t("builtins.offNow")) : null;
+  const state = live?.hidden ? t("builtins.hidden")
+    : live ? (live.enabled ? t("builtins.onNow") : t("builtins.offNow")) : null;
   const online = store.state.clock.online;
   const card = h("div", { class: "live-card" },
     h("figure", { class: "live-figure" }, thumb(key, false)),
@@ -69,7 +70,7 @@ export function appPage(key) {
       h("div", { class: `live-status ${online ? "ok" : "bad"}` }, h("span", { class: `dot ${online ? (live?.enabled ? "ok" : "") : "bad"}` }),
         h("strong", {}, online ? state ?? t("builtins.offNow") : t("badge.offline")),
         live?.credentials ? h("span", { class: "muted" }, t("builtins.linked")) : null),
-      h("p", { class: "muted detail-about" }, t("detail.firmwareDraws"))));
+      h("p", { class: "muted detail-about" }, t(live?.hidden ? "builtins.hiddenNote" : "detail.firmwareDraws"))));
   return page(
     breadcrumb("builtins", appName(key)),
     head(key, t(`builtins.cat.${store.state.catalogue.find((a) => a.key === key).category}`)),

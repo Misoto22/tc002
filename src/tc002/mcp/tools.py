@@ -133,7 +133,8 @@ READ_ONLY = [
         "get_clock_settings",
         "Read the clock's settings",
         "The clock's live settings that tc002 manages (brightness, volume, built-in apps "
-        "on/off, their options) and `drift`: where the clock differs from tc002.toml. "
+        "on/off, their options), `drift`: where the clock differs from tc002.toml, and "
+        "`unavailable`: kept or rotated built-in apps this clock's firmware hides. "
         "Credentials are reported only as present. Changes nothing.",
         lambda app, a: app.clock_state(),
         read_only=True,

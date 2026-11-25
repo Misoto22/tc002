@@ -91,22 +91,46 @@ def snapshot(device):
     return snap
 
 
+# Platforms this clock's firmware hides (by region): listed in /getSocial as
+# `hiddenPlatforms`. They stay `enable: false` whatever is written, and /switchApp to
+# one answers 404, so tc002 reports them instead of pretending to turn them on.
+HIDDEN_KEY = "hiddenPlatforms"
+
+
+def hidden_in(cfg):
+    """The catalogue apps a category's config says this firmware hides."""
+    listed = cfg.get(HIDDEN_KEY) or []
+    return {k for k in listed if isinstance(k, str) and k in CATALOGUE}
+
+
+def hidden(device):
+    """Every built-in app this clock's firmware hides (one request per category)."""
+    return set().union(*(hidden_in(device.category_config(c)) for c in CATEGORY_ENDPOINTS))
+
+
 def apply_enabled(device, keep):
     """Enable exactly the built-ins named in `keep`; disable every other one.
 
     Each category is read in full and written back with only `enable` changed, so
     settings such as the weather city are preserved and the order array stays
-    complete (the device rejects a partial order with 400).
+    complete (the device rejects a partial order with 400). Returns (changed,
+    unavailable): what was switched, and the kept apps this firmware hides, which are
+    left alone because they cannot be turned on.
     """
     for name in keep:
         lookup(name)  # fail before touching the device
-    changed = []
+    changed, unavailable = [], []
     for category, (_, _, infos_key, order_key) in CATEGORY_ENDPOINTS.items():
         cfg = device.category_config(category)
         infos = cfg.get(infos_key, {})
+        off_limits = hidden_in(cfg)
         dirty = False
         for key, info in infos.items():
             if key not in CATALOGUE:  # e.g. the social "tokens" cache is not an app
+                continue
+            if key in off_limits:
+                if key in keep:
+                    unavailable.append(key)
                 continue
             want = key in keep
             if bool(info.get("enable")) != want:
@@ -116,7 +140,7 @@ def apply_enabled(device, keep):
         if dirty:
             order = cfg.get(order_key) or full_order(category)
             device.set_category_config(category, {infos_key: infos, order_key: order})
-    return changed
+    return changed, unavailable
 
 
 def full_order(category):

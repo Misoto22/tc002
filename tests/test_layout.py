@@ -40,8 +40,12 @@ class FakeClock:
         return copy.deepcopy(self.cfg[category])
 
     def set_category_config(self, category, body):
-        assert set(body) == set(self.cfg[category])  # infos + full order, always
+        hidden = self.cfg[category].get(builtins.HIDDEN_KEY)
+        # infos + full order, always; the firmware's own hidden list is not written back
+        assert set(body) == set(self.cfg[category]) - {builtins.HIDDEN_KEY}
         self.cfg[category] = copy.deepcopy(body)
+        if hidden is not None:
+            self.cfg[category][builtins.HIDDEN_KEY] = hidden
 
     def switch_custom(self, app):
         self._switch(("custom", app))
@@ -67,10 +71,59 @@ def enabled(clock):
 
 def test_apply_keeps_only_named_builtins_and_preserves_settings():
     clock = FakeClock()
-    changed = builtins.apply_enabled(clock, {"clock"})
-    assert enabled(clock) == {"clock"}
+    changed, unavailable = builtins.apply_enabled(clock, {"clock"})
+    assert enabled(clock) == {"clock"} and unavailable == []
     assert sorted(changed) == ["google=off", "weather=off", "xhs=off"]
     assert clock.cfg["tools"]["toolsInfos"]["weather"]["city"] == "Sydney"
+
+
+def hiding_xhs():
+    """A clock whose firmware hides xhs (as /getSocial says in hiddenPlatforms)."""
+    clock = FakeClock()
+    social = clock.cfg["social"]
+    social["socialInfos"]["xhs"]["enable"] = False
+    social["socialInfos"]["douyin"] = {"enable": False}
+    social[builtins.HIDDEN_KEY] = ["xhs", "facebook", "x", "not-an-app"]
+    return clock
+
+
+def test_apps_the_firmware_hides_are_reported_not_turned_on():
+    clock = hiding_xhs()
+    changed, unavailable = builtins.apply_enabled(clock, {"clock", "xhs", "douyin"})
+    assert unavailable == ["xhs"] and "xhs=on" not in changed and "douyin=on" in changed
+    assert clock.cfg["social"]["socialInfos"]["xhs"]["enable"] is False
+    assert builtins.hidden(clock) == {"xhs", "facebook", "x"}
+
+
+def test_sync_says_a_hidden_app_is_not_available(tmp_path):
+    from tc002 import config
+    from tc002.clock import sync
+
+    class Clock(FakeClock):
+        def config(self):
+            return {"carouselSpeed": 0}
+
+        def set_config(self, **fields):
+            pass
+
+    clock = Clock()
+    clock.cfg = hiding_xhs().cfg
+    settings = config.parse({"device": {"keep_builtins": ["clock", "xhs"]}})
+    changes = sync.apply(clock, settings, tmp_path)
+    assert any("xhs not available" in c for c in changes)
+    assert not any("xhs=on" in c for c in changes)
+
+
+def test_a_404_switch_says_why():
+    class Refusing(FakeClock):
+        def switch_builtin(self, category, index):
+            raise DeviceError("http://clock/switchApp: HTTP 404 Not Found", 404)
+
+    from tc002.runtime.rotation import _switch_builtin
+
+    with pytest.raises(DeviceError) as caught:
+        _switch_builtin(Refusing(), builtins.lookup("xhs"))
+    assert caught.value.status == 404 and "firmware hides it" in str(caught.value)
 
 
 def test_snapshot_has_no_credentials_and_restores(tmp_path):
