@@ -76,7 +76,8 @@ def test_sync_auto_sends_the_rule_and_a_fixed_zone_turns_it_off(tmp_path, monkey
 
     sync.apply(clock, config.parse({"display": {"timezone": "UTC+9"}}), tmp_path)
     assert clock.cfg["timezone"] == "UTC+9"
-    assert clock.cfg["timezoneEx"] == {"location": "", "customPosixEnabled": False, "customPosix": ""}
+    off = {"location": "", "customPosixEnabled": False, "customPosix": ""}
+    assert clock.cfg["timezoneEx"] == off
 
 
 def test_restore_puts_the_old_zone_back(tmp_path, monkeypatch):
