@@ -1,8 +1,6 @@
 """Errors the application layer raises. They say what went wrong, not how to show it:
 the CLI prints `detail`, the web API turns them into RFC 9457 problems, the MCP server
-into tool errors."""
-
-from ..device import DeviceError
+into tool errors. Every App method raises only these (see `base.guarded`)."""
 
 
 class AppError(Exception):
@@ -17,8 +15,12 @@ class NotConfigured(AppError):
     """No clock address, or no tc002.toml, to act on."""
 
 
+class NotFound(AppError):
+    """No such thing to act on (an integration action, a preview, a game)."""
+
+
 class Conflict(AppError):
-    """tc002.toml changed elsewhere since the caller read it; nothing was written."""
+    """The state changed under the caller (tc002.toml edited elsewhere, no game running)."""
 
 
 class InvalidRequest(AppError):
@@ -29,10 +31,19 @@ class InvalidSettings(InvalidRequest):
     """Settings that tc002.toml's validation rejects; nothing was written."""
 
 
-class ClockUnreachable(AppError, DeviceError):
-    """The clock did not answer or refused. Also a DeviceError, so code that already
-    handles those (and their HTTP `status`) keeps working."""
+class ClockUnreachable(AppError):
+    """The clock did not answer, or refused. `status` is its HTTP status if it answered."""
 
     def __init__(self, detail, status=None):
-        AppError.__init__(self, "Clock unreachable", detail)
+        super().__init__("Clock unreachable", detail)
         self.status = status
+
+
+class ServiceUnavailable(AppError):
+    """A service on the network that a use case needs did not answer (a search service,
+    Home Assistant)."""
+
+
+class CommandFailed(AppError):
+    """A command on this Mac failed (launchctl, open, networksetup); `detail` says what
+    it printed."""

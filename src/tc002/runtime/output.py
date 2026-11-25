@@ -4,7 +4,7 @@ import sys
 import time
 from pathlib import Path
 
-from ..device import DeviceError
+from ..clock.device import DeviceError
 from ..render import mockup, themes
 
 REFRESH = 60  # re-push an unchanged animation this often so a rebooted clock gets it back

@@ -6,9 +6,9 @@ from zoneinfo import ZoneInfo
 import pytest
 
 from tc002 import config
-from tc002.runtime import focus as timer
 from tc002.screens import SCREENS, build, countdown, focus, moon, progress, sun, worldclock
 from tc002.screens.examples import examples
+from tc002.state import focus as timer
 
 NEW = ["focus", "progress", "countdown", "worldclock", "sun", "moon", "life", "fire"]
 

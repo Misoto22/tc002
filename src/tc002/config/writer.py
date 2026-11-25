@@ -12,8 +12,8 @@ import tempfile
 import threading
 from pathlib import Path
 
-from . import builtins
-from .config import to_data
+from ..clock import builtins
+from . import to_data
 
 HEADER = """\
 # tc002 configuration — the single source of every setting tc002 manages.

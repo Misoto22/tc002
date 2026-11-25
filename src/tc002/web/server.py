@@ -8,19 +8,14 @@ rebinding) and every write must carry the per-process token embedded in index.ht
 
 import json
 import secrets
-import subprocess
-import threading
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from importlib import resources
 from urllib.parse import parse_qsl, urlsplit
 
-from .. import config
-from ..app import AppError
-from ..device import DeviceError
-from . import previews
-from .api import Api, ApiError
-from .errors import app_status
+from ..app import AppError, catalog
+from . import api
+from .errors import ApiError, problem_of
 
 MAX_BODY = 256 * 1024
 LOOPBACK = "127.0.0.1"  # the UI never listens beyond this machine
@@ -36,19 +31,6 @@ TYPES = {
     ".md": "text/plain; charset=utf-8",
 }
 STATIC = resources.files("tc002.web").joinpath("static")
-
-
-# GET endpoints that take only the query string: path -> Api method
-GETS = {
-    "/api/agents": "agents_now",
-    "/api/discover": "discover",
-    "/api/log": "log",
-    "/api/wifi/status": "wifi_status",
-    "/api/game/frame": "game_frame",
-    "/api/symbols": "symbols",
-    "/api/home/entities": "home_entities",
-    "/api/clock/check": "clock_check",
-}
 
 
 def _static_files(root, prefix=""):
@@ -76,7 +58,7 @@ def problem(status, title, detail, errors=None, instance=None):
     return body
 
 
-def make_handler(api, token, port):
+def make_handler(app, token, port):
     allowed_hosts = {f"{LOOPBACK}:{port}", f"localhost:{port}"}
     static_files = _static_files(STATIC)
 
@@ -159,36 +141,20 @@ def make_handler(api, token, port):
                     self._post(url.path, self._body())
             except ApiError as exc:
                 self._fail(exc.status, exc.title, exc.detail, exc.errors)
-            except DeviceError as exc:
-                if exc.status is None:
-                    self._fail(502, "Clock unreachable", str(exc))
-                elif exc.status == 404:
-                    self._fail(404, "Not on the clock", f"The clock has no such app: {exc}")
-                else:
-                    self._fail(502, "Clock refused the request", str(exc))
-            except subprocess.SubprocessError as exc:
-                # launchctl / open failing: say what it printed, not a dropped connection
-                stderr = (getattr(exc, "stderr", None) or "").strip()
-                self._fail(500, "Command failed", f"{exc}: {stderr}" if stderr else str(exc))
             except AppError as exc:
-                self._fail(app_status(exc), exc.title, exc.detail, exc.errors)
+                self._fail(*problem_of(exc))
             except (OSError, RuntimeError, ValueError) as exc:
                 self._fail(500, "Request failed", str(exc))
 
         def _get(self, url):
             path = url.path
             query = dict(parse_qsl(url.query))
-            if path == "/api/state":
-                self._send(200, api.state())
-            elif path == "/api/led":
-                self._send(200, api.led())
-            elif path == "/api/cities":
-                self._send(200, api.cities(query))
-            elif path in GETS:
-                self._send(200, getattr(api, GETS[path])(query))
-            elif path.startswith("/api/preview/") and path.endswith(".gif"):
-                name = path.removeprefix("/api/preview/").removesuffix(".gif")
-                self._send(200, api.preview(name, query), "image/gif")
+            start, end = api.PREVIEW
+            if path in api.GETS:
+                self._send(200, api.get(app, path, query))
+            elif path.startswith(start) and path.endswith(end):
+                name = path.removeprefix(start).removesuffix(end)
+                self._send(200, api.preview(app, name, query), "image/gif")
             elif path in ("/", "/index.html"):
                 html = static_files["index.html"].read_text().replace("{{TOKEN}}", token)
                 self._send(200, html.encode(), TYPES[".html"])
@@ -199,36 +165,7 @@ def make_handler(api, token, port):
                 self._fail(404, "Not found", f"No resource at {path}.")
 
         def _post(self, path, body):
-            routes = {
-                "/api/config": lambda data: api.save_config(
-                    data, expected=self.headers.get("If-Match")
-                ),
-                "/api/show": api.show,
-                "/api/message": api.send_message,
-                "/api/live": api.live,
-                "/api/quick": api.quick,
-                "/api/preset": api.apply_preset,
-                "/api/live/stop": api.live_stop,
-                "/api/setup": api.first_run,
-                "/api/appearance": api.appearance,
-                "/api/social-token": api.social_token,
-                "/api/focus": api.focus,
-                "/api/night": api.night,
-                "/api/secret": api.save_secret,
-                "/api/try-screen": api.try_screen,
-                "/api/game": api.play,
-                "/api/game/key": api.game_key,
-                "/api/wifi/join-hotspot": api.wifi_join_hotspot,
-                "/api/wifi/send": api.wifi_send,
-                "/api/wifi/rejoin": api.wifi_rejoin,
-                "/api/reveal": api.reveal,
-            }
-            if path.startswith("/api/integrations/"):
-                self._send(HTTPStatus.OK, api.integration(path.removeprefix("/api/integrations/")))
-                return
-            if path not in routes:
-                raise ApiError(404, "Not found", f"No endpoint at {path}.")
-            self._send(HTTPStatus.OK, routes[path](body))
+            self._send(HTTPStatus.OK, api.post(app, path, body, self.headers))
 
         def do_GET(self):
             self._dispatch("GET")
@@ -239,16 +176,14 @@ def make_handler(api, token, port):
     return Handler
 
 
-def serve(host, config_path, port=config.UI_PORT, ready=None):
-    """Run until interrupted. `ready(url)` is called once the socket is listening."""
+def serve(app, port=catalog.UI_PORT, ready=None):
+    """Serve `app` until interrupted. `ready(url)` is called once the socket is listening."""
     token = secrets.token_urlsafe(24)
-    api = Api(host, config_path)
     httpd = ThreadingHTTPServer((LOOPBACK, port), BaseHTTPRequestHandler)
     # port 0 picks a free port; the Host check must use the real one
-    httpd.RequestHandlerClass = make_handler(api, token, httpd.server_port)
+    httpd.RequestHandlerClass = make_handler(app, token, httpd.server_port)
     url = f"http://{LOOPBACK}:{httpd.server_port}/"
-    # draw the fixed previews while the browser opens, so the first page's pictures are ready
-    threading.Thread(target=previews.warm, args=(api._led_theme(),), daemon=True).start()
+    app.warm_previews()  # draw the fixed previews while the browser opens
     if ready:
         ready(url)
     try:

@@ -10,7 +10,7 @@ import random
 from ..render.anim import Animation
 from ..render.canvas import HEIGHT, WIDTH, Canvas
 from . import GAMES
-from .session import FRAME_MS
+from .frame import FRAME_MS
 
 FRAMES = 60  # 6 s at the session's frame rate
 SEED = 7

@@ -1,6 +1,6 @@
 """A focus timer (Pomodoro): minutes of work, then a short break, counting down.
 
-Start it from the UI or `tc002 focus start`; the state lives in runtime/focus.py.
+Start it from the UI or `tc002 focus start`; the state lives in state/focus.py.
 Idle, it shows FOCUS and the length of a session. Running, the time left ticks down
 second by second (each GIF covers the next MAX_FRAMES seconds) above a bar that empties;
 work is amber, the break green.
@@ -14,7 +14,7 @@ from ..render import font
 from ..render.anim import MAX_FRAMES, Animation
 from ..render.canvas import WIDTH, Canvas
 from ..render.palette import LED
-from ..runtime import focus
+from ..state import focus
 
 BAR_Y = 14
 

@@ -4,8 +4,8 @@ Credentials stored on the clock are never read out: only their presence is repor
 
 from concurrent.futures import ThreadPoolExecutor
 
-from .. import builtins, device_settings
-from ..device import CATEGORY_ENDPOINTS, DeviceError
+from ..clock import builtins, device_settings
+from ..clock.device import CATEGORY_ENDPOINTS, DeviceError
 
 SECRET_KEYS = {"token", "password", "username", "url", "tokens"}
 

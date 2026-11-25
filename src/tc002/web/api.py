@@ -1,175 +1,108 @@
-"""JSON API behind `tc002 ui`: read everything, change tc002.toml, act on the clock.
+"""The JSON API behind `tc002 ui`: one table per method, path -> App call.
 
-A thin front end over the application layer (`tc002.app.App`): each action checks the
-shape of the request, calls one App method and returns its result. Saving goes through
-`App.save_config` (validate, write tc002.toml, `sync.apply`, restart the service), the
-same path the CLI and the MCP server use.
+Each handler checks the shape of the request (that is this front end's job: JSON, not
+App, decides what a body looks like) and returns what App returns. Nothing here reads
+files, talks to the clock or runs commands; App does.
 """
 
-from pathlib import Path
-
-from .. import builtins, config, device_settings, presets
-from ..app import App
-from ..device import MIN_FIRMWARE
-from ..games import GAMES
-from ..render import font, themes
-from ..render.canvas import HEIGHT, WIDTH
-from ..render.palette import hex_palette
-from ..runtime import freshness
-from ..screens import NETWORKED, SCREENS, message, stale
-from ..screens import options as screen_options
-from ..screens import usage as usage_screen
-from . import cities
-from .agents import Agents
+from ..app import catalog
 from .errors import ApiError
-from .host_actions_api import HostActions
-from .play_actions import PlayActions
-from .previews import LIVE_SCREENS, Previews
-from .screen_actions import ScreenActions
-from .setup_actions import SetupActions
 
 
-class Api(SetupActions, PlayActions, HostActions, Previews, ScreenActions):
-    """Every API action; groups of them live in the *_actions modules."""
+def _dict(value, what):
+    if not isinstance(value, dict) or not value:
+        raise ApiError(422, "Nothing to change", f'Send {{"{what}": {{...}}}}.')
+    return value
 
-    def __init__(self, host, config_path, state_dir=None):
-        # the clock is asked through self._device, so a test can stand in for it
-        self.app = App(host, config_path, state_dir, timeout=4, device=lambda: self._device())
-        self.agents = Agents()
-        self.game = None  # the one game being played, if any (games/session.py)
 
-    host = property(lambda self: self.app.host, lambda self, v: setattr(self.app, "host", v))
-    config_path = property(
-        lambda self: self.app.config_path, lambda self, v: setattr(self.app, "config_path", v)
+def _night(app, body):
+    """Screen off now (`{"off": true, "until": "morning" | null}`) or on (`{"off": false}`)."""
+    if body.get("off"):
+        return app.screen_off(until_morning=body.get("until") == "morning")
+    return app.screen_on()
+
+
+def _focus(app, body):
+    if body.get("action") == "stop":
+        return app.focus_stop()
+    done = app.focus_start(body.get("minutes") or None)
+    return {k: done[k] for k in ("running", "minutes", "break")}
+
+
+def _game(app, body):
+    if body.get("action") == "stop":
+        return app.stop_game()
+    return app.play_game(body.get("game"))
+
+
+def _first_run(app, body):
+    return app.first_run(
+        body.get("host"), body.get("preset"), body.get("timezone"), body.get("weather")
     )
-    state_dir = property(lambda self: self.app.state_dir)
-
-    # -- helpers ------------------------------------------------------------------
-
-    def _device(self):
-        return self.app.new_device()
-
-    def _settings(self):
-        return self.app.settings()
-
-    def _settings_or_none(self):
-        return self.app.settings_or_none()
-
-    def _led_theme(self):
-        return self.app.led_theme()
-
-    # -- reads --------------------------------------------------------------------
-
-    def state(self):
-        try:
-            settings = self._settings()
-        except config.ConfigError as exc:
-            # a hand edit gone wrong: say where, so the page can show it instead of a 500
-            raise ApiError(
-                422, "Invalid tc002.toml", f"{exc}. Fix the file, then reload this page."
-            ) from None
-        return {
-            "night": self.app.night_status(),
-            "config": {
-                "path": str(self.config_path) if self.config_path else None,
-                "shown": _home_relative(self.config_path),
-                "data": config.to_data(settings),
-                # sent back with a save (If-Match): a file changed since is not overwritten
-                "version": self.app.config_version(),
-            },
-            "clock": self.app.clock_state(settings),
-            "integrations": self.app.integrations(),
-            "agents": self.agents.snapshot(),
-            "freshness": freshness.read(),
-            "focus": self.app.focus_now(),
-            "connections": self._connections(),
-            "staleAfter": {"age": stale.STALE_AFTER, "noData": stale.NO_DATA_AFTER},
-            "catalogue": [
-                {"key": k, "category": b.category, "index": b.index}
-                for k, b in builtins.CATALOGUE.items()
-            ],
-            "screens": list(SCREENS),
-            "screenOptions": screen_options.describe(SCREENS),
-            "liveScreens": sorted(LIVE_SCREENS),
-            "networked": sorted(NETWORKED),
-            "games": {name: list(g.KEYS) for name, g in GAMES.items()},
-            "schema": device_settings.schema(),
-            "colors": message.COLORS,
-            "alertKinds": list(message.ICONS),
-            "messageMaxChars": message.MAX_CHARS,
-            "limits": {"warn": usage_screen.WARN, "critical": usage_screen.CRITICAL},
-            "slotSeconds": {"min": config.MIN_SLOT_SECONDS, "max": config.MAX_SLOT_SECONDS},
-            "presets": presets.describe(),
-            "ledThemes": themes.names(),
-            "minFirmware": ".".join(map(str, MIN_FIRMWARE)),
-            "timezones": device_settings.TIMEZONES,
-        }
-
-    def agents_now(self, query=None):
-        return self.agents.snapshot()
-
-    def appearance(self, body):
-        """Change only the [appearance] table: LED theme and the UI palette it may follow."""
-        return self.app.set_appearance(body.get("led_theme"), body.get("ui_palette"))
-
-    def led(self):
-        """Pixel fonts and LED palette, so browser previews draw exactly what the clock would."""
-        return {
-            "font": {"big": font.BIG, "small": font.SMALL},
-            "palette": hex_palette(),
-            "size": {"width": WIDTH, "height": HEIGHT},
-        }
-
-    def cities(self, query):
-        return cities.search(query.get("q", ""), query.get("lang", "en"))
-
-    # -- writes -------------------------------------------------------------------
-
-    def save_config(self, data, restart=True, expected=None):
-        """Validate, write, apply, restart; `expected` is the version the page loaded."""
-        return self.app.save_config(data, restart, expected)
-
-    def quick(self, body):
-        """Quick settings (brightness, volume, …): merged into the saved tc002.toml and applied
-        at once, leaving any unsaved draft in the UI alone."""
-        patch = body.get("display")
-        if not isinstance(patch, dict) or not patch:
-            raise ApiError(422, "Nothing to change", 'Send {"display": {...}}.')
-        return self.app.set_display(patch)
-
-    def apply_preset(self, body):
-        """The draft with a preset's rotation applied; the UI decides when to save it."""
-        try:
-            return {"data": presets.apply(body.get("data") or {}, body.get("preset"))}
-        except ValueError as exc:
-            raise ApiError(422, "Unknown preset", str(exc)) from None
-
-    def live(self, body):
-        return self.app.live(body.get("data"), body.get("focus") or None)
-
-    def live_stop(self, body):
-        return self.app.live_stop()
-
-    def night(self, body):
-        """Screen off now (`{"off": true, "until": "morning" | null}`) or on (`{"off": false}`)."""
-        if body.get("off"):
-            return self.app.screen_off(until_morning=body.get("until") == "morning")
-        return self.app.screen_on()
-
-    def show(self, body):
-        return self.app.show(body.get("screen"), body.get("builtin"))
-
-    def send_message(self, body):
-        """Text or alert, played in the background so the request returns at once."""
-        return self.app.play_message(
-            body.get("text"), body.get("type"), body.get("kind", "done"), body.get("color")
-        )
 
 
-def _home_relative(path):
-    """The config path as the sidebar shows it: ~/… rather than the user's home directory."""
-    if not path:
-        return None
-    home = str(Path.home())
-    text = str(path)
-    return "~" + text[len(home) :] if text.startswith(home + "/") else text
+# GET path -> (app, query) -> JSON
+GETS = {
+    "/api/state": lambda app, q: app.overview(),
+    "/api/led": lambda app, q: catalog.led(),
+    "/api/cities": lambda app, q: app.find_cities(q.get("q", ""), q.get("lang", "en")),
+    "/api/agents": lambda app, q: app.agents(),
+    "/api/discover": lambda app, q: app.discover(),
+    "/api/log": lambda app, q: app.log(),
+    "/api/wifi/status": lambda app, q: app.wifi_status(),
+    "/api/game/frame": lambda app, q: app.game_frame(),
+    "/api/symbols": lambda app, q: app.find_symbols(q.get("q")),
+    "/api/home/entities": lambda app, q: app.home_entities(),
+    "/api/clock/check": lambda app, q: app.clock_check(),
+}
+
+# POST path -> (app, body, headers) -> JSON
+POSTS = {
+    # If-Match: the version the page loaded, so a file changed since is not overwritten
+    "/api/config": lambda app, b, h: app.save_config(b, expected=h.get("If-Match")),
+    "/api/quick": lambda app, b, h: app.set_display(_dict(b.get("display"), "display")),
+    "/api/appearance": lambda app, b, h: app.set_appearance(
+        b.get("led_theme"), b.get("ui_palette")
+    ),
+    "/api/preset": lambda app, b, h: app.apply_preset(b.get("data"), b.get("preset")),
+    "/api/live": lambda app, b, h: app.live(b.get("data"), b.get("focus") or None),
+    "/api/live/stop": lambda app, b, h: app.live_stop(),
+    "/api/show": lambda app, b, h: app.show(b.get("screen"), b.get("builtin")),
+    "/api/message": lambda app, b, h: app.start_message(
+        b.get("text"), b.get("type"), b.get("kind", "done"), b.get("color")
+    ),
+    "/api/night": lambda app, b, h: _night(app, b),
+    "/api/focus": lambda app, b, h: _focus(app, b),
+    "/api/game": lambda app, b, h: _game(app, b),
+    "/api/game/key": lambda app, b, h: app.game_key(b.get("key"), b.get("down")),
+    "/api/try-screen": lambda app, b, h: app.try_screen(b.get("screen"), b.get("options")),
+    "/api/setup": lambda app, b, h: _first_run(app, b),
+    "/api/social-token": lambda app, b, h: app.set_social_token(b.get("app"), b.get("token")),
+    "/api/secret": lambda app, b, h: app.save_secret(
+        b.get("connection"), b.get("field"), b.get("value")
+    ),
+    "/api/reveal": lambda app, b, h: app.reveal(b.get("what")),
+    "/api/wifi/join-hotspot": lambda app, b, h: app.wifi_join_hotspot(),
+    "/api/wifi/send": lambda app, b, h: app.wifi_send(b.get("ssid"), b.get("password")),
+    "/api/wifi/rejoin": lambda app, b, h: app.wifi_rejoin(b.get("ssid")),
+}
+INTEGRATIONS = "/api/integrations/"  # + action name -> app.integration(action)
+PREVIEW = ("/api/preview/", ".gif")  # /api/preview/<name>.gif -> app.preview(...)
+
+
+def get(app, path, query):
+    return GETS[path](app, query)
+
+
+def preview(app, name, query):
+    return app.preview(
+        name, query.get("theme"), query.get("text"), query.get("color"), query.get("kind")
+    )
+
+
+def post(app, path, body, headers):
+    if path.startswith(INTEGRATIONS):
+        return app.integration(path.removeprefix(INTEGRATIONS))
+    if path not in POSTS:
+        raise ApiError(404, "Not found", f"No endpoint at {path}.")
+    return POSTS[path](app, body, headers)

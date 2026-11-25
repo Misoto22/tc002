@@ -5,7 +5,6 @@ import json
 import time
 from dataclasses import dataclass
 
-from .. import config
 from ..app import App
 
 
@@ -152,7 +151,7 @@ def ui(args, ctx):
         if not args.no_open:
             webbrowser.open(url)
 
-    server.serve(config.host(), config.path(), port=args.port, ready=ready)
+    server.serve(App.local(), port=args.port, ready=ready)
     return 0
 
 

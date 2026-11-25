@@ -1,4 +1,4 @@
-"""First run from the UI: find the clock on the LAN, remember it, start a tc002.toml.
+"""Finding a TC002 on the LAN.
 
 Discovery asks every address of this Mac's /24 for the firmware's /getBase, many at
 once with a short timeout; only replies that look like a TC002 count. Nothing is sent
@@ -8,8 +8,8 @@ beyond the local subnet.
 import socket
 from concurrent.futures import ThreadPoolExecutor
 
-from .. import config, config_writer, presets, provision
-from ..device import MIN_FIRMWARE, Device, DeviceError, firmware
+from . import provision
+from .device import MIN_FIRMWARE, Device, DeviceError, firmware
 
 PROBE_TIMEOUT = 0.8
 WORKERS = 64
@@ -58,32 +58,3 @@ def discover(subnet=None, timeout=PROBE_TIMEOUT, listen=provision.listen):
     with ThreadPoolExecutor(WORKERS) as pool:
         found = [c for c in pool.map(lambda h: probe(h, timeout), hosts) if c]
     return {"subnet": f"{subnet}.0/24", "clocks": found, "how": "sweep"}
-
-
-def setup(host, preset=None, timezone=None, weather=None):
-    """Remember `host` and write its first settings: a new ~/.config/tc002/tc002.toml from
-    `preset` when none is set yet, plus the time zone and weather city if given.
-
-    Returns the saved Settings with where they live; the caller pushes them to the clock.
-    """
-    if probe(host, timeout=3) is None:
-        raise ValueError(f"no TC002 answered at {host}")
-    path = config.path()
-    if path is None:
-        path = config.STATE_DIR / "tc002.toml"
-        data = config.to_data(config.Settings())
-        if preset:
-            data = presets.apply(data, preset)
-    else:
-        data = config.to_data(config.load(path))
-    if timezone:
-        data["display"] = {**data["display"], "timezone": timezone}
-    if weather:
-        city = {k: str(weather[k]) for k in ("city", "lat", "lon") if weather.get(k)}
-        data["apps"] = {**data["apps"], "weather": {**data["apps"].get("weather", {}), **city}}
-    settings = config.parse(data, str(path))  # raises ConfigError on a bad time zone
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with config_writer.WRITE_LOCK:
-        config_writer.save(settings, path)
-    config.save_local(host=host, config=str(path))
-    return {"host": host, "config": str(path), "settings": settings}

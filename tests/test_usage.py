@@ -4,7 +4,8 @@ import json
 import sqlite3
 import time
 
-from tc002 import presets, usage
+from tc002 import usage
+from tc002.config import presets
 from tc002.render.anim import MAX_FRAMES
 from tc002.screens import usage as usage_screen
 from tc002.usage.claude import ClaudeUsage

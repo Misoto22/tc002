@@ -1,6 +1,6 @@
 """Output: change-only pushes and quiet retries while the clock is away."""
 
-from tc002.device import DeviceError
+from tc002.clock.device import DeviceError
 from tc002.render.anim import Animation
 from tc002.render.canvas import Canvas
 from tc002.runtime.output import Output

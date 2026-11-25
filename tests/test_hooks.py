@@ -2,7 +2,7 @@
 
 import json
 
-from tc002.integrations import claude_hooks
+from tc002.host import claude_hooks
 
 EXE = "/Users/me/.local/bin/tc002"
 OTHER = {"type": "command", "command": "/Users/me/.claude/luvus-agent-hook.sh"}
@@ -60,7 +60,7 @@ def test_missing_settings_file_is_created(tmp_path):
 
 
 def test_service_path_finds_the_tools_screens_run():
-    from tc002.integrations import launchd
+    from tc002.host import launchd
 
     found = {"gh": "/Users/me/.local/share/mise/shims"}
     path = launchd.service_path(find=found.get)
@@ -71,7 +71,7 @@ def test_service_path_finds_the_tools_screens_run():
 
 
 def test_a_shim_that_fails_outside_a_project_is_skipped(tmp_path):
-    from tc002.integrations import launchd
+    from tc002.host import launchd
 
     shims, brew = tmp_path / "shims", tmp_path / "brew"
     for folder in (shims, brew):

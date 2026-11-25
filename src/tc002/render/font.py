@@ -111,7 +111,7 @@ BIG_HEIGHT, SMALL_HEIGHT = 7, 5
 def for_text(text):
     """The table to draw `text` with: the 5x7 font, or the 12 px CJK one when any
     character is beyond what the 5x7 font has (it then draws the whole line)."""
-    from . import cjk  # loaded only when text needs it
+    from . import cjk
 
     if all(ch.upper() in BIG for ch in text):
         return BIG

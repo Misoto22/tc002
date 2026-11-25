@@ -8,7 +8,7 @@ import sys
 import pytest
 
 from tc002.app import App
-from tc002.integrations import launchd
+from tc002.host import launchd
 from tc002.mcp import server
 from tc002.mcp.tools import TOOLS
 

@@ -5,7 +5,7 @@ imitation at 52x16 with tc002's fonts: what the app shows, not its exact pixels.
 labels them as approximate.
 """
 
-from .. import builtins
+from ..clock import builtins
 from ..render.anim import Animation
 from ..render.canvas import Canvas
 from ..render.palette import LED

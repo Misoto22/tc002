@@ -14,7 +14,8 @@ and lights ON or OFF in a colour; "unavailable" as "--".
 from dataclasses import dataclass
 from typing import ClassVar
 
-from .. import connections, net
+from .. import net
+from ..host import connections
 from ..render import font
 from ..render.anim import Animation
 from ..render.canvas import WIDTH, Canvas

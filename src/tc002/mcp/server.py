@@ -12,7 +12,6 @@ import sys
 from importlib.metadata import version
 
 from ..app import AppError
-from ..device import DeviceError
 from .tools import TOOLS
 
 PROTOCOL_VERSIONS = ("2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05")
@@ -127,8 +126,6 @@ class Server:
             lines = [f"{exc.title}: {exc.detail}"]
             lines += [e["message"] for e in exc.errors or ()]
             return _failure("\n".join(lines))
-        except DeviceError as exc:
-            return _failure(f"Clock unreachable: {exc}")
         except (OSError, RuntimeError, ValueError, KeyError) as exc:
             return _failure(f"{type(exc).__name__}: {exc}")
 

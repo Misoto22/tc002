@@ -1,7 +1,7 @@
 """Install the Claude Code hooks that tell tc002 what each session is doing.
 
 Edits ~/.claude/settings.json in place: adds one `tc002 hook` command per event (it
-reads the event from stdin, see runtime/sessions.py), leaves every other hook
+reads the event from stdin, see state/sessions.py), leaves every other hook
 untouched, and backs the file up before the first change. Hooks from older tc002
 versions (`tc002 event <kind>`) are recognised and replaced.
 """

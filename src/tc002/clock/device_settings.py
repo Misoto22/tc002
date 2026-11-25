@@ -4,7 +4,7 @@ One table per setting, taken from the protocol reference (sections 5.1 and 5.6).
 same tables validate tc002.toml and drive the web UI's controls (`schema()`), so an
 allowed value is defined exactly once. Credentials (OAuth tokens, calendar passwords,
 the weather API key) are deliberately not settable here: they stay on the device. The
-one way to give the clock a social token is write-only (`TOKEN_APPS`, web/api.py): sent
+one way to give the clock a social token is write-only (`TOKEN_APPS`, `App.set_social_token`): sent
 to the clock, never stored, never read back.
 """
 

@@ -14,7 +14,8 @@ import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import builtins, device_settings, paths
+from .. import paths
+from ..clock import builtins, device_settings
 
 MIN_SLOT_SECONDS, MAX_SLOT_SECONDS = 3, 600  # how long one rotation slot may show
 CYCLE, SINGLE = "cycle", "single"  # [rotation] mode: step through the slots, or hold one
@@ -75,7 +76,7 @@ class Settings:
     @property
     def led_theme(self):
         """The LED theme in effect, with "match" resolved to the UI's palette."""
-        from .render import themes
+        from ..render import themes
 
         return themes.resolve(self.appearance["led_theme"], self.appearance["ui_palette"])
 
@@ -88,7 +89,7 @@ class Settings:
 
 
 def _parse(data, source):
-    from .screens import SCREENS  # deferred: screens import runtime modules
+    from ..screens import SCREENS
 
     known_screens = set(SCREENS)
     if "playlist" in data:  # the section's name before 0.2; read it, write [rotation]
@@ -154,16 +155,16 @@ def _parse(data, source):
         raise ConfigError(f"{source}: " + "; ".join(problems))
 
     screen_options = data.get("screen", {})
-    from .screens import options as screen_options_rules
+    from ..screens import options as screen_options_rules
 
     if problems := screen_options_rules.validate(SCREENS, screen_options):
         raise ConfigError(f"{source}: " + "; ".join(problems))
-    from . import connections as connection_rules
+    from ..host import connections as connection_rules
 
     connections = data.get("connections", {})
     if problems := connection_rules.validate(connections):
         raise ConfigError(f"{source}: " + "; ".join(problems))
-    from . import night as night_rules
+    from ..runtime import night as night_rules
 
     night = dict(data.get("night", {}))
     if problems := night_rules.validate(night):
@@ -213,7 +214,7 @@ def _slot_data(slot, seconds=True):
 
 
 def _appearance_problems(appearance):
-    from .render import themes
+    from ..render import themes
 
     problems = []
     if appearance["led_theme"] not in themes.names():

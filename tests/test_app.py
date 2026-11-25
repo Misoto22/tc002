@@ -2,10 +2,11 @@
 
 import pytest
 
-from tc002 import cli, night
+from tc002 import cli
 from tc002.app import App, ClockUnreachable, InvalidRequest, InvalidSettings, NotConfigured
-from tc002.device import DeviceError
-from tc002.integrations import launchd
+from tc002.clock.device import DeviceError
+from tc002.host import launchd
+from tc002.runtime import night
 
 TOML = """\
 [screens]
@@ -84,11 +85,21 @@ def test_show_checks_names_and_switches(tmp_path):
             app.show(**bad)
 
 
-def test_device_errors_become_clock_unreachable_and_stay_device_errors(tmp_path):
+def test_device_errors_become_clock_unreachable(tmp_path):
     app = app_with(tmp_path, Clock(fail=True))
     with pytest.raises(ClockUnreachable) as caught:
         app.custom_apps()
-    assert isinstance(caught.value, DeviceError) and "timed out" in caught.value.detail
+    assert caught.value.status is None and "timed out" in caught.value.detail
+    assert isinstance(caught.value.__cause__, DeviceError)
+
+
+def test_no_app_method_lets_a_lower_level_error_through(tmp_path):
+    bad = tmp_path / "tc002.toml"
+    bad.write_text("[screens\n")
+    app = App("192.0.2.1", bad, device=lambda: Clock(fail=True))
+    with pytest.raises(InvalidSettings) as caught:
+        app.overview()
+    assert caught.value.title == "Invalid tc002.toml" and str(bad) in caught.value.detail
 
 
 def test_status_and_now_showing_work_offline(tmp_path, no_service):
@@ -153,12 +164,12 @@ def test_screen_off_and_on(tmp_path):
     assert app.screen_on()["dark"] is False and ("remove", night.APP) in clock.calls
 
 
-def test_play_message_refuses_empty_text_and_unknown_kinds(tmp_path):
+def test_start_message_refuses_empty_text_and_unknown_kinds(tmp_path):
     app = app_with(tmp_path, Clock())
     with pytest.raises(InvalidRequest):
-        app.play_message("   ")
+        app.start_message("   ")
     with pytest.raises(InvalidRequest):
-        app.play_message("hi", "alert", "nope")
+        app.start_message("hi", "alert", "nope")
 
 
 def test_cli_reports_application_errors_in_one_line(tmp_path, monkeypatch, capsys):
@@ -175,3 +186,10 @@ def test_cli_doctor_prints_the_app_checks(tmp_path, monkeypatch, capsys, no_serv
     assert cli.main(["--config", str(cfg), "doctor"]) == 1  # no clock configured
     out = capsys.readouterr().out
     assert "[FAIL] clock: no host" in out and "[warn] service: not installed" in out
+
+
+def test_no_attribute_hides_a_use_case(tmp_path):
+    app = App("192.0.2.1", tmp_path / "x.toml", preview_dir=tmp_path, device=Clock)
+    app.agents()  # creates the readers it keeps
+    hidden = [name for name in vars(app) if callable(getattr(App, name, None))]
+    assert not hidden, f"instance attributes named like App methods: {hidden}"

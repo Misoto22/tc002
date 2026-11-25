@@ -2,7 +2,7 @@
 
 import pytest
 
-from tc002 import builtins
+from tc002.clock import builtins
 from tc002.render import font
 from tc002.render.anim import MAX_FRAMES
 from tc002.render.canvas import WIDTH, Canvas, rgb

@@ -1,5 +1,5 @@
 // Play a game on the clock with this keyboard. The server runs the game and pushes each
-// frame to the clock (games/session.py); this page sends key presses and mirrors frames.
+// frame to the clock (runtime/game.py); this page sends key presses and mirrors frames.
 
 import { get, post } from "../api.js";
 import { t } from "../i18n.js";

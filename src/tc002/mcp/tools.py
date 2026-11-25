@@ -8,8 +8,7 @@ the risky ones.
 
 from dataclasses import dataclass, field
 
-from .. import builtins, config, device_settings
-from ..screens import SCREENS, message
+from ..app import catalog
 
 
 @dataclass(frozen=True)
@@ -52,7 +51,7 @@ class Tool:
 def _display_schema():
     """`[display]` settings as JSON Schema, from the same table that validates tc002.toml."""
     props = {}
-    for key, (kind, label, spec) in device_settings.DISPLAY.items():
+    for key, (kind, label, spec) in catalog.DISPLAY.items():
         if kind == "bool":
             props[key] = {"type": "boolean", "description": label}
         elif kind == "int":
@@ -64,11 +63,11 @@ def _display_schema():
             }
         else:
             props[key] = {"enum": list(spec), "description": label}
-    if "auto" in device_settings.TIMEZONES:
+    if "auto" in catalog.TIMEZONES:
         props["timezone"]["description"] = (
             'Time zone: "auto" follows this Mac (summer time included), else a fixed UTC offset.'
         )
-    lo, hi = device_settings.BRIGHTNESS_RANGE
+    lo, hi = catalog.BRIGHTNESS_RANGE
     level = {"type": "integer", "minimum": lo, "maximum": hi}
     props["brightness"] = {
         "type": "object",
@@ -77,7 +76,7 @@ def _display_schema():
             f"presets in % ({lo}-{hi}, low < mid < high). Give only what changes."
         ),
         "properties": {
-            "level": {"enum": device_settings.BRIGHTNESS_LEVELS},
+            "level": {"enum": catalog.BRIGHTNESS_LEVELS},
             "low": level,
             "mid": level,
             "high": level,
@@ -87,8 +86,8 @@ def _display_schema():
     return props
 
 
-SCREEN_NAMES = list(SCREENS)
-BUILTIN_NAMES = list(builtins.CATALOGUE)
+SCREEN_NAMES = catalog.SCREEN_NAMES
+BUILTIN_NAMES = catalog.BUILTIN_NAMES
 
 READ_ONLY = [
     Tool(
@@ -171,22 +170,22 @@ ACTIONS = [
         "Show a message",
         "Play a short text or an alert (icon and chasing lights) on the clock, then go "
         "back to the rotation by itself (about 10 s; long text scrolls). Returns at once "
-        f"with how long it plays. Text up to {message.MAX_CHARS} characters, alerts up to "
-        f"{message.ALERT_MAX_CHARS}. Nothing is saved.",
-        lambda app, a: app.play_message(
+        f"with how long it plays. Text up to {catalog.MESSAGE_MAX_CHARS} characters, alerts up to "
+        f"{catalog.ALERT_MAX_CHARS}. Nothing is saved.",
+        lambda app, a: app.start_message(
             a["text"], a.get("type", "text"), a.get("kind", "done"), a.get("color")
         ),
         {
-            "text": {"type": "string", "minLength": 1, "maxLength": message.MAX_CHARS},
+            "text": {"type": "string", "minLength": 1, "maxLength": catalog.MESSAGE_MAX_CHARS},
             "type": {"enum": ["text", "alert"], "default": "text"},
             "kind": {
-                "enum": list(message.ICONS),
+                "enum": catalog.ALERT_KINDS,
                 "default": "done",
                 "description": "Alert icon and colour (alerts only).",
             },
             "color": {
                 "type": "string",
-                "description": f"{', '.join(message.COLORS)} or #RRGGBB.",
+                "description": f"{', '.join(catalog.COLORS)} or #RRGGBB.",
             },
         },
         required=("text",),
@@ -255,7 +254,7 @@ ACTIONS = [
         {
             "data": {
                 "type": "object",
-                "description": "Tables: " + ", ".join(sorted(config.SECTION_KEYS)) + ".",
+                "description": "Tables: " + ", ".join(catalog.CONFIG_SECTIONS) + ".",
             },
             "expected_version": {
                 "type": "string",

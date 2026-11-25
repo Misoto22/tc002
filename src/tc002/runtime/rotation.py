@@ -11,9 +11,9 @@ the screen (see hold.py) it switches nothing, and while the screen is meant to b
 import threading
 import time
 
-from .. import builtins
-from ..device import DeviceError
-from . import hold
+from ..clock import builtins
+from ..clock.device import DeviceError
+from ..state import hold
 from .output import Quiet, log
 
 POLL = 0.5

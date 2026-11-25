@@ -82,7 +82,7 @@ release-please for versions and changelog, Dependabot for `uv` and GitHub Action
 - **Evidence:** (a) also stops the Claude/CPU screens and needs launchd access from the
   UI; (b) is one small file, expires on its own (≤5 min, renewed every minute while
   live), and the page restores tc002.toml on exit.
-- **Choice:** (b), `runtime/hold.py`. Verified on the clock: timeFormat went to
+- **Choice:** (b), `state/hold.py`. Verified on the clock: timeFormat went to
   `HH:MM:SS` while live and back to `HH:MM` on stop.
 
 ## 2026-10-29 — Icons from Lucide, vendored as a sprite

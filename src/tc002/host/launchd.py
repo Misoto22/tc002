@@ -4,6 +4,7 @@ import os
 import plistlib
 import subprocess
 import time
+from collections import deque
 from pathlib import Path
 
 LABEL = "dev.tc002.watch"
@@ -126,3 +127,12 @@ def status():
         if sep and key in ("state", "pid", "last exit code", "runs"):
             fields.setdefault(key, value)
     return ", ".join(f"{k}: {v}" for k, v in fields.items()) + f"\nlog: {LOG}"
+
+
+def log_tail(lines=200):
+    """The last `lines` lines of the service log ("" before it has run)."""
+    try:
+        with LOG.open(encoding="utf-8", errors="replace") as f:
+            return "".join(deque(f, maxlen=lines))
+    except FileNotFoundError:
+        return ""
