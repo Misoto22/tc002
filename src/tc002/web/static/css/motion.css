@@ -5,6 +5,7 @@
 @keyframes pop-in { from { opacity: 0; transform: translateY(-4px) scale(0.98); } }
 @keyframes palette-in { from { opacity: 0; transform: translateY(-8px) scale(0.98); } }
 @keyframes toast-in { from { opacity: 0; transform: translateY(var(--space-10)) scale(0.98); } }
+@keyframes toast-bump { 50% { transform: scale(1.03); } }
 @keyframes toast-out { to { opacity: 0; transform: translateX(var(--space-16)); } }
 @keyframes page-in { from { opacity: 0; transform: translateY(var(--space-6)); } }
 @keyframes shimmer { to { background-position: -200% 0; } }

@@ -1,4 +1,5 @@
 import { assets } from "./assets.js";
+import { t } from "./i18n.js";
 import { TIMING } from "./timing.js";
 
 // Small DOM toolkit: one element helper, Lucide icons from the local sprite, and the
@@ -171,13 +172,44 @@ export function pageHead(title, description, ...actions) {
     actions.length ? h("div", { class: "actions" }, ...actions) : null);
 }
 
+// A toast says what just happened, then goes on its own. The same message again does not
+// stack: the one on screen counts it (×2) and stays a while longer. Each has a close
+// button, and at most MAX_TOASTS show at once (the oldest goes first).
+const MAX_TOASTS = 3;
+
 export function toast(title, detail, kind = "info") {
+  const box = document.getElementById("toasts");
+  const key = JSON.stringify([kind, title, detail ?? ""]);
+  const same = [...box.children].find((el) => el.dataset.key === key && !el.classList.contains("leaving"));
+  if (same) {
+    same.count += 1;
+    same.querySelector(".toast-count").textContent = `×${same.count}`;
+    same.classList.remove("bump"); void same.offsetWidth; same.classList.add("bump"); // replay
+    same.restart();
+    return;
+  }
   const ico = { info: "circle-check", error: "circle-alert", warn: "triangle-alert" }[kind];
-  const el = h("div", { class: `toast ${kind}`, role: kind === "error" ? "alert" : "status" },
-    icon(ico), h("div", {}, title, detail && h("span", { class: "muted" }, detail)));
-  document.getElementById("toasts").append(el);
-  setTimeout(() => { el.classList.add("leaving"); setTimeout(() => el.remove(), ms("--normal")); },
-    kind === "error" ? TIMING.toastErrorMs : TIMING.toastMs);
+  let timer;
+  const close = () => {
+    clearTimeout(timer);
+    if (el.classList.contains("leaving")) return;
+    el.classList.add("leaving");
+    setTimeout(() => el.remove(), ms("--normal"));
+  };
+  const el = h("div", { class: `toast ${kind}`, role: kind === "error" ? "alert" : "status", "data-key": key },
+    icon(ico),
+    h("div", { class: "toast-text" }, title, h("span", { class: "toast-count" }),
+      detail && h("span", { class: "muted" }, detail)),
+    h("button", { class: "toast-close", type: "button", "aria-label": t("btn.close"), title: t("btn.close"), onClick: close }, icon("x")));
+  el.count = 1;
+  el.restart = () => {
+    clearTimeout(timer);
+    timer = setTimeout(close, kind === "error" ? TIMING.toastErrorMs : TIMING.toastMs);
+  };
+  box.append(el);
+  el.restart();
+  const live = [...box.children].filter((x) => !x.classList.contains("leaving"));
+  for (const extra of live.slice(0, Math.max(0, live.length - MAX_TOASTS))) extra.querySelector(".toast-close").click();
 }
 
 // Show a fixed popover under `anchor` (above it when there is no room below; right-aligned
