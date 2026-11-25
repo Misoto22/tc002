@@ -188,6 +188,7 @@ def make_handler(api, token, port):
                 "/api/appearance": api.appearance,
                 "/api/social-token": api.social_token,
                 "/api/focus": api.focus,
+                "/api/night": api.night,
                 "/api/secret": api.save_secret,
                 "/api/try-screen": api.try_screen,
                 "/api/game": api.play,

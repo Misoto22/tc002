@@ -31,6 +31,8 @@ COMMENTS = {
     "rotation": "Replaces the device's own carousel. Each slot is a screen or a kept built-in.\n"
     'mode = "single" holds `show` (one screen or built-in) instead of stepping through slots.',
     "alerts": "A Claude Code session waiting for you takes over the clock until you answer.",
+    "night": "The screen fully dark every night, between two times on this Mac's clock.\n"
+    "The background service puts a black screen up at `start` and takes it down at `end`.",
     "screen": "Options of tc002's own screens, one table each (see `tc002 ui` for every\n"
     "option): [screen.countdown] date and label, [screen.worldclock] zones, [screen.focus]\n"
     "minutes and break_minutes, [screen.progress] week_start, [screen.stocks] symbols,\n"
@@ -75,6 +77,7 @@ def _table(name, body, lines):
 EXAMPLES = {
     "display": '[display]\nvolume = 2\ntimezone = "UTC+1"\nbrightness = { level = "mid" }',
     "apps": '[apps.clock]\ntimeFormat = "HH:MM"\n\n[apps.weather]\ncity = "Berlin"',
+    "night": '[night]\nenable = true\nstart = "23:00"\nend = "07:00"',
     "screen": '[screen.countdown]\ndate = "2027-01-01"\nlabel = "NEW YEAR"',
     "connections": '[connections.homeassistant]\nurl = "http://homeassistant.local:8123"',
 }

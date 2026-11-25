@@ -31,6 +31,7 @@ SECTION_KEYS = {
     "apps": None,
     "rotation": {"slots", "mode", "show"},
     "alerts": {"takeover"},
+    "night": {"enable", "start", "end"},
     "appearance": {"led_theme", "ui_palette"},
     "screen": None,  # [screen.<name>] options, validated by screens/options.py
     "connections": None,  # [connections.<name>] plain settings, validated by connections.py
@@ -68,6 +69,7 @@ class Settings:
     appearance: dict = field(default_factory=lambda: dict(DEFAULT_APPEARANCE))
     screen_options: dict = field(default_factory=dict)  # [screen.<name>] tables
     connections: dict = field(default_factory=dict)  # [connections.<name>] (never secrets)
+    night: dict = field(default_factory=dict)  # [night] schedule, see night.py
     source: str = "<built-in defaults>"
 
     @property
@@ -149,6 +151,11 @@ def _parse(data, source):
     connections = data.get("connections", {})
     if problems := connection_rules.validate(connections):
         raise ConfigError(f"{source}: " + "; ".join(problems))
+    from . import night as night_rules
+
+    night = dict(data.get("night", {}))
+    if problems := night_rules.validate(night):
+        raise ConfigError(f"{source}: " + "; ".join(problems))
     appearance = {**DEFAULT_APPEARANCE, **data.get("appearance", {})}
     if problems := _appearance_problems(appearance):
         raise ConfigError(f"{source}: " + "; ".join(problems))
@@ -157,6 +164,7 @@ def _parse(data, source):
         screen_options=screen_options,
         connections=connections,
         appearance=appearance,
+        night=night,
         screens=screens,
         rotation=tuple(slots),
         rotation_mode=mode,
@@ -221,6 +229,7 @@ def to_data(settings):
             **({"show": _slot_data(settings.pinned, False)} if settings.pinned else {}),
         },
         "alerts": {"takeover": settings.alert_takeover},
+        "night": dict(settings.night),
         "appearance": dict(settings.appearance),
         "screen": {k: dict(v) for k, v in settings.screen_options.items()},
         "connections": {k: dict(v) for k, v in settings.connections.items()},

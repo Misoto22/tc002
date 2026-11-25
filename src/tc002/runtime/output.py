@@ -34,8 +34,10 @@ class Quiet:
 class Output:
     """Pushes animations, skipping ones whose key matches the last successful push."""
 
-    def __init__(self, device, preview_dir=None, duration=10, theme=themes.CLASSIC):
-        self.device, self.theme = device, theme
+    def __init__(
+        self, device, preview_dir=None, duration=10, theme=themes.CLASSIC, paused=lambda: False
+    ):
+        self.device, self.theme, self.paused = device, theme, paused
         self.preview_dir = Path(preview_dir) if preview_dir else None
         self.duration = duration
         self._last = {}
@@ -47,6 +49,8 @@ class Output:
             path.write_bytes(mockup.led_gif(anim, self.theme))
             print(f"[{app}] {len(anim.frames)} frames -> {path}")
             print(anim.frames[0].ansi())
+            return
+        if self.paused():  # night: the screen is dark, nothing needs fresh frames
             return
         now = time.monotonic()
         last = self._last.get(app)

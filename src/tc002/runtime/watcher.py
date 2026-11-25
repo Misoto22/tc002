@@ -4,6 +4,7 @@ import signal
 import subprocess
 import threading
 
+from .. import night
 from ..screens import build, stale
 from .freshness import Freshness
 from .output import Output, log
@@ -48,7 +49,9 @@ def screen_loop(out, screen, stop, attention, once=False, freshness=None):
 
 def watch(device, settings, preview_dir=None, once=False):
     """Run the configured screens (and, on a real clock, the rotation driver)."""
-    out = Output(device, preview_dir, theme=settings.led_theme)
+    darkness = night.Watch(device, settings, log=log) if device is not None and not once else None
+    dark = darkness.dark if darkness else (lambda: False)
+    out = Output(device, preview_dir, theme=settings.led_theme, paused=dark)
     screens = [build(name, settings) for name in settings.screens]
     stop = threading.Event()
     attention = Attention()
@@ -62,7 +65,9 @@ def watch(device, settings, preview_dir=None, once=False):
         for s in screens
     ]
     if device is not None and not once:
-        rotation = Rotation(device, settings.schedule, attention, settings.alert_takeover)
+        rotation = Rotation(
+            device, settings.schedule, attention, settings.alert_takeover, dark=dark
+        )
         threads.append(threading.Thread(target=rotation.run, args=(stop,), daemon=True))
     for t in threads:
         t.start()

@@ -236,3 +236,30 @@ def focus(args, ctx):
     if "focus" not in ctx.settings.screens:
         print("note: the focus screen is not enabled; turn it on in `tc002 ui` → Rotation")
     return 0
+
+
+def display(args, ctx):
+    """Screen off now / back on, or show whether it is dark and why."""
+    from .. import night
+
+    def at(epoch):
+        return time.strftime("%H:%M", time.localtime(epoch))
+
+    if args.action == "off":
+        until = night.until_morning(ctx.settings) if args.until_morning else None
+        night.turn_off(ctx.device, ctx.settings, until)
+        print(f"screen off until {at(until) if until else 'you turn it on'}")
+    elif args.action == "on":
+        night.turn_on(ctx.device, ctx.settings)
+    st = night.status(ctx.settings)
+    sched = st["schedule"]
+    why = {"off": "screen off", "on": "kept on", "schedule": "night schedule"}.get(st["why"])
+    line = "dark" if st["dark"] else "on"
+    if why:
+        line += f" ({why})"
+    if st["until"]:
+        line += f" until {at(st['until'])}"
+    plan = f"{sched['start']}-{sched['end']}" if sched["enable"] else "off"
+    print(f"screen: {line}")
+    print(f"night schedule: {plan} (now {st['time']})")
+    return 0

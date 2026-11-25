@@ -8,6 +8,7 @@ import { applySaved, load, setFocus, store } from "../store.js";
 import { post } from "../api.js";
 import { badge, button, h, icon, pageHead, panel, row, section, toast } from "../ui.js";
 import { clockProblem, page, serviceSummary, slotKey, thumb } from "./common.js";
+import { nightNotice } from "../night.js";
 
 function nowShowing() {
   const r = store.draft.rotation;
@@ -74,6 +75,7 @@ export function overview() {
   setFocus({ type: "rotation" });
   return page(
     pageHead(t("page.overview"), t("desc.overview"), button(t("btn.refresh"), load, { ico: "refresh-cw" })),
+    nightNotice(),
     ...nowShowing(),
     ...(focusBlock() ?? []),
     section(t("section.status")), statusPanel(),
