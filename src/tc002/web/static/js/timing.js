@@ -3,6 +3,7 @@
 
 export const TIMING = {
   agentPollMs: 5000, // sessions and limits refresh
+  offlineRecheckMs: 15000, // an offline clock is asked again this often
   statusSettleMs: 6000, // "Applied" shows this long before "In sync"
   liveDebounceMs: 450, // a burst of edits sends one live preview
   quickDebounceMs: 200, // dragging a slider sends one change

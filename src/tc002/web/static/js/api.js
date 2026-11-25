@@ -1,8 +1,18 @@
 // HTTP calls to the local tc002 server. Every write carries the page's session token.
+// The server makes a new token each time it starts; a page left open across a restart
+// fetches the new one from index.html (same origin only) and retries, so it keeps working
+// and keeps its unsaved edits.
 
 import { t } from "./i18n.js";
 
-const TOKEN = document.querySelector('meta[name="tc002-token"]').content;
+const META = 'meta[name="tc002-token"]';
+let token = document.querySelector(META).content;
+
+async function freshToken() {
+  const res = await fetch("/", { cache: "no-store" });
+  const doc = new DOMParser().parseFromString(await res.text(), "text/html");
+  token = doc.querySelector(META)?.content ?? token;
+}
 
 export class ApiFailure extends Error {
   constructor(problem) {
@@ -16,12 +26,16 @@ export class ApiFailure extends Error {
   }
 }
 
-async function request(path, options = {}) {
+async function request(path, options = {}, retried = false) {
   const res = await fetch(path, {
     ...options,
-    headers: { "Content-Type": "application/json", "X-TC002-Token": TOKEN, ...options.headers },
+    headers: { "Content-Type": "application/json", "X-TC002-Token": token, ...options.headers },
   });
   const body = await res.json().catch(() => ({ title: `HTTP ${res.status}` }));
+  if (res.status === 403 && body.title === "Missing token" && !retried) {
+    await freshToken(); // the server restarted since this page loaded
+    return request(path, options, true);
+  }
   if (!res.ok) throw new ApiFailure(body);
   return body;
 }
@@ -33,6 +47,6 @@ export const post = (path, body) => request(path, { method: "POST", body: JSON.s
 export function postOnExit(path, body) {
   fetch(path, {
     method: "POST", keepalive: true, body: JSON.stringify(body),
-    headers: { "Content-Type": "application/json", "X-TC002-Token": TOKEN },
+    headers: { "Content-Type": "application/json", "X-TC002-Token": token },
   });
 }
