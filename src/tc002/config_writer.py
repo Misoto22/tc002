@@ -28,7 +28,8 @@ COMMENTS = {
         f"{cat}: {' '.join(k for k, b in builtins.CATALOGUE.items() if b.category == cat)}"
         for cat in ("tools", "social", "calendar")
     ),
-    "display": "Clock-wide settings, applied with /setConfig. Omit a key to leave it as is.",
+    "display": "Clock-wide settings, applied with /setConfig. Omit a key to leave it as is.\n"
+    'timezone = "auto" follows this Mac\'s time zone, summer time included.',
     "apps": "Settings of built-in apps (no credentials: those stay on the device).",
     "rotation": "Replaces the device's own carousel. Each slot is a screen or a kept built-in.\n"
     'mode = "single" holds `show` (one screen or built-in) instead of stepping through slots.',
@@ -77,7 +78,7 @@ def _table(name, body, lines):
 
 
 EXAMPLES = {
-    "display": '[display]\nvolume = 2\ntimezone = "UTC+1"\nbrightness = { level = "mid" }',
+    "display": '[display]\nvolume = 2\ntimezone = "auto"\nbrightness = { level = "mid" }',
     "apps": '[apps.clock]\ntimeFormat = "HH:MM"\n\n[apps.weather]\ncity = "Berlin"',
     "night": '[night]\nenable = true\nstart = "23:00"\nend = "07:00"',
     "screen": '[screen.countdown]\ndate = "2027-01-01"\nlabel = "NEW YEAR"',
