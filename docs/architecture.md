@@ -41,6 +41,11 @@ Rules the same test enforces:
 - **Every module is in exactly one unit, and there are no import cycles.** A new
   package or top-level module fails the build until it is given a place in `LAYERS`.
 
+CI runs the test on every pull request. Claude Code also runs it when it ends a turn in
+this repository (a Stop hook: `.claude/settings.json` → `.claude/hooks/check-architecture.sh`)
+and is handed the violations to fix before it stops; one that it cannot fix is shown to
+you instead of looping.
+
 ## Modules
 
 ```text

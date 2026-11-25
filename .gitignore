@@ -9,8 +9,10 @@ build/
 .DS_Store
 # --preview output written into the clone by mistake
 tc002-*.gif
-# local editor / agent settings
-.claude/
+# local editor / agent settings; the shared Claude Code hook (settings.json, hooks/) is kept
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
 # your own settings: `tc002 ui` keeps them in ~/.config/tc002/tc002.toml; this name is
 # ignored so a copy kept in the clone is never committed (see tc002.example.toml)
 /tc002.toml
