@@ -6,8 +6,8 @@ import threading
 import pytest
 
 from tc002.games import GAMES, Breakout, Pong, Snake
-from tc002.games import session as game_session
 from tc002.render.canvas import Canvas
+from tc002.runtime import game as game_session
 
 
 def play(game, steps, keys=()):
@@ -78,7 +78,7 @@ class Clock:
 
 
 def test_session_pushes_bitmaps_holds_the_rotation_and_cleans_up(monkeypatch):
-    from tc002.runtime import hold
+    from tc002.state import hold
 
     monkeypatch.setattr(game_session, "FRAME_MS", 5)
     clock = Clock()

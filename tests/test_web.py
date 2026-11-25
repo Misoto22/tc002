@@ -7,7 +7,8 @@ import urllib.request
 
 import pytest
 
-from tc002.integrations import launchd
+from tc002.app import App
+from tc002.host import launchd
 from tc002.web import server
 
 TOML = """\
@@ -36,7 +37,7 @@ def ui(tmp_path, monkeypatch):
         ready.set()
 
     # host None: the clock is "not configured", so nothing ever reaches the LAN
-    t = threading.Thread(target=server.serve, args=(None, cfg, 0, on_ready), daemon=True)
+    t = threading.Thread(target=server.serve, args=(App(None, cfg), 0, on_ready), daemon=True)
     t.start()
     ready.wait(5)
     page = urllib.request.urlopen(box["url"]).read().decode()
@@ -188,7 +189,7 @@ def test_presets_are_listed_and_applied_to_a_draft(ui):
 
 
 def test_cities_fall_back_offline_and_need_no_token(ui, monkeypatch):
-    from tc002.web import cities
+    from tc002.lookup import cities
 
     def no_network(url):
         raise OSError("offline")
@@ -213,9 +214,7 @@ def test_live_preview_needs_a_clock_and_validates(ui):
     assert status == 200 and json.loads(body) == {"changes": []}
 
 
-def test_show_pushes_a_screen_the_clock_does_not_have_yet(monkeypatch):
-    from tc002.web import api as api_module
-
+def test_show_pushes_a_screen_the_clock_does_not_have_yet():
     calls = []
 
     class Clock:
@@ -228,20 +227,19 @@ def test_show_pushes_a_screen_the_clock_does_not_have_yet(monkeypatch):
         def switch_custom(self, app):
             calls.append(("switch", app))
 
-    api = api_module.Api("192.0.2.1", None)
-    monkeypatch.setattr(api, "_device", lambda: Clock())
-    api.show({"screen": "claude"})  # samples local files only, so it runs on any OS
+    app = App("192.0.2.1", None, device=Clock)
+    app.show("claude")  # samples local files only, so it runs on any OS
     assert calls == [("push", "claude", True), ("switch", "claude")]
 
 
 def test_device_http_errors_keep_their_status():
-    from tc002.device import DeviceError
+    from tc002.clock.device import DeviceError
 
     assert DeviceError("x", 404).status == 404 and DeviceError("y").status is None
 
 
 def test_agents_endpoint_lists_sessions_and_limits(ui):
-    from tc002.runtime import sessions
+    from tc002.state import sessions
 
     sessions.record_hook(
         {"hook_event_name": "Notification", "session_id": "s1", "cwd": "/x/kura", "message": "ok?"}
@@ -256,7 +254,7 @@ def test_agents_endpoint_lists_sessions_and_limits(ui):
 
 def test_first_run_saves_the_clock_and_creates_a_config(ui, tmp_path, monkeypatch):
     from tc002 import config
-    from tc002.web import setup
+    from tc002.clock import discovery as setup
 
     monkeypatch.setattr(config, "STATE_DIR", tmp_path / "state")
     monkeypatch.setattr(config, "LOCAL_FILE", tmp_path / "state" / "local.json")
@@ -282,7 +280,7 @@ def test_unknown_integration_action_is_404(ui):
 
 
 def test_discovery_sweeps_when_nothing_announces(monkeypatch):
-    from tc002.web import setup
+    from tc002.clock import discovery as setup
 
     monkeypatch.setattr(setup, "probe", lambda h, t: {"host": h} if h.endswith(".7") else None)
     found = setup.discover("10.1.2", listen=lambda: [])
@@ -290,7 +288,7 @@ def test_discovery_sweeps_when_nothing_announces(monkeypatch):
 
 
 def test_discovery_prefers_clocks_that_announce_themselves(monkeypatch):
-    from tc002.web import setup
+    from tc002.clock import discovery as setup
 
     swept = []
     monkeypatch.setattr(setup, "probe", lambda h, t: swept.append(h) or {"host": h})
@@ -428,7 +426,7 @@ def test_trying_a_failing_screen_says_why(ui, monkeypatch):
 
 
 def test_home_entities_need_a_connection(ui, monkeypatch):
-    from tc002 import connections
+    from tc002.host import connections
 
     monkeypatch.setattr(connections, "value", lambda *a, **k: None)
     url, token, _ = ui
@@ -437,7 +435,7 @@ def test_home_entities_need_a_connection(ui, monkeypatch):
 
 
 def test_fixed_previews_are_drawn_once(ui, monkeypatch):
-    from tc002.web import previews
+    from tc002.app import content as previews
 
     url, _, _ = ui
     previews._fixed.cache_clear()
@@ -463,12 +461,12 @@ def test_a_failing_launchctl_is_a_problem_not_a_dropped_connection(ui, monkeypat
 
 
 def test_install_service_answers_with_an_object(monkeypatch):
-    from tc002.web import host_actions
+    from tc002.app import host
 
     monkeypatch.setattr(launchd, "install", lambda exe: exe)
     monkeypatch.setattr(launchd, "status", lambda: "state: running")
-    monkeypatch.setattr(host_actions, "executable", lambda: "/bin/tc002")
-    assert host_actions.run("install-service") == {
+    monkeypatch.setattr(host, "executable", lambda: "/bin/tc002")
+    assert App().integration("install-service") == {
         "installed": "/bin/tc002",
         "service": "state: running",
     }
@@ -493,18 +491,15 @@ def test_a_save_against_a_file_changed_elsewhere_is_refused(ui):
 
 def test_quick_settings_wait_for_a_save_in_progress(tmp_path, monkeypatch):
     """Read-modify-write under one lock: a quick setting cannot read the file mid-save."""
-    from tc002 import config_writer
-    from tc002.web.api import Api
+    from tc002.config import writer
 
     cfg = tmp_path / "tc002.toml"
     cfg.write_text(TOML)
     monkeypatch.setattr(launchd, "restart", lambda: False)
-    api = Api(None, cfg)
+    app = App(None, cfg)
     done = threading.Event()
-    with config_writer.WRITE_LOCK:  # a save is writing
-        worker = threading.Thread(
-            target=lambda: (api.quick({"display": {"volume": 2}}), done.set())
-        )
+    with writer.WRITE_LOCK:  # a save is writing
+        worker = threading.Thread(target=lambda: (app.set_display({"volume": 2}), done.set()))
         worker.start()
         assert not done.wait(0.3)  # it waits instead of reading the old file
         cfg.write_text(TOML.replace("takeover = true", "takeover = false"))

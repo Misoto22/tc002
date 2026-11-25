@@ -7,7 +7,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import pytest
 
-from tc002 import provision
+from tc002.clock import provision
 
 
 def test_wifi_details_are_checked_before_sending():

@@ -10,7 +10,8 @@ import datetime as dt
 from dataclasses import dataclass
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from .. import connections, net
+from .. import net
+from ..host import connections
 from ..render import font
 from ..render.anim import Animation
 from ..render.canvas import Canvas

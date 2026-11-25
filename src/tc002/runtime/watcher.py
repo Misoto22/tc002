@@ -5,8 +5,9 @@ import subprocess
 import threading
 import time
 
-from .. import night, tz
+from ..clock import tz
 from ..screens import build, stale
+from . import night
 from .freshness import Freshness
 from .output import Output, log
 from .rotation import Attention, Rotation
@@ -112,7 +113,7 @@ def watch(device, settings, preview_dir=None, once=False):
         t.join(timeout=max(0, deadline - time.monotonic()))
     if not once:
         # one quick try each: with the clock off, 2 x 5 s per screen would outlast
-        # launchd's stop (integrations/launchd.py) and fail `tc002 uninstall`
+        # launchd's stop (host/launchd.py) and fail `tc002 uninstall`
         for s in screens:
             out.remove(s.APP, timeout=REMOVE_TIMEOUT, attempts=1)
         log("stopped; screens removed from the clock")

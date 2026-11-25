@@ -7,7 +7,8 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from tc002 import config, connections, keychain
+from tc002 import config
+from tc002.host import connections, keychain
 from tc002.screens import (
     NETWORKED,
     agenda,
@@ -281,9 +282,9 @@ def test_connections_keep_secrets_out_of_tc002_toml():
 
 
 def test_networked_screens_are_never_sampled_for_previews():
-    from tc002.web import api
+    from tc002.app import catalog
 
-    assert NETWORKED.isdisjoint(api.LIVE_SCREENS)
+    assert NETWORKED.isdisjoint(catalog.LIVE_SCREENS)
     assert {build(n).APP for n in NETWORKED} == NETWORKED
 
 

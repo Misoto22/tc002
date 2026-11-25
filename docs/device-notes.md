@@ -29,11 +29,11 @@ this page records what tc002 relies on and what was measured.
 | Observation | Consequence |
 |---|---|
 | HTTP replies have no `Content-Length` and close the connection | Fine for `urllib`; a mock server in the tests does the same |
-| Python's `urllib` honours `HTTP_PROXY`; a local proxy cannot reach the LAN and requests hang | `device.py` builds an opener with an empty `ProxyHandler` |
+| Python's `urllib` honours `HTTP_PROXY`; a local proxy cannot reach the LAN and requests hang | `clock/device.py` builds an opener with an empty `ProxyHandler` |
 | The first request after a quiet period sometimes times out | One automatic retry |
 | Full-screen `db` pushes sustain about 17 per second | Viable fallback for real-time effects |
 | A 24-frame GIF pushed once animates on the device | Basis of every screen |
-| `/getConfig` has an undocumented `nightMode` (`enable`, `startTime`, `endTime`); on firmware 2.0.4 it darkened the screen once, then ignored every later window (wrapping midnight or not, built-in app or custom) | Night is a black custom app instead (`night.py`), which reliably turns every LED off |
+| `/getConfig` has an undocumented `nightMode` (`enable`, `startTime`, `endTime`); on firmware 2.0.4 it darkened the screen once, then ignored every later window (wrapping midnight or not, built-in app or custom) | Night is a black custom app instead (`runtime/night.py`), which reliably turns every LED off |
 | `/getConfig` also has an undocumented `timezoneEx` (`location`, `customPosixEnabled`, `customPosix`); on firmware 2.0.4 a POSIX rule such as `AEST-10AEDT,M10.1.0,M4.1.0/3` sets the clock's time, summer time included, and wins over `timezone`. With `customPosixEnabled` false, `location` must be empty or one of the firmware's own, else 400 "location does not match timezone" | `timezone = "auto"` sends this Mac's rule (`tz.py`); a fixed `UTC±N` clears all three fields |
 | Any app switch lights a dark screen | The service switches and pushes nothing while night is on |
 | A launchd agent's first requests can fail with `No route to host` until macOS grants Local Network access | Documented under Troubleshooting |

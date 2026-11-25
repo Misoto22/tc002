@@ -171,6 +171,9 @@ Nothing a screen reads leaves your Mac.
 ```text
 tc002 ui                             settings in the browser (local only)
 tc002 doctor                         check settings, clock, firmware, service, hooks
+tc002 display off --until-morning    screen fully dark (tc002 display on / status)
+tc002 focus start --minutes 25       focus timer on the focus screen (tc002 focus stop)
+tc002 mcp                            let an AI agent control the clock (see below)
 tc002 text "BUILD OK" --color green  short text shimmers; long text scrolls, then clears
 tc002 text "构建完成" --show          ...in Chinese, and switch the clock to it
 tc002 alert "DEPLOYED" --kind done   chasing-lights alert, removed after 10 s
@@ -190,6 +193,32 @@ From a script or CI step on the same network:
 ```bash
 tc002 alert "TESTS GREEN" --kind done || true
 ```
+
+## Let an AI agent control the clock (MCP)
+
+`tc002 mcp` is a [Model Context Protocol](https://modelcontextprotocol.io) server on
+stdio (standard library only, nothing extra to install). Register it with Claude Code:
+
+```bash
+claude mcp add tc002 -- tc002 mcp
+```
+
+Add `--scope user` to have it in every project. That command edits Claude Code's own
+settings; tc002 never touches them for you. Other MCP clients take the same command:
+`{"command": "tc002", "args": ["mcp"]}`.
+
+It uses the clock and `tc002.toml` from `tc002 setup` (`tc002 --host <IP> mcp` to choose
+another). The tools are the same actions the CLI and the UI have:
+
+| Kind | Tools |
+|---|---|
+| Read only | `get_status`, `list_screens`, `now_showing`, `get_config`, `get_clock_settings`, `run_checks` |
+| Temporary, on the clock | `show_screen`, `send_message`, `screen_off`, `screen_on`, `focus_start`, `focus_stop`, `restart_service` |
+| Lasting: tc002.toml or the clock's settings | `set_display`, `save_config`, `apply_layout`, `restore_layout` |
+
+Each tool carries `readOnlyHint` / `destructiveHint`, so a client can ask you before the
+lasting ones. `tc002://status`, `tc002://screens` and `tc002://config` are also readable
+as resources.
 
 ## Configure
 
@@ -227,7 +256,9 @@ An empty `slots` list leaves the device's own carousel in charge.
 ```text
 tc002.toml ─► config ─► watcher ─┬─ screen threads ── sample → render → Output ─► POST /api/custom
                                  └─ rotation ─────── switchDiyApp / switchApp ──► clock
-tc002 ui ─► local server (127.0.0.1 only, per-session token) ─► tc002.toml ─► clock, service
+tc002 ui ─► local server (127.0.0.1 only, per-session token) ─┐
+tc002 <command> ──────────────────────────────────────────────┼─► app (use cases) ─► tc002.toml, clock, service
+tc002 mcp ─► MCP over stdio ──────────────────────────────────┘
 ```
 
 [docs/architecture.md](https://github.com/Misoto22/tc002/blob/main/docs/architecture.md) has the module map,

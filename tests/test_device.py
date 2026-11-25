@@ -7,7 +7,7 @@ from typing import ClassVar
 
 import pytest
 
-from tc002.device import Device, DeviceError
+from tc002.clock.device import Device, DeviceError
 
 
 class FakeClock(BaseHTTPRequestHandler):
@@ -90,7 +90,7 @@ def test_http_proxy_env_is_ignored(clock, monkeypatch):
 def test_a_reply_cut_off_mid_way_is_retried_then_a_device_error(monkeypatch):
     import http.client
 
-    from tc002 import device
+    from tc002.clock import device
 
     calls = []
 

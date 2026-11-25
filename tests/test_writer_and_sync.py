@@ -3,7 +3,9 @@
 import copy
 import tomllib
 
-from tc002 import config, config_writer, sync
+from tc002 import config
+from tc002.clock import sync
+from tc002.config import writer
 
 FULL = {
     "screens": {"enabled": ["claude", "sys"]},
@@ -31,14 +33,14 @@ FULL = {
 def test_dump_round_trips_every_field(tmp_path):
     settings = config.parse(copy.deepcopy(FULL))
     path = tmp_path / "tc002.toml"
-    config_writer.save(settings, path)
+    writer.save(settings, path)
     assert tomllib.loads(path.read_text()) == FULL
     assert config.load(path) == config.parse(copy.deepcopy(FULL), str(path))
 
 
 def test_empty_sections_are_written_as_commented_examples(tmp_path):
     path = tmp_path / "tc002.toml"
-    config_writer.save(config.Settings(), path)
+    writer.save(config.Settings(), path)
     text = path.read_text()
     assert "# [display]" in text and "# [apps.clock]" in text
     assert "display" not in tomllib.loads(text)
@@ -115,7 +117,7 @@ def test_apply_twice_changes_nothing_the_second_time(tmp_path):
 
 
 def test_social_account_ids_sync_to_the_social_category():
-    from tc002 import sync
+    from tc002.clock import sync
 
     class Clock:
         def __init__(self):

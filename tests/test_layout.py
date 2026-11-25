@@ -4,9 +4,9 @@ import copy
 
 import pytest
 
-from tc002 import builtins
+from tc002.clock import builtins
+from tc002.clock.device import DeviceError
 from tc002.config import Slot
-from tc002.device import DeviceError
 from tc002.runtime.rotation import Attention, Rotation
 
 SECRET = "oauth-token-must-not-leak"

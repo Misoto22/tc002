@@ -1,8 +1,7 @@
 """One game being played: a loop that steps the game, draws it, and puts each frame on
 the clock as a `draw` bitmap, while the browser sends key presses and mirrors the frame.
 
-Frames go out every FRAME_MS (a full 52x16 bitmap takes ~60 ms to push on this
-repository's clock, so 10 frames/s leaves headroom). While a session runs, the rotation
+Frames go out every FRAME_MS (games/frame.py). While a session runs, the rotation
 is held so it does not switch away; stopping removes the game's app and lets go.
 """
 
@@ -11,15 +10,14 @@ import random
 import threading
 import time
 
-from ..device import DeviceError
-from ..render import font, themes
+from ..clock.device import DeviceError
+from ..games import GAMES
+from ..games.frame import FRAME_MS, draw
+from ..render import themes
 from ..render.canvas import HEIGHT, WIDTH, Canvas
-from ..render.palette import LED
-from ..runtime import hold
-from . import GAMES
+from ..state import hold
 
 APP = "tc002-game"
-FRAME_MS = 100
 IDLE_STOP = 120  # seconds without a key press before the game gives the clock back
 
 
@@ -52,25 +50,7 @@ class Session:
     # -- the loop -----------------------------------------------------------------
 
     def _draw(self):
-        c = Canvas()
-        self.game.draw(c)
-        if self.game.over:
-            c.rect(0, 4, WIDTH, HEIGHT - 4, 0)
-            c.text_centered(
-                5,
-                "GAME OVER" if self.name != "breakout" or self.game.bricks else "CLEARED",
-                LED["white"],
-                big=False,
-            )
-            score = f"SCORE {self.game.score}"
-            c.text(
-                (WIDTH - font.text_width(font.SMALL, score)) // 2,
-                11,
-                score,
-                LED["amber"],
-                big=False,
-            )
-        return c
+        return draw(self.game, self.name)
 
     def _push(self, frame):
         px = themes.frames([frame.px], self.theme)[0]

@@ -25,10 +25,10 @@ import threading
 import time
 from pathlib import Path
 
-from . import paths
-from .device import DeviceError
-from .render.anim import Animation
-from .render.canvas import Canvas
+from .. import paths
+from ..clock.device import DeviceError
+from ..render.anim import Animation
+from ..render.canvas import Canvas
 
 PATH = Path(os.environ.get("TC002_NIGHT_FILE", paths.CACHE_DIR / "night.json"))
 APP = "night"  # the black custom app

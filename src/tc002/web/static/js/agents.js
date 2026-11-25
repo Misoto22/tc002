@@ -27,7 +27,7 @@ export function pollAgents(onChange) {
   }, TIMING.agentPollMs);
 }
 
-// One fixed action on this Mac (see web/host_actions.py), then fresh state.
+// One fixed action on this Mac (see app/host.py), then fresh state.
 export async function integration(action) {
   try {
     await post(`/api/integrations/${action}`, {});

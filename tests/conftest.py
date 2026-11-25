@@ -2,9 +2,10 @@
 
 import pytest
 
-from tc002 import config, night
-from tc002.integrations import statusline
-from tc002.runtime import focus, freshness, hold, sessions
+from tc002 import config
+from tc002.host import statusline
+from tc002.runtime import freshness, night
+from tc002.state import focus, hold, sessions
 from tc002.usage import claude, claude_login, limits
 
 

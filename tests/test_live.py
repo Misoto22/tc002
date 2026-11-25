@@ -3,9 +3,9 @@
 import json
 
 from tc002.config import Slot
-from tc002.runtime import hold
+from tc002.lookup import cities
 from tc002.runtime.rotation import Attention, Rotation
-from tc002.web import cities
+from tc002.state import hold
 
 
 class Clock:

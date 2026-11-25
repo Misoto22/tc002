@@ -2,7 +2,7 @@
 
 import json
 
-from tc002.integrations import statusline
+from tc002.host import statusline
 from tc002.render.canvas import rgb
 from tc002.render.palette import LED
 from tc002.screens import usage

@@ -4,8 +4,9 @@ import copy
 
 import pytest
 
-from tc002 import config, sync, tz
-from tc002.device import DeviceError
+from tc002 import config
+from tc002.clock import sync, tz
+from tc002.clock.device import DeviceError
 
 SYDNEY = ("Australia/Sydney", "AEST-10AEDT,M10.1.0,M4.1.0/3")
 TOKYO = ("Asia/Tokyo", "JST-9")
@@ -53,7 +54,7 @@ class Clock:
         self.cfg |= copy.deepcopy(fields)
 
     def category_config(self, category):
-        from tc002.device import CATEGORY_ENDPOINTS
+        from tc002.clock.device import CATEGORY_ENDPOINTS
 
         _, _, infos_key, order_key = CATEGORY_ENDPOINTS[category]
         return {infos_key: {}, order_key: []}

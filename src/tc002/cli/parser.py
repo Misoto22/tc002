@@ -3,9 +3,7 @@
 import argparse
 from importlib.metadata import version
 
-from .. import config
-from ..runtime import sessions
-from ..screens import message
+from ..app import catalog
 
 EPILOG = """\
 first run:
@@ -46,9 +44,11 @@ def build():
     sub.add_parser("doctor", help="check config, clock, firmware, service and hooks")
     ui = sub.add_parser("ui", help="open the settings UI in your browser (local only)")
     ui.add_argument(
-        "--port", type=int, default=config.UI_PORT, help=f"local port (default {config.UI_PORT})"
+        "--port", type=int, default=catalog.UI_PORT, help=f"local port (default {catalog.UI_PORT})"
     )
     ui.add_argument("--no-open", action="store_true", help="do not open a browser")
+
+    sub.add_parser("mcp", help="serve tc002 to AI agents over MCP (stdio), for `claude mcp add`")
 
     sub.add_parser("info", help="clock firmware, Wi-Fi and global settings")
     sub.add_parser("apps", help="list custom apps on the clock")
@@ -57,14 +57,14 @@ def build():
 
     t = sub.add_parser("text", help="show text: short text shimmers, long text scrolls")
     t.add_argument("text")
-    t.add_argument("--color", default="white", help=f"{', '.join(message.COLORS)} or #RRGGBB")
+    t.add_argument("--color", default="white", help=f"{', '.join(catalog.COLORS)} or #RRGGBB")
     t.add_argument("--app", default="msg", help="custom app name (default: msg)")
     t.add_argument("--passes", type=int, default=2, help="marquee passes for long text")
     t.add_argument("--show", action="store_true", help="switch the clock to it")
 
     a = sub.add_parser("alert", help="alert with chasing border lights")
     a.add_argument("text")
-    a.add_argument("--kind", choices=list(message.ICONS), default="done")
+    a.add_argument("--kind", choices=catalog.ALERT_KINDS, default="done")
     a.add_argument("--color", help="override the kind's colour")
     a.add_argument("--seconds", type=float, default=10, help="how long before removal")
     a.add_argument("--app", default="alert")
@@ -75,7 +75,7 @@ def build():
         "statusline", help="save Claude Code's plan limits, then run your own status line"
     )
     e = sub.add_parser("event", help="mark a done / wait / clear by hand")
-    e.add_argument("kind", choices=list(sessions.MANUAL))
+    e.add_argument("kind", choices=catalog.MANUAL_EVENTS)
 
     fo = sub.add_parser("focus", help="start or stop the focus timer screen")
     fo.add_argument("action", choices=["start", "stop"])

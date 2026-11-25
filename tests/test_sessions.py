@@ -7,8 +7,8 @@ import pytest
 from tc002 import cli
 from tc002.render.canvas import rgb
 from tc002.render.palette import LED
-from tc002.runtime import sessions
 from tc002.screens import claude
+from tc002.state import sessions
 
 T0 = 1_800_000_000.0
 

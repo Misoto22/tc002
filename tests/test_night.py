@@ -4,8 +4,10 @@ import time
 
 import pytest
 
-from tc002 import config, config_writer, night
-from tc002.device import DeviceError
+from tc002 import config
+from tc002.clock.device import DeviceError
+from tc002.config import writer
+from tc002.runtime import night
 from tc002.runtime.output import Output
 from tc002.runtime.rotation import Attention, Rotation
 
@@ -70,7 +72,7 @@ def test_validation_and_round_trip(tmp_path):
         config.parse({"night": {"enable": True, "dim": 1}})
 
     path = tmp_path / "tc002.toml"
-    config_writer.save(settings_with(NIGHTLY), path)
+    writer.save(settings_with(NIGHTLY), path)
     assert config.load(path).night == NIGHTLY
 
 

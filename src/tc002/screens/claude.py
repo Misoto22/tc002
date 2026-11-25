@@ -6,7 +6,7 @@ Layout (52x16), three columns split by dim 1 px rules at x 17 and x 35:
 A session that starts waiting takes the whole screen (bell, project, NEEDS YOU) until
 you answer; one that finishes shows DONE and its project for a few seconds.
 
-States come from the hooks (runtime/sessions.py). Without hooks, transcripts written
+States come from the hooks (state/sessions.py). Without hooks, transcripts written
 in the last SESSION_WINDOW seconds still count as running.
 """
 
@@ -20,7 +20,7 @@ from ..render import font
 from ..render.anim import Animation
 from ..render.canvas import Canvas
 from ..render.palette import LED
-from ..runtime import sessions
+from ..state import sessions
 
 PROJECTS = str(paths.CLAUDE_PROJECTS)
 SESSION_WINDOW = 180
