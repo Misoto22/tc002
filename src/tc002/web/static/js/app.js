@@ -20,6 +20,7 @@ import { connections } from "./pages/connections.js";
 import { appPage, screenPage } from "./pages/detail.js";
 import { pollAgents } from "./agents.js";
 import { followUiPalette } from "./appearance.js";
+import { TIMING } from "./timing.js";
 
 // [id, page, icon, nav group]; a page without a group (setup) is reached from the first
 // run and from the overview, not from the sidebar.
@@ -223,6 +224,14 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "[" && !mod && !typing) { e.preventDefault(); toggleSidebar(); } // as in Linear
 });
 window.addEventListener("beforeunload", (e) => { if (store.dirtyPaths().length) e.preventDefault(); });
+
+// An offline clock (or a console that was restarting) is asked again on its own while the
+// window is visible, and as soon as it comes back into view; load() keeps unsaved edits.
+function recheck() {
+  if (!document.hidden && store.store.state && !store.store.state.clock.online) store.load().catch(() => {});
+}
+setInterval(recheck, TIMING.offlineRecheckMs);
+document.addEventListener("visibilitychange", recheck);
 
 renderTopbar();
 // A refresh redraws in place: no entrance animations, only changed numbers count.
