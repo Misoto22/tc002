@@ -342,3 +342,19 @@
 
 .skeleton.short { width: 60%; }
 
+
+/* ---- plan-limit meters (Integrations: one pair per agent) ------------------------- */
+
+.state-line { display: inline-flex; align-items: center; gap: var(--space-6); }
+.meters { display: flex; gap: var(--space-16); }
+.meter { display: grid; gap: var(--space-4); width: var(--meter-w); }
+.meter-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-8); color: var(--muted); font-size: var(--text-xs); }
+.meter-value { color: var(--text); font-family: var(--mono); font-size: var(--text-sm); }
+.meter.unknown .meter-value { color: var(--faint); }
+.meter-track { height: var(--track-h); overflow: hidden; border-radius: var(--radius-pill); background: var(--track-strong); }
+.meter-fill { height: 100%; border-radius: inherit; transition: width var(--normal); }
+.meter.claude .meter-fill { background: var(--agent-claude); }
+.meter.codex .meter-fill { background: var(--agent-codex); }
+.meter.gemini .meter-fill { background: var(--agent-gemini); }
+.meter.warn .meter-fill { background: var(--yellow); }
+.meter.bad .meter-fill { background: var(--red); }

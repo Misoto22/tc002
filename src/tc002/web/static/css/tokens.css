@@ -145,7 +145,8 @@
   --brand-mark: 30px;
   --dot: 6px; /* status dots in rows and headers */
   --dot-lg: 7px; /* status dots in badges and buttons */
-  --track-h: 4px; /* slider track */
+  --track-h: 4px; /* slider track, plan-limit meters */
+  --meter-w: 84px; /* one plan-limit meter */
   --handle-w: 18px; /* drag handle of a rotation slot */
   --check-size: 18px;
   --badge-h: 22px;
