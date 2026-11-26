@@ -137,6 +137,7 @@ APPS = {
     "hackernews": {"brand": "si:ycombinator"},
     "home": {"brand": "si:homeassistant"},
     "codex": {"brand": "lobehub:codex"},  # the Codex mark itself, not OpenAI's logo
+    "gemini": {"glyph": "sparkles"},
     # tools
     "clock": {"glyph": "clock"},
     "weather": {"glyph": "cloud-sun"},

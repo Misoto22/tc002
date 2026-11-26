@@ -69,7 +69,7 @@ def test_without_a_previous_status_line_it_prints_the_limits(tmp_path):
 
 def test_usage_screen_marks_unknown_and_high_usage():
     state = usage.State((usage.Row("claude", 85, 40), usage.Row("codex", None, None)))
-    still = usage.frame(state)
+    still = usage.frame(state.rows)
     assert rgb(LED["amber"]) in still.px  # 85 % is a warning
     assert rgb(LED["teal"]) not in still.px  # Codex unknown: grey mark, empty bar
     assert len(usage.render(state).frames) == usage.FILL_FRAMES

@@ -67,7 +67,7 @@ LAYERS = {
     ),
     "clock": ("The TC002: HTTP client, built-in apps, settings rules, sync, Wi-Fi, discovery", []),
     "state": ("Small state files shared by service, UI and hooks", ["paths"]),
-    "usage": ("Claude Code and Codex usage read from local files", ["paths"]),
+    "usage": ("Claude Code, Codex and Gemini usage read from this Mac", ["paths"]),
     "render": ("Pixels only: canvas, fonts, palette, GIF", []),
     "paths": ("Where tc002 keeps files", []),
     "net": ("Outgoing HTTP for screens and lookups", []),

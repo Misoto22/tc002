@@ -4,7 +4,7 @@ import time
 from dataclasses import asdict
 
 from ..state import sessions
-from ..usage import claude, codex
+from ..usage import claude, codex, gemini
 
 
 class Agents:
@@ -15,6 +15,7 @@ class Agents:
         self.readers = {
             "claude": claude.ClaudeUsage(claude.PROJECTS, clock),
             "codex": codex.CodexUsage(clock=clock),
+            "gemini": gemini.GeminiUsage(clock=clock),
         }
 
     def snapshot(self):

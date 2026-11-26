@@ -79,6 +79,10 @@
   "symbol": "brand-codex",
   "kind": "brand"
  },
+ "gemini": {
+  "symbol": "sparkles",
+  "kind": "glyph"
+ },
  "clock": {
   "symbol": "clock",
   "kind": "glyph"

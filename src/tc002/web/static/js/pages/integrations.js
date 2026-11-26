@@ -44,6 +44,7 @@ export function integrations() {
   const installed = !it.service.startsWith("not installed");
   const rerender = () => document.getElementById("page").replaceChildren(integrations());
   const codexSeen = agents.usage.codex.source !== "none";
+  const geminiSeen = agents.usage.gemini?.source !== undefined && agents.usage.gemini.source !== "none";
   return page(
     pageHead(t("page.integrations"), t("desc.integrations")),
     section(t("int.clock")),
@@ -66,7 +67,9 @@ export function integrations() {
           : button(t("int.connect"), () => integration("connect-claude"), { kind: "primary", ico: "plug" }),
         { app: "claude" }),
       row(t("int.codex"), t("int.codexHint"), badge(codexSeen ? t("int.ready") : t("limits.unknown"), codexSeen ? "ok" : ""),
-        { app: "codex" })),
+        { app: "codex" }),
+      row(t("int.gemini"), t("int.geminiHint"), badge(geminiSeen ? t("int.ready") : t("limits.unknown"), geminiSeen ? "ok" : ""),
+        { app: "gemini" })),
     section(t("int.mac")),
     panel(
       row(t("row.service"), h("div", {}, h("div", { title: serviceSummary(it.service).title }, serviceSummary(it.service).text),

@@ -137,9 +137,10 @@ on in **On the clock**.
 - **Sessions** (for Claude Code users) — how many sessions are running, asking for you,
   and finished but unread. A session that starts waiting takes over the clock with its
   project name until you answer.
-- **Plan limits** (for Claude Code and Codex users) — one row per agent: the 5-hour
-  allowance used as a number and a bar, the 7-day allowance as a line under it; amber from
-  80 %, blinking from 95 %.
+- **Plan limits** (for Claude Code, Codex and Gemini users) — one row per agent: the
+  5-hour allowance used as a number and a bar, the 7-day allowance as a line under it;
+  amber from 80 %, blinking from 95 %. Gemini's limits are asked of Antigravity while it
+  is open; with three agents the screen shows two, then the third.
 - **System** — a scrolling CPU chart of the last 52 seconds, plus memory.
 - **Focus timer** — work, then a break, counting down by the second; start it from the
   Overview or `tc002 focus start`.

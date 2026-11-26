@@ -13,6 +13,7 @@
 }
 .app-icon[data-app="claude"] { color: var(--agent-claude); }
 .app-icon[data-app="codex"] { color: var(--agent-codex); }
+.app-icon[data-app="gemini"] { color: var(--agent-gemini); }
 
 /* sized from the box token, not a percentage: a % height on an SVG in a grid cell resolves
    against the row, not the box */

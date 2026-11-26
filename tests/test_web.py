@@ -249,7 +249,7 @@ def test_agents_endpoint_lists_sessions_and_limits(ui):
     data = json.loads(body)
     assert status == 200 and data["counts"]["waiting"] == 1
     assert data["sessions"][0]["project"] == "kura"
-    assert set(data["usage"]) == {"claude", "codex"}
+    assert set(data["usage"]) == {"claude", "codex", "gemini"}
 
 
 def test_first_run_saves_the_clock_and_creates_a_config(ui, tmp_path, monkeypatch):
