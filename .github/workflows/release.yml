@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   release:
-    uses: Misoto22/ci/.github/workflows/release.yml@cc7dd7f7cf2113627494435195b6d7f2f52f9220 # v0.9.0
+    uses: Misoto22/ci/.github/workflows/release.yml@121edc748cf9c4c062572ee9b1275460c4a17a40 # v0.11.0
     permissions:
       contents: write
       pull-requests: write
@@ -42,6 +42,6 @@ jobs:
         with:
           ref: ${{ needs.release.outputs.tag_name }}
           persist-credentials: false
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
       - run: uv build
       - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
