@@ -35,7 +35,7 @@ export const en = {
   "play.preview": "Preview", "play.start": "Play",
 
   "screen.claude": "How many Claude Code sessions are working, waiting or done",
-  "screen.usage": "Claude Code and Codex plan limits, 5-hour and weekly",
+  "screen.usage": "Claude Code, Codex and Gemini plan limits, 5-hour and weekly",
   "screen.sys": "CPU over the last minute, and memory",
   "screen.focus": "A work-and-break timer counting down",
   "screen.progress": "How much of the day, week and year has gone",
@@ -89,7 +89,7 @@ export const zh = {
   "play.preview": "预览", "play.start": "开始",
 
   "screen.claude": "Claude Code 会话：运行中、等你回复、已完成各有几个",
-  "screen.usage": "Claude Code 和 Codex 的 5 小时与每周额度",
+  "screen.usage": "Claude Code、Codex 和 Gemini 的 5 小时与每周额度",
   "screen.sys": "最近一分钟的 CPU 曲线和内存",
   "screen.focus": "工作与休息交替的倒计时",
   "screen.progress": "今天、本周、今年过去了多少",

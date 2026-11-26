@@ -16,3 +16,5 @@ CACHE_DIR = _dir("TC002_CACHE_DIR", "~/.cache/tc002")  # state that can be rebui
 CLAUDE_DIR = _dir("CLAUDE_CONFIG_DIR", "~/.claude")
 CLAUDE_PROJECTS = CLAUDE_DIR / "projects"  # Claude Code's session transcripts
 CODEX_HOME = _dir("CODEX_HOME", "~/.codex")
+GEMINI_DIR = _dir("GEMINI_DIR", "~/.gemini")
+ANTIGRAVITY_DAEMON = GEMINI_DIR / "antigravity" / "daemon"  # its language server's port file

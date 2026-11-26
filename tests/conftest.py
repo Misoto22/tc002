@@ -6,7 +6,7 @@ from tc002 import config
 from tc002.host import statusline
 from tc002.runtime import freshness, night
 from tc002.state import focus, hold, sessions
-from tc002.usage import claude, claude_login, limits
+from tc002.usage import claude, claude_login, gemini, limits
 
 
 @pytest.fixture(autouse=True)
@@ -26,3 +26,6 @@ def isolated_state(tmp_path, monkeypatch):
     monkeypatch.setenv("CODEX_HOME", str(tmp_path / "codex"))
     # never read the real Claude login or call Anthropic from a test
     monkeypatch.setattr(claude_login, "_logins", lambda: iter(()))
+    # never read the real Antigravity port file or ask its language server
+    monkeypatch.setattr(gemini, "PATH", tmp_path / "gemini-limits.json")
+    monkeypatch.setattr(gemini.paths, "ANTIGRAVITY_DAEMON", tmp_path / "antigravity-daemon")

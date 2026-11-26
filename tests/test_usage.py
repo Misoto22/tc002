@@ -142,3 +142,90 @@ def test_presets_add_what_they_need():
     assert out["screens"]["enabled"] == ["claude", "usage", "sys"]
     assert out["device"]["keep_builtins"] == ["clock"]
     assert data["device"]["keep_builtins"] == []  # input untouched
+
+
+def status_reply(*models):
+    return {
+        "userStatus": {
+            "cascadeModelConfigData": {
+                "clientModelConfigs": [
+                    {"label": label, "quotaInfo": info} for label, info in models
+                ]
+            }
+        }
+    }
+
+
+def test_gemini_quota_takes_the_most_used_gemini_model():
+    from tc002.usage import gemini
+
+    reply = status_reply(
+        ("Gemini 4 Neon (High)", {"remainingFraction": 0.98, "resetTime": iso(NOW + 3600)}),
+        ("Gemini 3.8 Flash (Low)", {"remainingFraction": 0.5, "resetTime": iso(NOW + 3600)}),
+        ("Claude Opus 5.5 (High)", {"resetTime": iso(NOW + 3600)}),  # exhausted: not Gemini
+    )
+    used, resets = gemini.quota(reply)
+    assert used == 50.0 and abs(resets - round(NOW + 3600)) <= 1
+    # an exhausted allowance omits remainingFraction (proto3 drops zeros)
+    gone = status_reply(("Gemini 4 Neon (High)", {"resetTime": iso(NOW + 3600)}))
+    assert gemini.quota(gone)[0] == 100.0
+    assert gemini.quota({"unexpected": True}) is None
+
+
+def test_gemini_reset_time_picks_the_window(tmp_path):
+    from tc002.usage import gemini, limits
+
+    path = tmp_path / "g.json"
+    gemini.record((40.0, NOW + 2 * 3600), path, NOW)
+    assert limits.latest(path, NOW) == {"limit_5h": 40.0, "reset_5h": NOW + 2 * 3600}
+    gemini.record((100.0, NOW + 3 * 86400), path, NOW)  # the weekly cap binds now
+    assert limits.latest(path, NOW) == {"limit_week": 100.0, "reset_week": NOW + 3 * 86400}
+    # once the 5-hour window refills it comes back; the weekly reading is kept
+    gemini.record((5.0, NOW + 4 * 3600), path, NOW)
+    assert limits.latest(path, NOW)["limit_week"] == 100.0
+    assert limits.latest(path, NOW)["limit_5h"] == 5.0
+
+
+def test_gemini_reader_asks_the_local_server(tmp_path, monkeypatch):
+    from tc002.usage import gemini
+
+    daemon = tmp_path / "daemon"
+    daemon.mkdir()
+    (daemon / "hub_1.json").write_text(json.dumps({"httpPort": 1, "csrfToken": "t"}))
+    asked = []
+
+    def fake_fetch(port, token):
+        asked.append((port, token))
+        return status_reply(
+            ("Gemini 4 Neon (High)", {"remainingFraction": 0.75, "resetTime": iso(NOW + 600)})
+        )
+
+    monkeypatch.setattr(gemini, "fetch", fake_fetch)
+    reader = gemini.GeminiUsage(str(daemon), tmp_path / "g.json", clock=lambda: NOW)
+    u = reader.collect()
+    assert asked == [(1, "t")]
+    assert u.source == "antigravity" and u.limit_5h == 25.0 and u.limit_week is None
+    reader.collect()
+    assert len(asked) == 1  # within REFRESH: the saved reading is used
+    absent = gemini.GeminiUsage(str(tmp_path / "none"), tmp_path / "n.json", clock=lambda: NOW)
+    assert absent.collect().source == "none"
+
+
+def test_usage_screen_pages_three_agents():
+    class Fixed:
+        def __init__(self, u):
+            self.u = u
+
+        def collect(self):
+            return self.u
+
+    seen = usage.Usage(0, 0, 97.0, 10.0, source="x")
+    screen = usage_screen.UsageScreen(Fixed(seen), Fixed(seen), Fixed(seen))
+    state = screen.sample()
+    assert [r.agent for r in state.rows] == ["claude", "codex", "gemini"]
+    anim = screen.render(state)
+    assert len(anim.frames) <= MAX_FRAMES  # both pages blink and still fit
+    anim.payload()
+    # Gemini without Codex shares the first page with Claude Code
+    alone = usage_screen.UsageScreen(Fixed(seen), Fixed(usage.Usage(0, 0)), Fixed(seen))
+    assert [r.agent for r in alone.sample().rows] == ["claude", "gemini"]

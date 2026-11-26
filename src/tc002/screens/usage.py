@@ -1,11 +1,13 @@
-"""Plan limits of Claude Code and Codex on one screen, one 8-pixel row per agent.
+"""Plan limits of Claude Code, Codex and Gemini, two agents a page, one 8-pixel row each.
 
 Layout of a row (52 px wide):
   x 1-5    agent mark, 5x5, in the agent's colour
   x 8-18   5-hour % used, small font ("--" when unknown); amber from 80 %, blinking from 95 %
   x 25-50  5-hour bar, 3 px tall; under it a 1 px line for the 7-day %
-Claude Code is the top row (y 1), Codex the bottom (y 9). Bars fill from empty when the
-screen comes on, then hold.
+Claude Code is always shown; Codex and Gemini when this Mac has them (Codex keeps its row
+when it is the only other one, so the screen never shows a single agent). Two rows fit:
+with three agents the screen shows Claude Code and Codex, then Gemini. Each page fills its
+bars from empty, then holds.
 """
 
 from dataclasses import dataclass
@@ -15,6 +17,7 @@ from ..render.canvas import Canvas
 from ..render.palette import LED
 from ..usage.claude import ClaudeUsage
 from ..usage.codex import CodexUsage
+from ..usage.gemini import GeminiUsage
 
 FILL_FRAMES, FILL_MS, HOLD_MS, BLINK_MS = 12, 40, 4000, 500
 WARN, CRITICAL = 80, 95
@@ -22,8 +25,9 @@ BAR_X, BAR_W = 25, 26
 AGENTS = {
     "claude": (LED["orange"], ["#.#.#", ".###.", "#####", ".###.", "#.#.#"]),
     "codex": (LED["teal"], [".###.", "#...#", "#.#.#", "#...#", ".###."]),
+    "gemini": (LED["blue"], ["..#..", "..#..", "##.##", "..#..", "..#.."]),
 }
-ROWS = (("claude", 1), ("codex", 9))
+ROW_Y = (1, 9)
 
 
 @dataclass(frozen=True)
@@ -62,19 +66,34 @@ def draw_row(c, row, y, progress=1.0, lit=True):
     _bar(c, y + 4, 1, (row.week or 0) * eased, LED["soft_white"])
 
 
-def frame(state, progress=1.0, lit=True):
+def pages(state):
+    """The rows two at a time, as they fit on the screen."""
+    return [state.rows[i : i + len(ROW_Y)] for i in range(0, len(state.rows), len(ROW_Y))]
+
+
+def frame(rows, progress=1.0, lit=True):
     c = Canvas()
-    for row, (_, y) in zip(state.rows, ROWS, strict=True):
+    for row, y in zip(rows, ROW_Y, strict=False):
         draw_row(c, row, y, progress, lit)
     return c
 
 
-def render(state):
-    frames = [frame(state, i / FILL_FRAMES) for i in range(1, FILL_FRAMES + 1)]
+def _page(rows, blinks):
+    frames = [frame(rows, i / FILL_FRAMES) for i in range(1, FILL_FRAMES + 1)]
     delays = [FILL_MS] * (FILL_FRAMES - 1) + [HOLD_MS]
-    if any(r.five_hour is not None and r.five_hour >= CRITICAL for r in state.rows):
-        frames += [frame(state, lit=False), frame(state)] * 4
-        delays += [BLINK_MS] * 8
+    if any(r.five_hour is not None and r.five_hour >= CRITICAL for r in rows):
+        frames += [frame(rows, lit=False), frame(rows)] * blinks
+        delays += [BLINK_MS] * (2 * blinks)
+    return frames, delays
+
+
+def render(state):
+    frames, delays = [], []
+    split = len(pages(state)) > 1  # two pages must share the clock's frame budget
+    for rows in pages(state):
+        more, wait = _page(rows, 2 if split else 4)
+        frames += more
+        delays += wait
     return Animation(frames, delays, key=state)
 
 
@@ -84,14 +103,17 @@ class UsageScreen:
     APP = "usage"
     TICK = 30.0
 
-    def __init__(self, claude=None, codex=None):
+    def __init__(self, claude=None, codex=None, gemini=None):
         self.claude, self.codex = claude or ClaudeUsage(), codex or CodexUsage()
+        self.gemini = gemini or GeminiUsage()
 
     def sample(self):
-        rows = []
-        for agent, reader in (("claude", self.claude), ("codex", self.codex)):
-            u = reader.collect()
-            rows.append(Row(agent, _round(u.limit_5h), _round(u.limit_week)))
+        readers = {"claude": self.claude, "codex": self.codex, "gemini": self.gemini}
+        read = {agent: reader.collect() for agent, reader in readers.items()}
+        shown = ["claude"] + [a for a in ("codex", "gemini") if read[a].source != "none"]
+        if len(shown) == 1:
+            shown.append("codex")  # the familiar pair, Codex marked unknown
+        rows = (Row(a, _round(read[a].limit_5h), _round(read[a].limit_week)) for a in shown)
         return State(tuple(rows))
 
     def render(self, state):

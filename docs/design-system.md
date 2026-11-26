@@ -17,7 +17,7 @@ in `render/themes.py`.
 | Surfaces | `--bg`, `--panel`, `--panel-raised`, `--field`, `--sidebar`, `--glass` | page, cards, menus, inputs |
 | Text | `--text`, `--text-2`, `--muted`, `--faint` | strongest to quietest; all pass AA on every surface |
 | State | `--green`, `--yellow`, `--red`, `--accent` (+ `-soft`) | status dots, warnings, the chosen item |
-| Agents | `--agent-claude`, `--agent-codex` | the two agents' marks only |
+| Agents | `--agent-claude`, `--agent-codex`, `--agent-gemini` | the agents' marks and their limit meters |
 | Space | `--space-N` (N is its px) | every padding, margin and gap |
 | Shape | `--radius-*`, `--hairline`, `--hairline-mid`, `--hairline-strong`, `--ring`, `--focus-w` | corners, rules, outlines, focus |
 | Size | `--control-h` 32, `--control-sm-h` 26, `--control-xs-h` 20, `--row-h` 56, `--icon*`, `--app-icon*`, `--dot*` | controls and marks |
@@ -29,7 +29,9 @@ in `render/themes.py`.
   nothing draws a free-standing line on the page. In a panel where some rows have an
   icon, rows without one indent to the same text edge.
 - **Row** (`row()` in `ui.js`): icon · title and hint · controls on the right. On a phone
-  the controls take their own line under the title.
+  the controls take their own line under the title. A row's state (online, running) is a
+  dot in its hint, not a badge beside its buttons, so the right side holds only
+  same-height actions — or, for an agent, its plan-limit **meters** (5-hour and 7-day %).
 - **List row that opens a page** (`.link-row`): the title is the link, stretched over the
   row; the placement button beside it is a separate control (no control inside a link).
 - **Card** (`.live-card`, `.choice`, `.screen-card`, `.game-card`): a picture first, then

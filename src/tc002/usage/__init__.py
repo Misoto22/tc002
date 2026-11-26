@@ -1,9 +1,10 @@
-"""Token usage of coding agents (Claude Code, Codex), read from their local files.
+"""Token usage and plan limits of coding agents (Claude Code, Codex, Gemini) on this Mac.
 
 Nothing here touches the network or an account: each agent already writes its token
 counts to disk, and these readers only add them up for "today" and "the last 5 hours".
 Plan limits (% of the 5-hour and weekly allowance) come from the same local files for
-Codex, and from what Claude Code hands its status line (see limits.py).
+Codex, from what Claude Code hands its status line (see limits.py), and from the
+language server Antigravity runs on 127.0.0.1 for Gemini (see gemini.py).
 """
 
 import time

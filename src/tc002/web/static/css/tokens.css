@@ -73,6 +73,7 @@
   /* agents, for limit bars (muted so the accent stays the loudest colour) */
   --agent-claude: #d97757;
   --agent-codex: #4a63e0;
+  --agent-gemini: #3b78e7;
 
   /* controls */
   --knob: #ffffff;
@@ -144,7 +145,8 @@
   --brand-mark: 30px;
   --dot: 6px; /* status dots in rows and headers */
   --dot-lg: 7px; /* status dots in badges and buttons */
-  --track-h: 4px; /* slider track */
+  --track-h: 4px; /* slider track, plan-limit meters */
+  --meter-w: 84px; /* one plan-limit meter */
   --handle-w: 18px; /* drag handle of a rotation slot */
   --check-size: 18px;
   --badge-h: 22px;
@@ -258,6 +260,7 @@
   --red-soft: rgb(239 106 95 / 14%);
   --agent-claude: #e38b6d;
   --agent-codex: #8b9cff;
+  --agent-gemini: #8ab4f8;
   --knob: #f1eee7;
   --knob-on: #161513;
   --knob-shadow: 0 1px 2px rgb(0 0 0 / 40%);
@@ -302,6 +305,8 @@
     --red-soft: rgb(239 106 95 / 14%);
     --agent-claude: #e38b6d;
     --agent-codex: #8b9cff;
+    --agent-gemini: #8ab4f8;
+  --agent-gemini: #8ab4f8;
     --knob: #f1eee7;
   --knob-on: #161513;
     --knob-shadow: 0 1px 2px rgb(0 0 0 / 40%);

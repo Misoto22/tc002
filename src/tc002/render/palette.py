@@ -18,7 +18,7 @@ LED = {
     "yellow": 0xFFD000,
     "amber": 0xFFB020,
     "red": 0xFF5A52,
-    "blue": 0x4285F4,
+    "blue": 0x4285F4,  # Gemini
     "sky": 0x5B8DEF,
     "cyan": 0x00E5FF,
     "violet": 0xA78BFA,
