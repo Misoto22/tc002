@@ -80,8 +80,8 @@
   "kind": "brand"
  },
  "gemini": {
-  "symbol": "sparkles",
-  "kind": "glyph"
+  "symbol": "brand-googlegemini",
+  "kind": "brand"
  },
  "clock": {
   "symbol": "clock",
